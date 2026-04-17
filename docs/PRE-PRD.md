@@ -237,8 +237,7 @@ Short reminders that are easy to forget—not all due at once.
 
 | Date | Result | Notes |
 | --- | --- | --- |
-| | | Bands OK as-is? Y/N |
-| | | Margin rule adopted? Y/N |
+| **2026-04-17** | **Pass** (E5-T1–E5-T6) | **Artifact:** `spikes/epic-05-matching-js/`. **§3 score:** L2-normalize, cosine = dot ∈ [-1,1], then **`(1 + cosine) / 2`** ∈ [0,1] so PRE-SEARCH §3 thresholds apply as written. **Bands:** strong ≥ **0.80**; weak **[0.65, 0.80)**; reject **&lt; 0.65** (§3 **&lt; 0.60** “unknown” copy — see sidecar). **Best match:** highest cosine; **tie → lowest index**; one gallery row → `secondScore` null. **Margin:** implemented (**Δ ≥ 0.05** vs runner-up for “strong GRANTED” when a runner-up exists); pros/cons in sidecar. **Tests:** `node --test spikes/epic-05-matching-js/matching.test.mjs` — **10** pass. **Supervisor still open:** weak band → **UNCERTAIN** vs **GRANTED-with-warning** (sidecar recommends UNCERTAIN). **Detail:** [spikes/epic-05-matching-js/FINDINGS.md](spikes/epic-05-matching-js/FINDINGS.md). |
 
 ---
 
