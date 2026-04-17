@@ -204,6 +204,8 @@ Short reminders that are easy to forget—not all due at once.
 
 **Open questions this epic answers:** Which ONNX wins on load + latency + sanity?
 
+**Spike status:** **Completed** (2026-04-17). Tasks **E4-T1–E4-T9** satisfied in **Findings — Epic 4** below. Full tables, task pass/fail, supervisor **E4-T2** wording, and verbatim ORT errors: [spikes/epic-04-embedding-onnx/FINDINGS.md](../spikes/epic-04-embedding-onnx/FINDINGS.md).
+
 | Spike | Smallest check | Timebox | Pass / fail | Adjust if fail |
 | --- | --- | --- | --- | --- |
 | **4a** | Table **2–3** candidates: license, source URL, input size, output dim | 45 min | Written shortlist in findings | Expand search ($0 only) |
@@ -215,10 +217,8 @@ Short reminders that are easy to forget—not all due at once.
 
 | Date | Result | Notes |
 | --- | --- | --- |
-| | | Selected model name + URL |
-| | | Input resolution; mean/std or [0,1] |
-| | | Output dimension |
-| | | ms/embed (webgl / wasm) |
+| **2026-04-17** | **Pass** (tasks **E4-T1–E4-T7**, **E4-T9**; model + preprocess + sanity) | **Artifact:** `spikes/epic-04-embedding-onnx/` — HTTP only (not `file://`). **ORT:** `onnxruntime-web@1.22.0` (jsDelivr); `wasmPaths` under package **`/dist/`** (same convention as Epic 1). **Winner for Epic 6:** **`w600k_mbf.onnx`** (InsightFace MobileFaceNet / `w600k`, `buffalo_s` on HF): https://huggingface.co/deepghs/insightface/resolve/main/buffalo_s/w600k_mbf.onnx — **~12.99 MiB** (13 616 099 bytes). **Shortlist:** `w600k_mbf` (chosen), `w600k_r50` (~174 MB class), ONNX Model Zoo ArcFace — detail in sidecar. **License:** InsightFace **code** MIT; **pretrained weights** may carry non-commercial / research terms — **E4-T2** supervisor approval + course check recorded in sidecar. **I/O:** input **`input.1`**, **`[N,3,112,112]`** **float32** **NCHW** RGB; preprocess **`(pixel - 127.5) / 127.5`**; output tensor name **`516`**, shape **`[1,512]`** **float32**; **L2-normalize in JS** before cosine (raw ‖e‖ ≈ 11). **E4-T7:** same-identity cosine **0.5240** vs mean cross-identity **0.4127** → **PASS**. **Test images:** same-origin **`assets/*.jpg`** (avoids cross-origin canvas taint). |
+| **2026-04-17** | **Pass** **E4-T8** (latency; forced EP) | **Measure:** preprocess + **`session.run`** per iter; **n = 22** after **1** warmup. **Environment:** **Cursor** embedded Chromium — **not** a substitute for benchmark **MBP Chrome**. **WebGL:** ORT `removing requested execution provider "webgl" from session options because it is not available: backend not found.` **WebGL-only** `InferenceSession.create`: `no available backend found. ERR: [webgl] backend not found.` **WASM-only:** **p50 18.900 ms**, **p90 19.200 ms** (min **18.400**, max **20.600**) — **&lt; 150 ms** embed stretch **PASS**. **Re-run** WebGL vs WASM in **desktop Chrome** for interview-grade EP comparison. |
 
 ---
 
