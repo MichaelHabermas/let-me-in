@@ -1,0 +1,543 @@
+GATEKEEPER
+Building Intelligent Door-Entry Systems with Browser-Based Facial Recognition
+
+Before You Start: Pre-Search (1.5 Hours)
+You must complete the Pre-Search checklist (Appendix A) before writing a single line of code. Open your
+preferred AI assistant and work through every question in order. Save the full conversation — it is part of your
+final submission.
+This week's methodology emphasis is browser-native ML inference and real-time computer vision. The
+Pre-Search process forces you to confront model format conversions, WebGL/WASM constraints, webcam
+API quirks, and face-matching pipeline design before you burn time on dead-end implementations. Students
+who skip Pre-Search consistently hit the same walls at hour 18 that take 4 hours to undo.
+
+
+Background
+Physical access control is a multi-billion-dollar industry undergoing rapid transformation. Companies like
+Verkada, ButterflyMX, and Openpath have replaced legacy key-card systems with camera-first, AI-powered
+entry platforms. Apple's Face ID normalized facial biometric authentication for consumers, while AWS
+Rekognition and Azure Face API commoditized cloud-based face matching. The core value proposition is
+simple: eliminate badges, PINs, and tailgating by verifying identity through what a person is rather than what
+they carry.
+You will build Gatekeeper — a fully browser-based door-entry verification system. The application captures a
+live webcam frame of a person attempting entry, runs YOLOv9 face detection locally in the browser, extracts
+facial features, and compares them against a pre-enrolled database of authorized personnel. The critical
+technical challenge is running the entire inference pipeline client-side using ONNX Runtime Web or
+TensorFlow.js — no server-side GPU, no cloud API calls for inference. This forces you to grapple with model
+optimization, quantization tradeoffs, and real-time performance on constrained hardware.
+
+
+    Gate: Project completion + technical interviews required for Austin admission.
+
+
+
+    Project Overview
+    One-week sprint with three deadlines:
+
+     Checkpoint   Deadline                      Focus
+
+     Pre-Search   Monday 6:00 PM CT             Architecture research & technology decisions
+
+     MVP          Tuesday 10:59 PM CT (24 hrs)  Core face detection + matching pipeline working end-to-end
+
+Checkpoint Deadline Focus
+
+Early Submission Friday 10:59 PM CT (4 days) Full UI, enrolled user database, access decision logic
+
+Final Submission Sunday 10:59 PM CT (7 days) Polished UX, performance optimization, documentation
+
+
+MVP Requirements (24 Hours)
+Hard gate. All items required to pass:
+
+    n Webcam capture functional — user sees live video feed in the browser.
+    n YOLOv9 model loaded and running inference in-browser (ONNX Runtime Web or TensorFlow.js).
+    n Face detection working — bounding box drawn around detected face in live feed.
+    n At least 3 enrolled users in a local database with name, role, and reference face image.
+    n Single face-to-face comparison returning a similarity score (cosine similarity or Euclidean distance).
+    n Access granted/denied decision displayed based on similarity threshold.
+    n Basic UI showing: live camera feed, detection overlay, match result, and user info on match.
+    n Entire inference pipeline runs client-side — zero server calls for ML inference.
+    n Deployed and publicly accessible via GitHub Pages, Netlify, or Vercel.
+
+    "A simple entry system with reliable face matching beats a complex entry system with
+        broken detection."
+
+    Core Technical Requirements
+
+
+Face Detection & Recognition Pipeline
+
+     Feature Requirements
+
+     Webcam Integration Use MediaDevices.getUserMedia() API; support front and rear cameras on mobile.
+
+     Face Detection YOLOv9 model converted to ONNX format; detect faces with bounding box coordinates.
+
+     Face Cropping Extract detected face region from frame; resize to model input dimensions (e.g., 640×640).
+
+     Feature Extraction Generate face embedding vector (128-d or 512-d) from cropped face image.
+
+     Similarity Matching Compare live embedding against all enrolled embeddings using cosine similarity.
+
+     Threshold Logic Configurable similarity threshold (default ³ 0.75); return best match above threshold.
+
+     Anti-Spoofing (Stretch) Basic liveness check — detect flat images vs. real faces using depth or motion cues.
+
+     Multi-Face Handling If multiple faces detected, highlight each and require single-person verification.
+
+
+
+User Enrollment & Data Management
+
+     Feature Requirements
+
+     User Database Store enrolled users with: name, ID, role/department, reference face image, embedding vector.
+
+     Enrollment Flow Admin captures face via webcam ® generates embedding ® saves to database.
+
+     Storage Backend IndexedDB for client-side persistence; optional JSON export/import for backup.
+
+     Image Storage Store reference images as Base64 data URIs or Blob objects in IndexedDB.
+
+     CRUD Operations Add, view, update, and delete enrolled users through the admin interface.
+
+     Bulk Import Support uploading a JSON file with multiple user records and face images.
+
+
+
+Access Control & Logging
+
+     Feature Requirements
+
+     Access Decision Display GRANTED (green) or DENIED (red) with matched user's name and confidence score.
+
+     Entry Log Record every access attempt: timestamp, matched user (or 'Unknown'), similarity score, decision.
+
+     Log Viewer Admin page showing entry log as a sortable, filterable table.
+
+     Visual Feedback On match: show enrolled photo side-by-side with captured frame for human verification.
+
+    Feature            Requirements
+
+    Cooldown Timer     Prevent rapid re-scanning; enforce 3-second cooldown between verification attempts.
+
+Testing Scenarios
+We will test:
+
+1. Open the application in Chrome — webcam feed appears within 2 seconds of granting camera permission.
+2. Enroll a new user through the admin flow — capture face, enter name and role, save successfully.
+3. Stand in front of the camera as an enrolled user — system returns GRANTED with correct name within 3
+seconds.
+4. Have an unenrolled person attempt entry — system returns DENIED with 'Unknown' label.
+5. Show a printed photo of an enrolled user to the camera — system should ideally detect or flag the attempt.
+6. Test with two people in frame simultaneously — system handles gracefully (rejects or prompts
+single-person).
+7. Refresh the page and verify enrolled users persist in IndexedDB.
+8. Open entry log and verify all previous attempts are recorded with correct timestamps and decisions.
+
+Performance Targets
+
+    Metric Target
+
+    Face Detection Latency < 500ms per frame on modern laptop (Chrome, 2020+ hardware)
+
+    End-to-End Verification < 3 seconds from frame capture to access decision
+
+    Model Load Time < 8 seconds on initial page load (cold cache)
+
+    Similarity Accuracy ³ 85% true positive rate at £ 5% false positive rate on test set of 20+ faces
+
+    Database Capacity Support ³ 50 enrolled users without degraded matching performance
+
+    Frame Rate Webcam preview maintains ³ 15 FPS while detection runs in background
+
+Deep Dive: Browser-Based YOLOv9 Face Recognition
+Pipeline
+This is the project's signature technical challenge. You are running a full object-detection model in the browser
+and building a face-matching pipeline on top of it — no Python backend, no cloud inference. Everything
+happens in JavaScript with WebGL or WASM acceleration.
+
+Required Capabilities
+Your system must handle these scenarios correctly:
+
+• Model Loading: Load a YOLOv9 ONNX model via onnxruntime-web. Display a loading progress bar.
+Handle model download failures gracefully.
+• Live Detection: Continuously capture frames from the webcam, run YOLOv9 inference, and draw
+bounding boxes around detected faces in real-time on a canvas overlay.
+• Embedding Generation: After detecting a face, crop the region, preprocess it (resize, normalize), and
+generate a fixed-length embedding vector for comparison.
+• 1:N Matching: Compare the live embedding against all enrolled embeddings. Return the best match
+and its similarity score. Handle the case where no match exceeds the threshold.
+• Enrollment Capture: Provide a guided enrollment flow: 'Look at the camera ® Detecting face ®
+Captured ® Enter details ® Saved.'
+
+Model Pipeline Architecture
+Your pipeline has three stages. Each must be independently testable:
+
+ Stage           Input                 Output                       Technology
+
+ 1. Detection    Raw webcam frame (640×480)
+                                       Bounding box coordinates + confidence
+                                                                    YOLOv9 ONNX model
+
+ 2. Extraction   Cropped face region   Embedding vector (128-d or 512-d)
+                                                                    FaceNet/ArcFace ONNX or custom head
+
+ 3. Matching     Live embedding + enrolled Best
+                                       DB     match ID + similarity score Cosine similarity in JS
+
+
+ONNX Model Integration Schema
+Your model loading and inference code should follow this pattern:
+
+ // Model initialization
+ const session = await ort.InferenceSession.create('./models/yolov9-face.onnx', {
+ executionProviders: ['webgl', 'wasm'], // WebGL preferred, WASM fallback
+ graphOptimizationLevel: 'all'
+ });
+ // Preprocessing: resize frame to 640x640, normalize to [0,1]
+ const tensor = new ort.Tensor('float32', preprocessed, [1, 3, 640, 640]);
+ // Run inference
+ const results = await session.run({ images: tensor });
+ const detections = postprocess(results); // NMS, threshold filtering
+
+Evaluation Criteria
+
+     Test Input Expected Output
+
+     Enrolled user facing camera, good lighting GRANTED + correct name + score ³ 0.80
+
+     Enrolled user, low lighting / partial occlusion GRANTED or UNCERTAIN + score ³ 0.65
+
+     Unenrolled person facing camera DENIED + 'Unknown' + score < 0.60
+
+     Printed photo held to camera DENIED or flagged as potential spoof (stretch goal)
+
+     Empty frame (no face) No detection — 'No face detected' message displayed
+
+     Two faces in frame Prompt: 'Multiple faces detected. Please ensure only one person is in frame.'
+
+
+
+    Implement At Least 3 of the Following
+
+    • Liveness Detection: Use frame differencing or head-pose estimation to distinguish real faces from
+    static images.
+    • Confidence Calibration: Display a visual confidence meter (low/medium/high) alongside the raw
+    similarity score.
+    • Multi-Angle Enrollment: Capture 3-5 reference images per user at different angles to improve
+    matching robustness.
+    • Access Scheduling: Allow admins to set time-based access rules (e.g., 'User X can enter only 9 AM–5
+    PM').
+    • Audio Feedback: Play distinct sounds for GRANTED (chime) and DENIED (buzz) to simulate a real
+    entry system.
+    • Face Landmark Overlay: Draw facial landmarks (eyes, nose, mouth) on the detected face for visual
+    debugging.
+    • Export Audit Report: Generate a downloadable CSV/PDF of all entry attempts for a given date range.
+
+    Pipeline Performance Targets
+
+    Metric                                    Target
+
+    ONNX Model File Size                      £ 25 MB (quantized INT8 preferred)
+
+    Detection Inference (WebGL)               < 200ms per frame on GPU-equipped laptop
+
+    Detection Inference (WASM fallback)       < 800ms per frame on CPU-only device
+
+    Embedding Extraction                      < 150ms per cropped face
+
+    Total Pipeline (detect + embed + match)   < 2 seconds end-to-end
+
+    Memory Footprint                          < 500 MB browser tab memory usage during active scanning
+
+    AI Cost Analysis (Required)
+
+
+Development & Testing Costs
+Track and report the following during development:
+    • LLM API costs: Total spend on ChatGPT/Claude/Copilot for code generation, debugging, and
+    architecture decisions.
+    • Token usage: Approximate input/output token counts across all AI-assisted development sessions.
+    • Model conversion costs: Time and compute spent converting YOLOv9 from PyTorch ® ONNX ®
+    quantized ONNX.
+    • Training/fine-tuning costs: If you fine-tuned any face detection or embedding model, report GPU
+    hours and cost.
+    • Testing compute: Browser profiling time, performance benchmarking runs, and any cloud resources
+    used for testing.
+
+    Production Cost Projections
+    Since inference runs entirely client-side, production costs shift to hosting, storage, and data transfer. Project
+    costs assuming a static hosting model:
+
+     Cost Category                     100 Users           1K Users   10K Users          100K Users
+
+     Static Hosting (CDN)              $0/mo (free tier)   $5/mo      $20/mo             $80/mo
+
+     Model File Transfer (25MB)        $0.02/mo            $0.20/mo   $2.00/mo           $20/mo
+
+     IndexedDB (client-side)           $0                  $0         $0                 $0
+
+     Optional: Cloud Backup Storage    $1/mo               $5/mo      $25/mo             $150/mo
+
+     Optional: Analytics/Logging API   $0                  $10/mo     $50/mo             $200/mo
+
+     Estimated Monthly Total           $1–2                $20–25     $95–100            $450–500
+
+    Include assumptions:
+     • Average model downloads per user per month (cold cache vs. cached).
+     • Average number of verification attempts per user per day.
+     • Whether enrolled user images are stored purely client-side or synced to a backend.
+
+    Technical Stack
+
+     Layer                            Technology
+
+     Frontend                         HTML5 + CSS3 + Vanilla JS, or React, or Vue (single-page application)
+
+     Camera API                       MediaDevices.getUserMedia(), Canvas API for frame extraction
+
+     ML Runtime                       ONNX Runtime Web (onnxruntime-web) or TensorFlow.js
+
+     Layer Technology
+
+     Face Detection Model YOLOv9 converted to ONNX; alternative: YOLOv8-face, BlazeFace for comparison
+
+     Face Embedding FaceNet ONNX, ArcFace ONNX, or MobileFaceNet for lightweight extraction
+
+     Client-Side Storage IndexedDB (via Dexie.js or idb), localStorage for settings
+
+     Build Tools Vite, Webpack, or esbuild (if using a build step); otherwise plain ES modules
+
+     Deployment GitHub Pages, Netlify, Vercel, or Cloudflare Pages
+
+Use whatever stack helps you ship. Complete the Pre-Search process to make informed decisions.
+
+Build Strategy
+
+
+Priority Order
+1. YOLOv9 model conversion and browser loading — this is the hardest unknown. Convert the model to
+ONNX, verify it loads in onnxruntime-web, and confirm inference produces valid outputs. Do this first.
+2. Webcam capture pipeline — get getUserMedia working, render frames to a canvas, extract frame data as
+tensors.
+3. Face detection integration — feed webcam frames to the loaded model, parse bounding box outputs,
+draw overlays.
+4. Embedding extraction — implement or integrate a face embedding model to generate feature vectors
+from detected faces.
+5. Enrollment system — build the admin flow to capture a face, generate its embedding, and store it in
+IndexedDB.
+6. Matching engine — implement cosine similarity search across enrolled embeddings; apply threshold logic.
+7. Access decision UI — wire up the GRANTED/DENIED display, side-by-side comparison, and entry
+logging.
+8. Polish and stretch features — liveness detection, scheduling, audit export, sound feedback.
+
+Critical Guidance
+    • Start with a pre-converted ONNX model. Do not attempt to train YOLOv9 from scratch — find a
+    pre-trained face detection checkpoint and convert it. The conversion alone may take hours to debug.
+    • Test ONNX Runtime Web on day one. If WebGL inference fails on your hardware, you need to know
+    immediately so you can fall back to WASM or swap model architectures.
+    • Keep your face database small during development — 3-5 enrolled users. Scaling to 50 is an
+    optimization problem, not a functionality problem.
+    • Use cosine similarity, not Euclidean distance, for embedding comparison. Cosine similarity is
+    scale-invariant and works better with normalized embeddings.
+    • Profile your pipeline early. If detection takes 2 seconds per frame, you cannot brute-force your way to
+    500ms. You need model quantization or a smaller model.
+
+     • Deploy to Netlify or Vercel by end of day 1. Having a live URL forces you to test on real devices and
+     reveals CORS, HTTPS, and model-loading issues early.
+
+Required Documentation
+
+Submit a 1–2 page architecture document covering:
+
+     Section Content
+
+     System Architecture Diagram showing data flow: webcam ® detection ® embedding ® matching ® decision.
+
+     Model Pipeline Which models you used, input/output shapes, quantization applied, and why.
+
+     Matching Algorithm Similarity metric, threshold selection rationale, and false-positive/negative tradeoffs.
+
+     Storage Design IndexedDB schema for enrolled users and entry logs.
+
+     Performance Analysis Measured latency for each pipeline stage on your test hardware.
+
+     Limitations & Future Work Known failure modes (lighting, angles, spoofing) and how you would address them.
+
+
+
+Submission Requirements
+
+Deadline: Sunday 10:59 PM CT
+
+     Deliverable Requirements
+
+     GitHub Repository Clean commit history, README with setup instructions, .gitignore for node_modules and model files.
+
+     Demo Video 3–5 minute walkthrough: enrollment flow, successful match, denied entry, log viewer. Screen recordin
+
+     Pre-Search Document Full AI conversation saved as PDF or Markdown. All three phases completed.
+
+     Architecture Document 1–2 page PDF covering model pipeline, matching logic, and performance analysis.
+
+     AI Cost Analysis Development costs tracked, production cost projection table included.
+
+     Deployed Application Live URL (GitHub Pages, Netlify, or Vercel). Camera access must work over HTTPS.
+
+     Social Post Post about what you built on X/LinkedIn. Tag @GauntletAI. Include a screenshot or GIF of the system
+
+
+
+    Interview Preparation
+
+
+    Technical Topics
+
+    • Why did you choose your specific YOLOv9 variant and how did you convert it to ONNX? What
+    quantization tradeoffs did you make?
+    • Explain your face embedding approach. Why that model? How did you validate embedding quality?
+    • Walk through your similarity matching algorithm. How did you select the threshold value? What is your
+    false-positive rate?
+
+ • How does your system perform on edge cases — low lighting, glasses, hats, different angles? What
+ data supports your claims?
+ • If this system needed to support 10,000 enrolled users, what architectural changes would you make to
+ the matching engine?
+ • What are the privacy implications of storing facial embeddings client-side? How would you handle
+ GDPR/CCPA compliance?
+
+Mindset & Growth
+ • What was the single hardest technical problem you solved this week, and how did your approach
+ change from your first attempt?
+ • Where did you over-engineer, and where did you cut scope? Would you make the same decisions
+ again?
+ • How did the Pre-Search process change your architecture compared to what you would have built
+ without it?
+ • What did you learn about browser-based ML that surprised you? What assumptions were wrong?
+
+Final Note
+
+ "A reliable entry system that correctly matches 20 faces beats a sophisticated system that
+                                  crashes on model load."
+
+Gate: Project completion and technical interviews are required for Austin admission. Ship the MVP on time.
+Make the matching pipeline bulletproof. Everything else is polish.
+
+Appendix A: Pre-Search Checklist
+Complete this before writing code. Open your AI assistant, work through every question below, and save the
+full conversation as a reference document. This is a graded deliverable.
+
+Phase 1: Define Your Constraints
+
+1. Scale & Load
+    • How many users will be enrolled in the face database at launch? At maximum capacity?
+    • How many verification attempts per minute does the system need to handle?
+    • What is the maximum acceptable latency from camera capture to access decision?
+    • Will multiple entry points (cameras) operate simultaneously against the same database?
+
+2. Budget & Resources
+    • What is your budget for AI/ML development tools this week (API costs, compute)?
+    • Do you have access to a GPU for model conversion and quantization, or are you CPU-only?
+    • What are the target deployment costs per month for the production application?
+    • Can you use free-tier hosting, or do you need paid infrastructure for model file serving?
+
+3. Timeline & Milestones
+    • What is the absolute minimum feature set for a working demo in 24 hours?
+    • Which parts of the pipeline have you never built before and carry the most time risk?
+    • What is your fallback plan if YOLOv9 ONNX conversion fails — do you have a backup model?
+    • How much time will you allocate to model conversion vs. application development?
+
+4. Privacy & Compliance
+    • Where are face images and embeddings stored? What are the privacy implications of client-side
+    storage?
+    • Does your target deployment region have facial recognition regulations (e.g., Illinois BIPA, EU AI Act)?
+    • How will you handle data deletion requests? Can users request their face data be removed?
+    • Will you store raw face images, or only embeddings? What is the re-identification risk of stored
+    embeddings?
+
+5. Team & Skills
+    • Have you worked with ONNX Runtime Web or TensorFlow.js before? What is your experience level?
+    • Are you comfortable with canvas-based image manipulation and WebGL concepts?
+    • Do you have experience with face detection or recognition models? Which ones?
+
+Phase 2: Architecture Discovery
+
+1. Model Selection & Conversion
+
+    • Which YOLOv9 variant (tiny/small/medium) best balances accuracy and browser inference speed?
+    • What is the exact conversion path: PyTorch ® ONNX ® quantized ONNX? What tools do you need
+    (ultralytics, onnx, onnxruntime)?
+    • What input resolution will you use (320×320, 640×640)? How does this affect detection accuracy and
+    speed?
+    • Have you verified that your chosen ONNX model works with onnxruntime-web? Are there known
+    operator compatibility issues?
+    • Will you use INT8 or FP16 quantization? What is the expected accuracy vs. speed tradeoff?
+
+2. Face Embedding Strategy
+    • Will you use a separate face embedding model (FaceNet, ArcFace) or attempt to use YOLOv9 features
+    directly?
+    • What embedding dimensionality (128-d, 256-d, 512-d) gives the best tradeoff for your use case?
+    • Is there a pre-converted ONNX embedding model available, or do you need to convert one yourself?
+    • How will you normalize embeddings before similarity comparison?
+
+3. Browser ML Runtime
+    • ONNX Runtime Web vs. TensorFlow.js — which has better support for your model architecture?
+    • What execution providers are available (WebGL, WebGPU, WASM)? Which does your target browser
+    support?
+    • How will you handle model loading on slow connections? Progressive loading? Web Workers?
+    • What is the memory ceiling for a browser tab on your target devices?
+    • Can you run detection and embedding extraction concurrently using Web Workers?
+
+4. Client-Side Storage Architecture
+    • IndexedDB schema design: what object stores do you need (users, embeddings, logs, settings)?
+    • How will you handle IndexedDB versioning and schema migrations?
+    • What is the maximum practical size of an IndexedDB database on your target browsers?
+    • Will you use a library like Dexie.js or raw IndexedDB API? What are the tradeoffs?
+
+5. Webcam & Image Processing
+    • What resolution will you request from getUserMedia? How does this interact with model input size?
+    • How will you handle camera permissions — prompt timing, denial handling, device switching?
+    • What preprocessing steps are needed: color space conversion, normalization, tensor formatting?
+    • How will you handle aspect ratio mismatches between webcam output and model input?
+
+6. Matching & Decision Logic
+    • Cosine similarity vs. Euclidean distance vs. L2 normalized distance — which will you use and why?
+    • How will you determine the optimal similarity threshold? Will you use a validation set?
+    • How will you handle the case where multiple enrolled users exceed the threshold for a single face?
+    • What is your strategy for updating enrolled embeddings over time as a person's appearance changes?
+
+Phase 3: Post-Stack Refinement
+
+1. Security & Failure Modes
+    • How will you prevent spoofing via printed photos or video replay? What liveness detection is feasible
+    in-browser?
+    • What happens if the ONNX model fails to load? What is the graceful degradation path?
+    • How will you secure the admin enrollment interface — is it password-protected?
+    • What are the risks of storing facial embeddings in IndexedDB (accessible via browser DevTools)?
+
+2. Testing Strategy
+    • How will you test face matching accuracy? Will you create a benchmark dataset with known-good pairs?
+    • How will you test under different lighting conditions, distances, and angles?
+    • What browser compatibility testing will you do (Chrome, Firefox, Safari, mobile)?
+    • How will you measure and regression-test inference performance across code changes?
+
+3. Deployment & Hosting
+    • How will you serve the ONNX model file (25+ MB) efficiently? CDN? Chunked loading? Cache headers?
+    • Does your deployment platform support the required CORS headers for ONNX model loading?
+    • How will you handle HTTPS requirements for getUserMedia on deployed environments?
+    • What is your rollback plan if a deployment breaks model loading?
+
+4. Observability & Debugging
+    • How will you log inference performance metrics (detection time, embedding time, match time) in
+    production?
+    • What visual debugging tools will you build — bounding box overlays, confidence scores, embedding
+    visualizations?
+    • How will you diagnose false positives and false negatives? Can you capture and review failed matches?
+
+5. Performance Optimization
+    • If detection is too slow, what is your model downsizing strategy (smaller variant, lower resolution, fewer
+    anchors)?
+    • Can you skip frames for detection while maintaining a smooth webcam preview?
+    • What caching strategies will you use for model inference sessions and preprocessing buffers?
+    • How will you profile memory usage to prevent browser tab crashes on low-end devices?
