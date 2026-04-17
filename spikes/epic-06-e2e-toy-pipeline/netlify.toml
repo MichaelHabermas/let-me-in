@@ -1,9 +1,0 @@
-# Epic 8 — static publish root for this spike (no build).
-# In Netlify UI: set "Base directory" to repo path `spikes/epic-06-e2e-toy-pipeline`
-# so this file is the config root; `publish = "."` then matches this folder.
-
-[build]
-  publish = "."
-  command = ""
-
-# Model HTTP caching: see `_headers` (Netlify merges file-based headers reliably for /models/*).

@@ -1,0 +1,68 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Node / JavaScript
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+*.tsbuildinfo
+
+# Package manager caches
+.npm/
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# Build and caches
+dist/
+build/
+out/
+.cache/
+.parcel-cache/
+.turbo/
+.next/
+.nuxt/
+.svelte-kit/
+
+# Netlify CLI (local deploy state)
+.netlify/
+
+# Playwright / browser automation
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Editors (keep team-shared .cursor rules; ignore personal editor junk)
+*.swp
+*.swo
+*~
+
+# Python (handy if you add scripts later)
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.Python
+
+# Large ML weights (uncomment if you fetch models at build time instead of committing)
+# *.onnx
+# *.pt
+# *.pth
+# *.bin
+
+# Logs and temp
+*.log
+tmp/
+temp/
