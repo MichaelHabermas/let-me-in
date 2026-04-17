@@ -1,0 +1,13 @@
+# Epic 8 — static publish root for this spike (no build).
+# In Netlify UI: set "Base directory" to repo path `spikes/epic-06-e2e-toy-pipeline`
+# so this file is the config root; `publish = "."` then matches this folder.
+
+[build]
+  publish = "."
+  command = ""
+
+# ONNX filenames are not content-hashed; use modest caching to avoid stale weights.
+[[headers]]
+  for = "/*.onnx"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"

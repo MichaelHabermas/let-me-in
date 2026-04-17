@@ -275,9 +275,7 @@ Short reminders that are easy to forget—not all due at once.
 
 | Date | Result | Notes |
 | --- | --- | --- |
-| | | ms for 50-way match (p50) |
-| | | Quota / errors |
-| | | Approx storage MB |
+| **2026-04-17** | **Pass** (E7-T1–E7-T6) | **Artifact:** `spikes/epic-07-indexeddb-scale/` — [spikes/epic-07-indexeddb-scale/FINDINGS.md](spikes/epic-07-indexeddb-scale/FINDINGS.md). Raw IndexedDB; 512-d floats + 16×16 thumbs; **no quota errors**. **Typical middle scan time:** ~**0.017 ms** per normalize+50-dot pass (25 samples, inner×200 for timer resolution; headless Chromium — see sidecar). **`storage.estimate`:** ~**0.12 MiB** used vs ~**4230 MiB** quota on verify host. Repro: `node verify-browser.mjs` + `.epic7-verify-node` (see README). |
 
 ---
 
