@@ -11,5 +11,6 @@ Each PRE-PRD epic gets **its own subdirectory** here. Do not mix epics in one fo
 | [epic-03-letterbox-crop/](epic-03-letterbox-crop/) | Epic 3 — Letterbox / crop contract (synthetic bbox → tensor) | **Yes** — primary outcomes in [epic-03-letterbox-crop/FINDINGS.md](epic-03-letterbox-crop/FINDINGS.md) (merge into **Findings — Epic 3** in [docs/PRE-PRD.md](../docs/PRE-PRD.md) when stable). Placeholder embedder **112×112**; re-validate after Epic 4. |
 | [epic-04-embedding-onnx/](epic-04-embedding-onnx/) | Epic 4 — Embedding ONNX + ORT-web | **Yes** — outcomes in [epic-04-embedding-onnx/FINDINGS.md](epic-04-embedding-onnx/FINDINGS.md) (~13 MiB **`w600k_mbf.onnx`**). |
 | [epic-05-matching-js/](epic-05-matching-js/) | Epic 5 — 1:N matching sanity (pure JS) | **Yes** — outcomes in [epic-05-matching-js/FINDINGS.md](epic-05-matching-js/FINDINGS.md). |
+| [epic-06-e2e-toy-pipeline/](epic-06-e2e-toy-pipeline/) | Epic 6 — End-to-end toy pipeline | **Yes** — outcomes in [epic-06-e2e-toy-pipeline/FINDINGS.md](epic-06-e2e-toy-pipeline/FINDINGS.md) (~8 MiB detector + ~13 MiB embedder ONNX copies in-folder). |
 
 Keep a folder when you want to **reproduce measurements**, attach artifacts to a PR, or debug regressions. Otherwise removing it does not remove the recorded findings.

@@ -256,8 +256,7 @@ Short reminders that are easy to forget—not all due at once.
 
 | Date | Result | Notes |
 | --- | --- | --- |
-| | | Total ms; breakdown detect / embed / match |
-| | | Bottleneck stage |
+| **2026-04-17** | **Pass** (E6-T1–E6-T7) | **Artifact:** `spikes/epic-06-e2e-toy-pipeline/` — [spikes/epic-06-e2e-toy-pipeline/FINDINGS.md](spikes/epic-06-e2e-toy-pipeline/FINDINGS.md). Single page: detect (YOLO `[1,84,8400]` decode + NMS) → head-band heuristic on COCO person box → Epic 3 crop → Epic 4 `w600k_mbf` → Epic 5 match bands. **Scores (offline check, same assets):** same-person similarity01 **~0.94** (≥0.80 target); stranger **~0.52** (reject). **Timing:** on-page `performance.now()` table; steady vs cold load split; E6-T6 log if steady &gt; ~3 s. |
 
 ---
 
