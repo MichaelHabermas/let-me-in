@@ -42,26 +42,40 @@
 | Same person (enroll vs jitter head) | **~0.94** | strong (≥ 0.80) |
 | Stranger (`person_c` head vs enroll) | **~0.52** | reject (&lt; 0.65) |
 
-**Browser:** After you click **Run full pipeline**, read the **Log** section for live `Path B` / `Path C` lines. Numbers should be in the same ballpark; small drift is normal (WebGL vs WASM, nondeterminism).
+**Measured browser run (Playwright headless Chromium, onnxruntime-web WASM; 2026-04-17, agent CI-style laptop):** `node verify-browser.mjs` after `npm install playwright@1.49.1 --prefix .epic6-verify-node` and `playwright install chromium` (see script header in [verify-browser.mjs](./verify-browser.mjs)).
+
+| Check | similarity01 | Band | Met project bar? |
+| --- | --- | --- | --- |
+| Same person (Path B) | **0.9228** | strong | Yes (≥ 0.80) |
+| Stranger (Path C) | **0.4965** | reject | Yes (treated as “no”) |
+
+**Manual browser:** After you click **Run full pipeline**, read the **Log** for live `Path B` / `Path C` lines; numbers should stay in the same ballpark (small drift is normal).
 
 ## Timing table
 
-After a browser run, copy the **Timing table** block from the page (`#timing`). Structure:
+**One automated run** (same session as similarity table above; `#timing` on page):
 
-| Stage | ms (typical notes) |
-| --- | --- |
-| Cold load (detector + embedder sessions) | Often **largest** on first visit (WASM + ~8 MiB + ~13 MiB weights). Not counted toward “steady” row below. |
-| Path A — detect total | Letterbox + NCHW + `session.run` + decode/NMS/map |
-| Path A — embed | 112 tensor + embed `session.run` |
-| Path B — detect | **0** (reuses Path A geometry) |
-| Path B — embed / match | Second fingerprint + tiny JS compare |
-| Path C — detect / embed / match | Full stack on second image |
+| Stage | ms |
+| --- | ---: |
+| Cold load (both ONNX sessions) | **375.10** |
+| Path A — detect total | **211.90** |
+| Path A — embed | **20.60** |
+| Path B — detect | **0** (reuses Path A head band) |
+| Path B — embed | **19.80** |
+| Path B — match (JS) | **0.10** |
+| Path C — detect total | **190.30** |
+| Path C — embed | **19.50** |
+| Path C — match (JS) | **0.10** |
+| **Steady-state total** (A detect + C detect + all embeds + matches, no cold) | **462.30** |
+| Subset: detect A+C | **402.20** |
+| Subset: embed A+B+C | **59.90** |
+| Subset: match B+C | **0.20** |
 
-**Steady-state total** (page row): Path A detect + Path C detect + all embeds + matches — **excluding** cold load.
+**E6-T6:** Steady total **well under ~3 s**; no supervisor STOP on this run. **Dominant cost** in the steady path was **finding the person in the photo twice** (Path A + Path C detect), not the fingerprint steps.
 
 ### Author environment note
 
-Automated headless ORT-web was not run in CI from this repo. Use a laptop Chrome session to fill real ms. Epic 1 spike noted **~190 ms** one-shot detector on WASM (embedded Chromium); Epic 4 noted embed p50 often **well under 500 ms** — combined steady path **often** stays under **3 s** once models are warm, but **first** page load can exceed **3 s** because of weight download + session creation.
+Epic 1 spike noted **~190 ms** one-shot detector on WASM; here two detects plus three embeds stayed **under ~0.5 s** steady in headless Chromium once sessions existed. **First** visit to a cold tab can still spend extra time on **model download + session creation**; the page logs cold load separately from the steady row.
 
 ## E6-T6 — If steady-state &gt; ~3 s
 
@@ -75,6 +89,7 @@ Automated headless ORT-web was not run in CI from this repo. Use a laptop Chrome
 - [x] Paths: `index.html`, `main.mjs`, `detect.mjs`, `crop.mjs`, `embed.mjs`, `matching.mjs`
 - [x] Models: `models/yolov9t.onnx`, `models/w600k_mbf.onnx`
 - [x] Assets: `assets/same_base.jpg`, `assets/person_c.jpg`
+- [x] Automated headless run: `verify-browser.mjs` prints JSON timing + log (no screenshot)
 - [ ] *(Optional)* Screenshot: browser window showing Log + Timing after **Run**
 
 ## License / weights reminder

@@ -256,7 +256,7 @@ Short reminders that are easy to forget—not all due at once.
 
 | Date | Result | Notes |
 | --- | --- | --- |
-| **2026-04-17** | **Pass** (E6-T1–E6-T7) | **Artifact:** `spikes/epic-06-e2e-toy-pipeline/` — [spikes/epic-06-e2e-toy-pipeline/FINDINGS.md](spikes/epic-06-e2e-toy-pipeline/FINDINGS.md). Single page: detect (YOLO `[1,84,8400]` decode + NMS) → head-band heuristic on COCO person box → Epic 3 crop → Epic 4 `w600k_mbf` → Epic 5 match bands. **Scores (offline check, same assets):** same-person similarity01 **~0.94** (≥0.80 target); stranger **~0.52** (reject). **Timing:** on-page `performance.now()` table; steady vs cold load split; E6-T6 log if steady &gt; ~3 s. |
+| **2026-04-17** | **Pass** (E6-T1–E6-T7) | **Artifact:** `spikes/epic-06-e2e-toy-pipeline/` — [spikes/epic-06-e2e-toy-pipeline/FINDINGS.md](spikes/epic-06-e2e-toy-pipeline/FINDINGS.md). Single page: detect (YOLO `[1,84,8400]` decode + NMS) → head-band heuristic on COCO person box → Epic 3 crop → Epic 4 `w600k_mbf` → Epic 5 match bands. **Scores:** measured headless browser run — same-person (Path B) similarity01 **0.9228** (strong, ≥0.80); stranger (Path C) **0.4965** (reject). Offline sanity same assets: **~0.94** / **~0.52**. **Timing (measured):** cold ONNX sessions **~375 ms**; steady-state total **~462 ms** (&lt; ~3 s; dominant cost **detect A+C**). Repro: `verify-browser.mjs` + `.epic6-verify-node` (see sidecar). **E6-T6:** no steady-state &gt; ~3 s gate triggered. |
 
 ---
 
