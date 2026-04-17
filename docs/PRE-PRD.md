@@ -102,6 +102,17 @@ flowchart LR
 
 ---
 
+## Next actions (memory hook)
+
+Short reminders that are easy to forget—not all due at once.
+
+- **Spike order:** With Epics **1–2** done, the next PRE-PRD spike is **Epic 3** (synthetic bbox → letterbox/crop → tensor). You do **not** need full **decode + NMS** to complete Epic 3.
+- **Before “real” detection UX** (live boxes from the model): add **decode + NMS** (or an API that outputs boxes). Epic 1 **stubbed** postprocess on purpose.
+- **Before citing speeds** for interviews or writeups: re-run measurements in **Chrome on the real target machine** (e.g. MBP); Cursor’s embedded Chromium is **not** the canonical benchmark.
+- **When building the production app:** choose whether the **generic** detector (Epic 1 spike) is enough for crops, or move to a **face-focused** model for tighter face boxes—**product choice**, not locked by Epic 1.
+
+---
+
 ## Spec traceability matrix
 
 | Epic | SPECS / PRE-SEARCH anchors |
@@ -173,6 +184,8 @@ flowchart LR
 
 **Open questions this epic answers:** How bbox → padded crop → embedder input tensor?
 
+**Spike status:** **Completed** (2026-04-17). Tasks **E3-T1–E3-T7** satisfied in **Findings — Epic 3** below. Repo folder `spikes/epic-03-letterbox-crop/` is optional to keep — **deletable** once findings are accepted (see [spikes/index.md](../spikes/index.md)). **Re-validate** **E3-T4–E3-T6** when Epic 4 freezes embedder input **H×W** (placeholder **112×112** in spike — not the final contract).
+
 | Spike | Smallest check | Timebox | Pass / fail | Adjust if fail |
 | --- | --- | --- | --- | --- |
 | **3a** | On a static canvas frame, **fake bbox** → extract region → resize to embedder H×W → float tensor sanity (min/max, shape) | 1 h | Shape matches embedder; no clipping bugs | Adjust margin / square policy |
@@ -181,9 +194,7 @@ flowchart LR
 
 | Date | Result | Notes |
 | --- | --- | --- |
-| | | Crop margin % |
-| | | Letterbox vs stretch |
-| | | Coord system (detector px → canvas) |
+| **2026-04-17** | **Pass** (tasks **E3-T1–E3-T7**; artifact `spikes/epic-03-letterbox-crop/`) | **Artifact:** `spikes/epic-03-letterbox-crop/` — `index.html` + `main.js` + baked **`test-image.png`** (deterministic **64×64** RGB); serve with `npx serve .` (not `file://` — `import.meta.url` asset load). Per-task checklist + math in **`FINDINGS.md`**. **Crop margin %:** **10%** of `max(w,h)` on **clamped** bbox (`MARGIN_FRAC = 0.1`); expand symmetrically around center, then **clamp** to image. **Letterbox vs stretch:** square crop → placeholder **112×112** → **uniform scale** (no bars). **Future non-square embedder H×W:** default **letterbox** (fit inside, pad — **provisional** until Epic 4 model card); independent axis stretch not default. **Coord system (detector → canvas):** **canvas 2D pixels**, origin **top-left**, **+x** right, **+y** down; bbox `(x,y,w,h)` non-negative; integer after round; detector uses **same space** as crop canvas (scale video to canvas first). **Square crop:** `side = max(w,h)`, cap `min(side, imgW, imgH)`, center on box center, clamp `x0,y0`. **Placeholder embedder size:** **112×112** (`EMBED_HW`) — **re-run E3-T4–E3-T6** after Epic 4 picks ONNX. **Tensor (provisional):** **Float32** **CHW** **RGB**, `/255` → **[0,1]**; shape **`[3,112,112]`** with placeholder; `normalizeForEmbedder` stub for mean/std later. **E3-T6:** min/max/mean/std logged in plausible **[0,1]** range. Edge-case clamps (negative origin, oversized, off-image) **no throw**; degenerate zero-area path documented in spike. |
 
 ---
 
@@ -351,7 +362,7 @@ Rows marked **Spike** or **prove in spike** in [docs/PRE-SEARCH.md](docs/PRE-SEA
 
 - [ ] Final detector artifact name(s), EP default, ms/frame on MBP Chrome
 - [ ] Final embedder artifact, dim, preprocess recipe, ms/embed
-- [ ] Crop/letterbox spec frozen from Epic 3
+- [x] Crop/letterbox spec frozen from Epic 3
 - [ ] Matching bands + optional margin from Epics 5 and 9
 - [ ] Netlify + asset strategy from Epic 8
 - [ ] MVP vs stretch ordering (bulk import after single enroll; spoof stretch; ≥3 enhancements)
