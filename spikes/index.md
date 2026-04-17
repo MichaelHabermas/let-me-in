@@ -13,6 +13,7 @@ Each PRE-PRD epic gets **its own subdirectory** here. Do not mix epics in one fo
 | [epic-05-matching-js/](epic-05-matching-js/) | Epic 5 — 1:N matching sanity (pure JS) | **Yes** — outcomes in [epic-05-matching-js/FINDINGS.md](epic-05-matching-js/FINDINGS.md). |
 | [epic-06-e2e-toy-pipeline/](epic-06-e2e-toy-pipeline/) | Epic 6 — End-to-end toy pipeline | **Yes** — outcomes in [epic-06-e2e-toy-pipeline/FINDINGS.md](epic-06-e2e-toy-pipeline/FINDINGS.md) (~8 MiB detector + ~13 MiB embedder ONNX copies in-folder). |
 | [epic-07-indexeddb-scale/](epic-07-indexeddb-scale/) | Epic 7 — IndexedDB scale headroom | **Yes** — outcomes in [epic-07-indexeddb-scale/FINDINGS.md](epic-07-indexeddb-scale/FINDINGS.md). |
+| [epic-08-netlify-deploy/](epic-08-netlify-deploy/) | Epic 8 — Netlify deploy smoke (sidecar findings + scripts) | **Yes** — outcomes in [epic-08-netlify-deploy/FINDINGS.md](epic-08-netlify-deploy/FINDINGS.md); **published static root** is [epic-06-e2e-toy-pipeline/](epic-06-e2e-toy-pipeline/). |
 | [epic-09-accuracy-protocol/](epic-09-accuracy-protocol/) | Epic 9 — Accuracy protocol (written eval plan) | **Yes** — outcomes in [epic-09-accuracy-protocol/FINDINGS.md](epic-09-accuracy-protocol/FINDINGS.md). |
 
 Keep a folder when you want to **reproduce measurements**, attach artifacts to a PR, or debug regressions. Otherwise removing it does not remove the recorded findings.

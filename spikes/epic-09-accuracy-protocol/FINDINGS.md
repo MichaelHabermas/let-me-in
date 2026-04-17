@@ -3,6 +3,15 @@
 **Spike folder:** `spikes/epic-09-accuracy-protocol/`  
 **Date:** 2026-04-17
 
+## Features (F9.1–F9.4)
+
+| Feature | Status | Where |
+| --- | --- | --- |
+| F9.1 Enrollment rules, lighting buckets, attempt counts | **DONE** | [protocol-playbook.md](./protocol-playbook.md) |
+| F9.2 TPR/FPR definitions for this demo | **DONE** | [protocol-metrics.md](./protocol-metrics.md) |
+| F9.3 Optional smoke: stranger DENIED; two-face message | **DEFERRED** | Documented intent in README + playbook; **not executed** (E9-T5 skipped) |
+| F9.4 Link to PRE-SEARCH evaluation bands | **DONE** | [protocol-metrics.md](./protocol-metrics.md) § F9.4 |
+
 ## Task pass / status
 
 | Task | Status | Notes |

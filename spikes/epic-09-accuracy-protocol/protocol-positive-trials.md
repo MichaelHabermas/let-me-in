@@ -13,7 +13,7 @@ Positive trials supply the numerator/denominator for that **correct welcomes** r
 
 ## Enrolled set for this protocol
 
-Use **Subjects 01–12** from [protocol-playbook.md](./protocol-playbook.md) as the **minimum enrolled gallery** (12 distinct enrolled faces). Twelve is below 20 **identities**; the **20+ faces** requirement is met by the **full roster** (12 enrolled + 8 not enrolled = 20) as the **test set population** for combined accuracy reporting per SPECS. If an instructor requires **20 enrolled** specifically, add Subjects 21–32 as enrolled **after supervisor approval**—do not change numbers in this doc without updating FINDINGS.
+Use **Subjects 01–12** from [protocol-playbook.md](./protocol-playbook.md) as the **enrolled gallery** (12 distinct enrolled faces). The study roster still lists **≥ 20 different people** (12 enrolled + 8 not enrolled, plus optional 21+), which matches the SPECS intent of a **test set of 20+ faces** for the combined accuracy headline. The **correct welcomes** percentage is computed over **enrolled** door attempts (numerator and denominator both from “should let in” sessions), not over the whole roster. If a supervisor requires **20 enrolled** identities specifically, extend the gallery with Subjects **21–32** as enrolled **after approval** and note the change in [FINDINGS.md](./FINDINGS.md).
 
 ## Lighting variety
 

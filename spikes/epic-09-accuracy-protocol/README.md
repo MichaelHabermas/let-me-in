@@ -16,9 +16,9 @@ Written playbook for a **later** formal check that the door app **welcomes peopl
 | [protocol-specs-mapping.md](./protocol-specs-mapping.md) | E9-T4 — map trial types → SPECS Testing #4–#6 |
 | [protocol-metrics.md](./protocol-metrics.md) | F9.2, F9.4 — headline metrics + PRE-SEARCH bands |
 
-## Optional smoke (E9-T5)
+## Optional smoke (E9-T5, F9.3)
 
-Epic 6 throwaway demo: [spikes/epic-06-e2e-toy-pipeline/](../epic-06-e2e-toy-pipeline/). **Do not run** for Epic 9 reporting until supervisor approves protocol **and** accepts fixture ethics (see FINDINGS).
+If approved, a tiny run against [spikes/epic-06-e2e-toy-pipeline/](../epic-06-e2e-toy-pipeline/) checks **F9.3** intent: **stranger → turned away** (DENIED / Unknown) and **two faces → clear message**, not a normal welcome. **Do not run** until supervisor approves protocol **and** accepts fixture ethics (see [FINDINGS.md](./FINDINGS.md)).
 
 ## STOP (E9-T6)
 

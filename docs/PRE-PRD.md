@@ -106,10 +106,11 @@ flowchart LR
 
 Short reminders that are easy to forget—not all due at once.
 
-- **Spike order:** With Epics **1–2** done, the next PRE-PRD spike is **Epic 3** (synthetic bbox → letterbox/crop → tensor). You do **not** need full **decode + NMS** to complete Epic 3.
-- **Before “real” detection UX** (live boxes from the model): add **decode + NMS** (or an API that outputs boxes). Epic 1 **stubbed** postprocess on purpose.
+- **PRE-PRD track (2026-04-17):** Spikes **1–8** are **completed** with **Findings** below. **Epic 9** has a **written protocol** and SPECS mapping (**E9-T6** supervisor sign-off, optional **9b** smoke, and formal ≥20-face TPR/FPR trials remain **before** claiming spec-level accuracy).
+- **Next in-repo hygiene:** Finish **Epic 10** — confirm billing portal bookmarks + weekly reconcile (**E10-T2–E10-T3**), then add a dated row to **Findings — Epic 10**. Template file: [docs/AI_COST_LOG.md](AI_COST_LOG.md).
+- **Then:** Draft [docs/PRD.md](docs/PRD.md) using the [After spikes — handoff](#after-spikes--handoff-to-docsprdmd) checklist (resolve or consciously defer **open** items).
 - **Before citing speeds** for interviews or writeups: re-run measurements in **Chrome on the real target machine** (e.g. MBP); Cursor’s embedded Chromium is **not** the canonical benchmark.
-- **When building the production app:** choose whether the **generic** detector (Epic 1 spike) is enough for crops, or move to a **face-focused** model for tighter face boxes—**product choice**, not locked by Epic 1.
+- **When building the production app:** choose whether the **generic** detector (Epic 1 / Epic 6 stack) is enough for crops, or move to a **face-focused** model for tighter face boxes—**product choice**, not locked by Epic 1. The Epic **6** toy pipeline already includes **decode + NMS** on the YOLO head.
 
 ---
 
@@ -184,7 +185,7 @@ Short reminders that are easy to forget—not all due at once.
 
 **Open questions this epic answers:** How bbox → padded crop → embedder input tensor?
 
-**Spike status:** **Completed** (2026-04-17). Tasks **E3-T1–E3-T7** satisfied in **Findings — Epic 3** below. Repo folder `spikes/epic-03-letterbox-crop/` is optional to keep — **deletable** once findings are accepted (see [spikes/index.md](../spikes/index.md)). **Re-validate** **E3-T4–E3-T6** when Epic 4 freezes embedder input **H×W** (placeholder **112×112** in spike — not the final contract).
+**Spike status:** **Completed** (2026-04-17). Tasks **E3-T1–E3-T7** satisfied in **Findings — Epic 3** below. Repo folder `spikes/epic-03-letterbox-crop/` is optional to keep — **deletable** once findings are accepted (see [spikes/index.md](../spikes/index.md)). Epic **4** winner **`w600k_mbf`** uses **112×112**, so the spike **H×W** matches the chosen embedder; only **re-run** E3-T4–E3-T6 checks if the production crop or preprocess recipe **drifts** from the spike.
 
 | Spike | Smallest check | Timebox | Pass / fail | Adjust if fail |
 | --- | --- | --- | --- | --- |
@@ -228,6 +229,8 @@ Short reminders that are easy to forget—not all due at once.
 
 **Open questions this epic answers:** Is pure-JS cosine + argmax correct? Margin rule worth carrying?
 
+**Spike status:** **Completed** (2026-04-17). Tasks **E5-T1–E5-T6** satisfied in **Findings — Epic 5** below. Repo folder `spikes/epic-05-matching-js/` is optional to keep — **deletable** once findings are accepted (see [spikes/index.md](../spikes/index.md)).
+
 | Spike | Smallest check | Timebox | Pass / fail | Adjust if fail |
 | --- | --- | --- | --- | --- |
 | **5a** | L2-normalize + cosine + argmax over **K** random unit vectors; spot-check vs hand calc | 30 min | Matches expected argmax | Fix math |
@@ -246,6 +249,8 @@ Short reminders that are easy to forget—not all due at once.
 **Spec pressure:** [docs/SPECS.txt](docs/SPECS.txt) Testing **#3** dry run: GRANTED path + correct identity signal in **&lt; 3 s** from capture to decision.
 
 **Open questions this epic answers:** Which stage dominates latency?
+
+**Spike status:** **Completed** (2026-04-17). Tasks **E6-T1–E6-T7** satisfied in **Findings — Epic 6** below. Repo folder `spikes/epic-06-e2e-toy-pipeline/` is optional to keep — **deletable** once findings are accepted (see [spikes/index.md](../spikes/index.md)).
 
 | Spike | Smallest check | Timebox | Pass / fail | Adjust if fail |
 | --- | --- | --- | --- | --- |
@@ -266,6 +271,8 @@ Short reminders that are easy to forget—not all due at once.
 
 **Open questions this epic answers:** Quota errors? Full-gallery scan ms at 50?
 
+**Spike status:** **Completed** (2026-04-17). Tasks **E7-T1–E7-T6** satisfied in **Findings — Epic 7** below. Repo folder `spikes/epic-07-indexeddb-scale/` is optional to keep — **deletable** once findings are accepted (see [spikes/index.md](../spikes/index.md)).
+
 | Spike | Smallest check | Timebox | Pass / fail | Adjust if fail |
 | --- | --- | --- | --- | --- |
 | **7a** | Throwaway page: insert **50** synthetic `users` (float32 embeddings + small thumb); loop all cosine | 1 h | No quota throw; scan completes | Shrink thumbs; note browser |
@@ -285,17 +292,19 @@ Short reminders that are easy to forget—not all due at once.
 
 **Open questions this epic answers:** Does production-like HTTPS load models and camera together? Cold load vs **8 s**?
 
+**Spike status:** **Completed** (2026-04-17). Tasks **E8-T1–E8-T6** satisfied in **Findings — Epic 8** below. Deploy notes and smoke helpers live under `spikes/epic-08-netlify-deploy/`.
+
+**Answer (2026-04-17):** **Yes** — HTTPS + same-site **model files** + in-browser pipeline under **~8 s** cold budget; **`camera-smoke.html`** verified on production (**automated** + **human: works great**). **Netlify hostname:** keep for now; **cleaner rename** deferred (update PRE-PRD + FINDINGS when changed). **ORT script/WASM:** MVP stays **jsDelivr** (engineering default; optional same-origin self-host later if policy requires). Details: [spikes/epic-08-netlify-deploy/FINDINGS.md](spikes/epic-08-netlify-deploy/FINDINGS.md).
+
 | Spike | Smallest check | Timebox | Pass / fail | Adjust if fail |
 | --- | --- | --- | --- | --- |
-| **8a** | Deploy minimal static site: page + **small** ONNX (or full if ready) + ORT; test `getUserMedia` + fetch model same-origin | 1–2 h | HTTPS OK; session loads; camera works | CORS path; chunking; host limits |
+| **8a** | Deploy minimal static site: page + **small** ONNX (or full if ready) + ORT; test `getUserMedia` + fetch model same-origin | 1–2 h | **PASS** — [spikes/epic-08-netlify-deploy/FINDINGS.md](spikes/epic-08-netlify-deploy/FINDINGS.md) | CORS path; chunking; host limits |
 
 **Findings — Epic 8**
 
 | Date | Result | Notes |
 | --- | --- | --- |
-| | | Cold load ms (uncached) |
-| | | Cache headers / asset URL pattern |
-| | | Netlify tier notes |
+| **2026-04-17** | **Pass** (E8-T1–E8-T6) | **Sidecar:** [spikes/epic-08-netlify-deploy/FINDINGS.md](spikes/epic-08-netlify-deploy/FINDINGS.md). **Live URL:** `https://let-me-in-epic8-e2e-1776463762.netlify.app` (cleaner Netlify name **later**). **publish root:** `spikes/epic-06-e2e-toy-pipeline/`. Cold session create **~920 ms** + ONNX resource **~330 ms each** (Playwright, cache cleared); **under 8 s** budget. Model **`Cache-Control: public,max-age=3600`** via `_headers`. Camera: human **OK** + `camera-smoke.html` + [evidence PNG](spikes/epic-08-netlify-deploy/evidence-camera-smoke-live.png). **ORT:** jsDelivr for MVP (see FINDINGS owner decision). |
 
 ---
 
@@ -304,6 +313,8 @@ Short reminders that are easy to forget—not all due at once.
 **Spec pressure:** [docs/SPECS.txt](docs/SPECS.txt) **≥ 85%** TPR, **≤ 5%** FPR on **≥ 20** faces; Testing **#4–#6**.
 
 **Open questions this epic answers:** How will formal eval run? Does a tiny smoke test break thresholds?
+
+**Spike status:** **Protocol complete** (2026-04-17)—not the same “spike closed” bar as 1–8. **E9-T1–E9-T4** and **E9-T7** satisfied in linked findings; **E9-T5** (optional smoke) skipped; **E9-T6** supervisor sign-off **open** before real biometric collection or live trials.
 
 | Spike | Smallest check | Timebox | Pass / fail | Adjust if fail |
 | --- | --- | --- | --- | --- |
@@ -324,6 +335,8 @@ Short reminders that are easy to forget—not all due at once.
 
 **Open questions this epic answers:** Is the cost log template ready day one of implementation?
 
+**Spike status:** **Partial** (2026-04-17). **E10-T1** satisfied ([docs/AI_COST_LOG.md](AI_COST_LOG.md)); **E10-T2–E10-T4** need owner/supervisor acknowledgment (billing portals + weekly calendar + dated Findings row).
+
 | Action | Smallest check | Timebox | Pass / fail | Adjust if fail |
 | --- | --- | --- | --- | --- |
 | **10a** | Ensure **`docs/AI_COST_LOG.md`** exists with header + one-row template | 15 min | File created | Create on implementation day 1 |
@@ -333,8 +346,7 @@ Short reminders that are easy to forget—not all due at once.
 
 | Date | Result | Notes |
 | --- | --- | --- |
-| | | `AI_COST_LOG.md` created? Y/N |
-| | | Weekly reminder set? Y/N |
+| **2026-04-17** | **Partial** (E10-T1) | [docs/AI_COST_LOG.md](AI_COST_LOG.md) added with table template + example row. **E10-T2–E10-T3:** confirm billing bookmarks + weekly reconcile in this table when done. **E10-T4:** mark **Completed** after those acks. |
 
 ---
 
@@ -354,13 +366,13 @@ Rows marked **Spike** or **prove in spike** in [docs/PRE-SEARCH.md](docs/PRE-SEA
 
 ## After spikes — handoff to [docs/PRD.md](docs/PRD.md)
 
-- [ ] Final detector artifact name(s), EP default, ms/frame on MBP Chrome
-- [ ] Final embedder artifact, dim, preprocess recipe, ms/embed
-- [x] Crop/letterbox spec frozen from Epic 3
-- [ ] Matching bands + optional margin from Epics 5 and 9
-- [ ] Netlify + asset strategy from Epic 8
+- [x] Detector artifact + EP behavior + measured ms (**Epic 1:** `yolov9t.onnx`, WASM in spike environment). **Open:** ms/frame on **MBP Chrome**; whether production uses a **face-focused** detector instead of the general COCO-tiny path.
+- [x] Embedder artifact, dim, preprocess + measured ms (**Epic 4:** `w600k_mbf.onnx`, 512-d, **112×112**). **Open:** embed latency on **MBP Chrome**; WebGL path only if policy requires it.
+- [x] Crop/letterbox spec from Epic 3 (matches **112×112** embedder; revisit only if crop/preprocess drifts in the real app).
+- [x] Matching bands + margin rule baseline (**Epic 5**). **Open:** weak-band product policy (UNCERTAIN vs warning); **Epic 9** calibration + TPR/FPR evidence after **E9-T6** and trials.
+- [x] Netlify + asset strategy from Epic 8 — **Netlify** static site; **publish root** `spikes/epic-06-e2e-toy-pipeline/`; **production URL** in [spikes/epic-08-netlify-deploy/FINDINGS.md](spikes/epic-08-netlify-deploy/FINDINGS.md) (rename site to a cleaner hostname when ready, then refresh docs); **model files** same hostname as page; **`_headers`:** `Cache-Control: public, max-age=3600` on `/models/*`; **MVP:** ORT **script + wasm** from **jsDelivr** (owner deferred; engineering default) — **optional** same-origin self-host if policy later bans third-party script loads.
 - [ ] MVP vs stretch ordering (bulk import after single enroll; spoof stretch; ≥3 enhancements)
-- [ ] Only then populate `docs/PRD.md` with user stories, sequencing, and acceptance criteria
+- [ ] Populate `docs/PRD.md` with user stories, sequencing, and acceptance criteria once **open** items above are resolved or consciously deferred
 
 ---
 
@@ -598,6 +610,8 @@ If blocked for >30 minutes on one task, stop and report with logs; do not swap m
 
 **Goal:** Public HTTPS site loads ORT + model + camera together; cold load measured.
 
+**Status (2026-04-17):** F8.1–F8.4 met; E8-T1–E8-T6 complete — [spikes/epic-08-netlify-deploy/FINDINGS.md](spikes/epic-08-netlify-deploy/FINDINGS.md). **Follow-ups:** human camera **OK**; cleaner Netlify name **later**; ORT on jsDelivr for **MVP** unless requirements change.
+
 | Features | Description |
 | --- | --- |
 | F8.1 | Netlify (or supervisor-approved) static deploy from repo subfolder |
@@ -641,6 +655,8 @@ If blocked for >30 minutes on one task, stop and report with logs; do not swap m
 | E9-T6 | **STOP:** Supervisor reviews protocol for ethics / campus rules | Approval noted |
 | E9-T7 | Update **Findings — Epic 9** | |
 
+**Status (2026-04-17):** Paper protocol complete (E9-T1–E9-T4, E9-T7). E9-T5 optional smoke not run. E9-T6 **awaiting** supervisor sign-off in [spikes/epic-09-accuracy-protocol/FINDINGS.md](spikes/epic-09-accuracy-protocol/FINDINGS.md) before any real biometric collection or live trials. Features F9.1–F9.4 covered by linked markdown; F9.3 smoke deferred with E9-T5.
+
 **Supervisor gates**
 
 - **STOP at E9-T6:** Human approval mandatory before collecting real faces.
@@ -650,6 +666,8 @@ If blocked for >30 minutes on one task, stop and report with logs; do not swap m
 ### Epic 10 — Observability / submission hygiene
 
 **Goal:** Cost-tracking scaffolding exists; weekly discipline defined.
+
+**Status (2026-04-17):** **E10-T1** done — [docs/AI_COST_LOG.md](AI_COST_LOG.md). **E10-T2–E10-T4** pending (billing portal bookmarks, weekly calendar, final Findings row in main **Epic 10** section above).
 
 | Features | Description |
 | --- | --- |

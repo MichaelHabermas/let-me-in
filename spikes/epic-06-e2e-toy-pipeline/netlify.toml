@@ -6,8 +6,4 @@
   publish = "."
   command = ""
 
-# ONNX filenames are not content-hashed; use modest caching to avoid stale weights.
-[[headers]]
-  for = "/models/*.onnx"
-  [headers.values]
-    Cache-Control = "public, max-age=3600"
+# Model HTTP caching: see `_headers` (Netlify merges file-based headers reliably for /models/*).
