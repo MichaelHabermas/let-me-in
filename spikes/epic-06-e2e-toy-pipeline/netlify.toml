@@ -8,6 +8,6 @@
 
 # ONNX filenames are not content-hashed; use modest caching to avoid stale weights.
 [[headers]]
-  for = "/*.onnx"
+  for = "/models/*.onnx"
   [headers.values]
     Cache-Control = "public, max-age=3600"

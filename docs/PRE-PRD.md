@@ -307,16 +307,14 @@ Short reminders that are easy to forget—not all due at once.
 
 | Spike | Smallest check | Timebox | Pass / fail | Adjust if fail |
 | --- | --- | --- | --- | --- |
-| **9a** | **Protocol only:** define 20+ identity set, lighting buckets, enrollment rules (single photo vs multi-angle stretch), GRANTED/DENIED labeling | 1 h | Written protocol in findings | — |
-| **9b** (optional) | **5-face** smoke: 1 enrolled vs stranger; unknown → DENIED/Unknown; two-face prompt | 1 h | Aligns with evaluation table | Tune bands in PRD |
+| **9a** | **Protocol only:** define 20+ identity set, lighting buckets, enrollment rules (single photo vs multi-angle stretch), GRANTED/DENIED labeling | 1 h | **PASS** — [spikes/epic-09-accuracy-protocol/](spikes/epic-09-accuracy-protocol/) | — |
+| **9b** (optional) | **5-face** smoke: 1 enrolled vs stranger; unknown → DENIED/Unknown; two-face prompt | 1 h | **N/A** — skipped pending supervisor + safe fixture; see Findings | Tune bands in PRD |
 
 **Findings — Epic 9**
 
 | Date | Result | Notes |
 | --- | --- | --- |
-| | | Protocol summary / link |
-| | | Smoke pass/fail |
-| | | Threshold calibration needed? Y/N |
+| 2026-04-17 | Protocol + mapping complete | [spikes/epic-09-accuracy-protocol/FINDINGS.md](spikes/epic-09-accuracy-protocol/FINDINGS.md) — optional smoke **skipped** (awaiting approval / fixture); **E9-T6 supervisor sign-off still required** before real faces or live trials; threshold calibration **TBD** after first real run |
 
 ---
 
