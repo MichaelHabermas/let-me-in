@@ -5,7 +5,7 @@ import { getHttpsStartupState } from './https-gate';
 function renderHttpsBanner(message: string): void {
   const root = document.body;
   root.innerHTML = '';
-  
+
   const banner = document.createElement('div');
   banner.className = 'https-gate';
   banner.setAttribute('role', 'alert');
