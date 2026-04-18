@@ -13,6 +13,8 @@ export type Detection = {
 const INPUT_SIZE = 640;
 const PERSON_CLASS = 0;
 const CONF_THRESHOLD = 0.35;
+/** Reject anchors where every class looks ~0.5 after sigmoid (logits ~0) — tie-break wrongly picks person. */
+const TOP_CLASS_MARGIN = 0.08;
 const NMS_IOU = 0.45;
 const HEAD_BAND = 1 / 3;
 
@@ -170,16 +172,21 @@ export function decodeYoloPredictions(predictions: Float32Array, meta: Letterbox
 
     let bestC = 0;
     let bestScore = -Infinity;
+    let secondScore = -Infinity;
     for (let c = 0; c < numClasses; c++) {
       const logit = predictions[(4 + c) * numAnchors + i]!;
       const s = sigmoid(logit);
       if (s > bestScore) {
+        secondScore = bestScore;
         bestScore = s;
         bestC = c;
+      } else if (s > secondScore) {
+        secondScore = s;
       }
     }
 
     if (bestC !== PERSON_CLASS || bestScore < CONF_THRESHOLD) continue;
+    if (bestScore - secondScore < TOP_CLASS_MARGIN) continue;
 
     const x1 = cx - w / 2;
     const y1 = cy - h / 2;

@@ -37,6 +37,19 @@ describe('preprocessToChwFloat (E3.S1.F2.T2)', () => {
 });
 
 describe('decodeYoloPredictions (E3.S1.F2.T4)', () => {
+  it('returns no boxes when all class logits tie near zero (ambiguous anchors)', () => {
+    const meta = computeLetterboxMeta(1280, 720);
+    const buf = new Float32Array(84 * 8400);
+    for (let j = 0; j < 8400; j++) {
+      for (let c = 0; c < 80; c++) buf[(4 + c) * 8400 + j] = 0;
+      buf[0 * 8400 + j] = 100;
+      buf[1 * 8400 + j] = 100;
+      buf[2 * 8400 + j] = 20;
+      buf[3 * 8400 + j] = 20;
+    }
+    expect(decodeYoloPredictions(buf, meta).length).toBe(0);
+  });
+
   it('returns one person head-band box in source space for synthetic anchor', () => {
     const meta = computeLetterboxMeta(1280, 720);
     const buf = new Float32Array(84 * 8400);
