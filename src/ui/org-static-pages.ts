@@ -5,7 +5,12 @@ export type OrgStaticPageVariant = 'admin' | 'log';
 
 const variantMeta: Record<
   OrgStaticPageVariant,
-  { documentTitle: (rt: GateRuntime) => string; headingText: (rt: GateRuntime) => string; pageClass: string; ledeText: string }
+  {
+    documentTitle: (rt: GateRuntime) => string;
+    headingText: (rt: GateRuntime) => string;
+    pageClass: string;
+    ledeText: string;
+  }
 > = {
   admin: {
     documentTitle: (rt) => rt.adminPageTitle,

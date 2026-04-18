@@ -33,7 +33,11 @@ function reasonsForUncertain(
   return ['uncertain'];
 }
 
-function reasonsFor(match: MatchResult, t: AccessThresholds, decision: Decision): readonly string[] {
+function reasonsFor(
+  match: MatchResult,
+  t: AccessThresholds,
+  decision: Decision,
+): readonly string[] {
   const score = match.best.score;
   const marginDelta = marginDeltaFor(match);
   if (decision === 'DENIED') return ['below-unknown'];

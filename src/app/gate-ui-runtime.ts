@@ -25,7 +25,10 @@ export type GateUiRuntimeSlice = {
 /**
  * UI-facing runtime derived from org config only (no `import.meta` here — pass `isDev` explicitly).
  */
-export function createGateUiRuntimeSlice(cfg: GateUiConfigSlice, isDev: boolean): GateUiRuntimeSlice {
+export function createGateUiRuntimeSlice(
+  cfg: GateUiConfigSlice,
+  isDev: boolean,
+): GateUiRuntimeSlice {
   const orgName = cfg.org.name;
   return {
     orgName,
