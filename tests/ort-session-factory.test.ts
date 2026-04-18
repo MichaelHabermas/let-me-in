@@ -77,6 +77,21 @@ describe('createOrtSession', () => {
     expect(infoSpy).toHaveBeenCalledWith(`ORT WASM base: ${config.ortWasmBase}`);
     infoSpy.mockRestore();
   });
+
+  it('uses explicit wasm base URL when provided as third argument', async () => {
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    inferenceCreate.mockResolvedValue({ dispose: vi.fn() });
+    const { createOrtSession, resetOrtWasmConfigForTests } = await import(
+      '../src/infra/ort-session-factory',
+    );
+    resetOrtWasmConfigForTests();
+
+    await createOrtSession('x', ['wasm'], 'https://custom.example/wasm/');
+
+    expect(ortMockEnv.wasm.wasmPaths).toBe('https://custom.example/wasm/');
+    expect(infoSpy).toHaveBeenCalledWith('ORT WASM base: https://custom.example/wasm/');
+    infoSpy.mockRestore();
+  });
 });
 
 describe('onnx-runtime re-exports', () => {

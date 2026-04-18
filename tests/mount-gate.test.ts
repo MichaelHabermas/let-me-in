@@ -6,7 +6,7 @@ import type { Camera } from '../src/app/camera';
 import { wireGatePreviewSession } from '../src/app/gate-session';
 import { mountGateIntoHost } from '../src/app/mount-gate';
 import type { GateRuntime } from '../src/app/runtime-settings';
-import type { YoloDetector } from '../src/infra/detector-ort';
+import type { YoloDetector } from '../src/infra/detector-core';
 
 function fakeRuntime(): GateRuntime {
   return {

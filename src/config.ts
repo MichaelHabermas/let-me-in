@@ -120,3 +120,18 @@ export const config: Config = {
     },
   },
 };
+
+/** Subset of `Config` used to build the YOLO ONNX detector (avoids leaking full config into infra). */
+export type DetectorRuntimeSettings = {
+  detectorModelUrl: string;
+  ortWasmBase: string;
+  detectorUseWorker: boolean;
+};
+
+export function getDetectorRuntimeSettings(c: Config = config): DetectorRuntimeSettings {
+  return {
+    detectorModelUrl: c.modelUrls.detector,
+    ortWasmBase: c.ortWasmBase,
+    detectorUseWorker: c.detectorUseWorker,
+  };
+}

@@ -64,8 +64,10 @@ function defaultPreferredExecutionProviders(): string[] {
 export async function createOrtSession(
   modelSource: OrtModelSource,
   preferredEPs: string[] = defaultPreferredExecutionProviders(),
+  /** When set, configures WASM paths before session creation (falls back to `config.ortWasmBase`). */
+  wasmAssetsBaseUrl?: string,
 ): Promise<OrtSessionBundle> {
-  configureOrtWasmAssets();
+  configureOrtWasmAssets(wasmAssetsBaseUrl);
   const label = describeModelSource(modelSource);
   const attempts: { ep: string; message: string }[] = [];
   const createOptionsBase = { graphOptimizationLevel: 'all' as const };

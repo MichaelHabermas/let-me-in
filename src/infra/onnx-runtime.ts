@@ -1,9 +1,25 @@
 /**
- * Sole approved ONNX Runtime entry from app/ui (see eslint `no-restricted-imports`).
- * Session creation uses `onnxruntime-web/all` in `ort-session-factory.ts` so the WebGL EP is registered in the browser bundle.
+ * Approved ONNX Runtime surface for **app** and **ui** code (see ESLint `no-restricted-imports`
+ * on `onnxruntime-web` / `onnxruntime-web/all`).
+ *
+ * - **Session creation** is implemented in `ort-session-factory.ts`, which imports
+ *   `onnxruntime-web/all` so WebGL/WebGPU execution providers register in the browser bundle.
+ * - **Live YOLO detection** does not use this file for inference: use `createYoloDetector` from
+ *   `detector-ort.ts`, which delegates to `ort-session-factory` (main thread) or the YOLO worker.
+ * - **`createOnnxRuntimePlaceholder`** is a no-op handle reserved for a future embedder / ORT
+ *   lifecycle path that is not wired through the detector yet.
+ *
+ * Infra and tests may import `ort-session-factory` directly; app/ui should prefer this module
+ * when they need `createOrtSession` without pulling `onnxruntime-web` through the bundle boundary.
  */
 
-export { createOrtSession, OrtSessionError, type OrtSessionBundle } from './ort-session-factory';
+export {
+  configureOrtWasmAssets,
+  createOrtSession,
+  OrtSessionError,
+  resetOrtWasmConfigForTests,
+  type OrtSessionBundle,
+} from './ort-session-factory';
 
 export type OnnxRuntimeStatus = 'disabled' | 'ready';
 

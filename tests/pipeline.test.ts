@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createDetectionPipeline } from '../src/app/pipeline';
 import type { Camera } from '../src/app/camera';
-import type { YoloDetector } from '../src/infra/detector-ort';
+import type { YoloDetector } from '../src/infra/detector-core';
 
 describe('createDetectionPipeline', () => {
   it('subscribes onFrame and draws after infer', async () => {

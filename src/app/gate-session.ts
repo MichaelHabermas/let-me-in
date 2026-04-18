@@ -1,7 +1,12 @@
 import type { CameraErrorCode } from '../infra/camera';
 import type { YoloDetector } from '../infra/detector-core';
 import type { Camera, CreateCameraOptions } from './camera';
-import { createDetectionPipeline } from './pipeline';
+import {
+  attachPipeline,
+  beginDetectorLoad,
+  waitForDetectorReady,
+  type DetectorGateState,
+} from './gate-detector-coordinator';
 
 export type GatePreviewSessionDeps = {
   createCamera: (
@@ -14,6 +19,8 @@ export type GatePreviewSessionDeps = {
   yoloDetector?: YoloDetector;
   detectorLoadingMessage?: string;
   detectorLoadFailedMessage?: string;
+  /** Injected for tests; defaults to `setTimeout` delay. */
+  sleep?: (ms: number) => Promise<void>;
 };
 
 export type GatePreviewElements = {
@@ -26,76 +33,6 @@ export type GatePreviewElements = {
   overlayCanvas?: HTMLCanvasElement;
 };
 
-type DetectorGateState = {
-  loadState: 'none' | 'pending' | 'ready' | 'failed';
-  stopPipeline?: () => void;
-};
-
-function beginDetectorLoad(
-  deps: GatePreviewSessionDeps,
-  camera: Camera,
-  statusEl: HTMLElement,
-  state: DetectorGateState,
-  loadingMsg: string,
-  failedMsg: string,
-): void {
-  if (!deps.yoloDetector) {
-    state.loadState = 'none';
-    return;
-  }
-  state.loadState = 'pending';
-  statusEl.textContent = loadingMsg;
-  void deps.yoloDetector
-    .load()
-    .then(() => {
-      state.loadState = 'ready';
-      if (!camera.isRunning()) statusEl.textContent = '';
-    })
-    .catch((e) => {
-      console.error('[gate] detector load failed', e);
-      state.loadState = 'failed';
-      statusEl.textContent = failedMsg;
-    });
-}
-
-async function waitForDetectorReady(
-  deps: GatePreviewSessionDeps,
-  statusEl: HTMLElement,
-  state: DetectorGateState,
-  loadingMsg: string,
-  failedMsg: string,
-): Promise<boolean> {
-  if (!deps.yoloDetector) return true;
-  while (state.loadState === 'pending') {
-    statusEl.textContent = loadingMsg;
-    await new Promise((r) => setTimeout(r, 50));
-  }
-  if (state.loadState === 'failed') {
-    statusEl.textContent = failedMsg;
-    return false;
-  }
-  return true;
-}
-
-function attachPipeline(
-  camera: Camera,
-  deps: GatePreviewSessionDeps,
-  elements: GatePreviewElements,
-  state: DetectorGateState,
-): void {
-  if (!deps.yoloDetector || !elements.overlayCanvas || state.loadState !== 'ready') return;
-  const octx = elements.overlayCanvas.getContext('2d');
-  if (!octx) return;
-  state.stopPipeline?.();
-  state.stopPipeline = createDetectionPipeline({
-    camera,
-    detector: deps.yoloDetector,
-    overlayCtx: octx,
-    overlayWidth: elements.overlayCanvas.width,
-    overlayHeight: elements.overlayCanvas.height,
-  });
-}
-
 function wireCameraControls(
   camera: Camera,
   elements: GatePreviewElements,
@@ -106,20 +43,21 @@ function wireCameraControls(
   const failedMsg =
     deps.detectorLoadFailedMessage ?? 'Face detector could not load. Try refreshing.';
   const state: DetectorGateState = { loadState: deps.yoloDetector ? 'pending' : 'none' };
+  const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
 
-  beginDetectorLoad(deps, camera, statusEl, state, loadingMsg, failedMsg);
+  beginDetectorLoad({ deps, camera, statusEl, state, loadingMsg, failedMsg });
 
   const onStart = async () => {
     startBtn.disabled = true;
     try {
-      if (!(await waitForDetectorReady(deps, statusEl, state, loadingMsg, failedMsg))) {
+      if (!(await waitForDetectorReady({ deps, statusEl, state, loadingMsg, failedMsg, sleep }))) {
         startBtn.disabled = false;
         return;
       }
       statusEl.textContent = '';
       await camera.start();
       stopBtn.disabled = false;
-      attachPipeline(camera, deps, elements, state);
+      attachPipeline({ camera, deps, elements, state });
     } catch {
       startBtn.disabled = false;
     }

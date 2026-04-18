@@ -3,12 +3,13 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 
+import { getDetectorRuntimeSettings } from '../src/config';
 import {
   computeLetterboxMeta,
-  createYoloDetector,
   decodeYoloPredictions,
   preprocessToChwFloat,
-} from '../src/infra/detector-ort';
+} from '../src/infra/detector-core';
+import { createYoloDetector } from '../src/infra/detector-ort';
 import { configureOrtWasmAssets, resetOrtWasmConfigForTests } from '../src/infra/ort-session-factory';
 
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -94,7 +95,7 @@ describe('createYoloDetector integration (E3.S1.F2.T3)', () => {
     async () => {
       const modelPath = path.join(repoRoot, 'public/models/yolov9t.onnx');
       const modelBytes = new Uint8Array(readFileSync(modelPath));
-      const det = createYoloDetector({ modelBytes });
+      const det = createYoloDetector(getDetectorRuntimeSettings(), { modelBytes });
       await det.load();
       const img = createTestImageData(640, 480);
       for (let p = 0; p < img.data.length; p += 4) {

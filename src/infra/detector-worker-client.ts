@@ -1,4 +1,10 @@
-import type { Detection, YoloDetector } from './detector-core';
+import type { YoloDetector } from './detector-core';
+import { YoloWorkerTransport } from './yolo-worker-transport';
+import {
+  YOLO_WORKER_MSG,
+  type YoloHostToWorkerInfer,
+  type YoloHostToWorkerInit,
+} from './yolo-detector-worker-protocol';
 
 export type YoloWorkerDetectorOptions = {
   modelUrl: string;
@@ -12,71 +18,49 @@ export function createYoloWorkerDetector(opts: YoloWorkerDetectorOptions): YoloD
   const worker = new Worker(new URL('../workers/yolo-detector.worker.ts', import.meta.url), {
     type: 'module',
   });
-
-  let nextId = 1;
-  const pending = new Map<number, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
-
-  function post<T>(
-    type: string,
-    payload: Record<string, unknown> = {},
-    transfer: Transferable[] = [],
-  ): Promise<T> {
-    const id = nextId++;
-    return new Promise<T>((resolve, reject) => {
-      pending.set(id, {
-        resolve: resolve as (v: unknown) => void,
-        reject,
-      });
-      worker.postMessage({ type, id, ...payload }, transfer);
-    });
-  }
-
-  worker.onmessage = (ev: MessageEvent) => {
-    const m = ev.data as { type: string; id: number; dets?: Detection[]; error?: string };
-    const slot = pending.get(m.id);
-    if (!slot) return;
-    pending.delete(m.id);
-    if (m.type.endsWith('-ok')) {
-      slot.resolve(m);
-    } else {
-      slot.reject(new Error(m.error ?? 'worker error'));
-    }
-  };
-
-  worker.onerror = (e) => {
-    for (const [, slot] of pending) {
-      slot.reject(new Error(e.message));
-    }
-    pending.clear();
-  };
-
+  const rpc = new YoloWorkerTransport(worker);
   let loaded = false;
 
   return {
     async load() {
       if (loaded) return;
-      await post('init', { ortWasmBase: opts.ortWasmBase, modelUrl: opts.modelUrl });
+      const msg: YoloHostToWorkerInit = {
+        type: YOLO_WORKER_MSG.init,
+        id: rpc.nextMessageId(),
+        ortWasmBase: opts.ortWasmBase,
+        modelUrl: opts.modelUrl,
+      };
+      const reply = await rpc.postToWorker(msg);
+      if (reply.type !== YOLO_WORKER_MSG.initOk) {
+        throw new Error(
+          reply.type === YOLO_WORKER_MSG.initErr ? reply.error : 'unexpected worker reply',
+        );
+      }
       loaded = true;
     },
 
     async infer(imageData: ImageData) {
       const { width, height, data } = imageData;
       const rgba = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
-      const m = await post<{ dets: Detection[] }>(
-        'infer',
-        {
-          width,
-          height,
-          rgba,
-        },
-        [rgba],
-      );
-      return m.dets ?? [];
+      const msg: YoloHostToWorkerInfer = {
+        type: YOLO_WORKER_MSG.infer,
+        id: rpc.nextMessageId(),
+        width,
+        height,
+        rgba,
+      };
+      const reply = await rpc.postToWorker(msg, [rgba]);
+      if (reply.type !== YOLO_WORKER_MSG.inferOk) {
+        throw new Error(
+          reply.type === YOLO_WORKER_MSG.inferErr ? reply.error : 'unexpected worker reply',
+        );
+      }
+      return reply.dets;
     },
 
     async dispose() {
-      pending.clear();
-      worker.terminate();
+      rpc.clearPending();
+      rpc.terminate();
       loaded = false;
     },
   };

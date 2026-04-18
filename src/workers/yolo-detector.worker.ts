@@ -1,80 +1,73 @@
 /// <reference lib="webworker" />
 
-import * as ort from 'onnxruntime-web/all';
-
-import {
-  decodeYoloPredictions,
-  DETECTOR_INPUT_SIZE,
-  preprocessToChwFloat,
-} from '../infra/detector-core';
 import {
   configureOrtWasmAssets,
   createOrtSession,
   type OrtSessionBundle,
 } from '../infra/ort-session-factory';
+import { YOLO_WORKER_MSG } from '../infra/yolo-detector-worker-protocol';
+import { runYoloDetectorInference } from '../infra/yolo-ort-inference';
 
 let bundle: OrtSessionBundle | null = null;
 
-self.onmessage = async (ev: MessageEvent) => {
-  const m = ev.data as {
-    type: string;
-    id: number;
-    ortWasmBase?: string;
-    modelUrl?: string;
-    width?: number;
-    height?: number;
-    rgba?: ArrayBuffer;
-  };
+async function handleInitMessage(msg: {
+  id: number;
+  ortWasmBase: string;
+  modelUrl: string;
+}): Promise<void> {
+  try {
+    configureOrtWasmAssets(msg.ortWasmBase);
+    bundle = await createOrtSession(msg.modelUrl);
+    self.postMessage({ type: YOLO_WORKER_MSG.initOk, id: msg.id });
+  } catch (e) {
+    self.postMessage({
+      type: YOLO_WORKER_MSG.initErr,
+      id: msg.id,
+      error: e instanceof Error ? e.message : String(e),
+    });
+  }
+}
 
-  if (m.type === 'init') {
-    try {
-      configureOrtWasmAssets(m.ortWasmBase!);
-      bundle = await createOrtSession(m.modelUrl!);
-      self.postMessage({ type: 'init-ok', id: m.id });
-    } catch (e) {
-      self.postMessage({
-        type: 'init-err',
-        id: m.id,
-        error: e instanceof Error ? e.message : String(e),
-      });
-    }
+async function handleInferMessage(msg: {
+  id: number;
+  width: number;
+  height: number;
+  rgba: ArrayBuffer;
+}): Promise<void> {
+  if (!bundle) {
+    self.postMessage({
+      type: YOLO_WORKER_MSG.inferErr,
+      id: msg.id,
+      error: 'detector not loaded',
+    });
     return;
   }
+  try {
+    const data = new Uint8ClampedArray(msg.rgba);
+    const imageData = {
+      width: msg.width,
+      height: msg.height,
+      data,
+      colorSpace: 'srgb',
+    } as ImageData;
+    const dets = await runYoloDetectorInference(bundle.session, imageData);
+    self.postMessage({ type: YOLO_WORKER_MSG.inferOk, id: msg.id, dets });
+  } catch (e) {
+    self.postMessage({
+      type: YOLO_WORKER_MSG.inferErr,
+      id: msg.id,
+      error: e instanceof Error ? e.message : String(e),
+    });
+  }
+}
 
-  if (m.type === 'infer') {
-    if (!bundle) {
-      self.postMessage({ type: 'infer-err', id: m.id, error: 'detector not loaded' });
-      return;
-    }
-    try {
-      const data = new Uint8ClampedArray(m.rgba!);
-      const imageData = {
-        width: m.width!,
-        height: m.height!,
-        data,
-        colorSpace: 'srgb',
-      } as ImageData;
-      const { tensorData, meta } = preprocessToChwFloat(imageData);
-      const tensor = new ort.Tensor('float32', tensorData, [
-        1,
-        3,
-        DETECTOR_INPUT_SIZE,
-        DETECTOR_INPUT_SIZE,
-      ]);
-      const outputs = await bundle.session.run({ images: tensor });
-      const pred = outputs.predictions as ort.Tensor;
-      const arr = pred.data as Float32Array;
-      if (pred.dims[0] !== 1 || pred.dims[1] !== 84 || pred.dims[2] !== 8400) {
-        throw new Error(`Unexpected predictions shape: ${JSON.stringify(pred.dims)}`);
-      }
-      const dets = decodeYoloPredictions(arr, meta);
-      self.postMessage({ type: 'infer-ok', id: m.id, dets });
-    } catch (e) {
-      self.postMessage({
-        type: 'infer-err',
-        id: m.id,
-        error: e instanceof Error ? e.message : String(e),
-      });
-    }
+self.onmessage = (ev: MessageEvent) => {
+  const m = ev.data as { type?: string };
+  if (m.type === YOLO_WORKER_MSG.init) {
+    void handleInitMessage(ev.data as Parameters<typeof handleInitMessage>[0]);
+    return;
+  }
+  if (m.type === YOLO_WORKER_MSG.infer) {
+    void handleInferMessage(ev.data as Parameters<typeof handleInferMessage>[0]);
   }
 };

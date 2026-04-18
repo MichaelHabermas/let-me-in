@@ -2,8 +2,9 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { wireGatePreviewSession } from '../src/app/gate-session';
 import type { Camera } from '../src/app/camera';
+import { wireGatePreviewSession } from '../src/app/gate-session';
+import type { YoloDetector } from '../src/infra/detector-core';
 import { makeCameraError } from '../src/infra/camera';
 
 function buildElements() {
@@ -88,5 +89,57 @@ describe('wireGatePreviewSession', () => {
 
     onErrorCb?.(makeCameraError('permission-denied', 'nope'));
     expect(els.statusEl.textContent).toBe('Camera blocked');
+  });
+
+  it('defers camera.start until YOLO detector load finishes (injectable sleep)', async () => {
+    let resolveLoad!: () => void;
+    const loadPromise = new Promise<void>((r) => {
+      resolveLoad = r;
+    });
+    const yoloDetector: YoloDetector = {
+      load: () => loadPromise,
+      infer: vi.fn().mockResolvedValue([]),
+      dispose: vi.fn(),
+    };
+    const sleep = vi.fn().mockImplementation(async () => {
+      resolveLoad();
+    });
+
+    const els = buildElements();
+    const overlayCanvas = document.createElement('canvas');
+    overlayCanvas.width = 16;
+    overlayCanvas.height = 16;
+
+    const fakeCamera = {
+      start: vi.fn().mockResolvedValue(undefined),
+      stop: vi.fn(),
+      onError: vi.fn(() => () => {}),
+      onFrame: vi.fn(() => () => {}),
+      getFrame: vi.fn(),
+      isRunning: vi.fn(() => false),
+    } as unknown as Camera;
+
+    wireGatePreviewSession(
+      { ...els, overlayCanvas },
+      {
+        createCamera: () => fakeCamera,
+        getDefaultVideoConstraintsForCamera: () => ({
+          idealWidth: 640,
+          idealHeight: 480,
+          facingMode: 'user',
+        }),
+        getCameraUserFacingMessage: () => '',
+        yoloDetector,
+        sleep,
+      },
+    );
+
+    els.startBtn.click();
+    expect(fakeCamera.start).not.toHaveBeenCalled();
+    expect(sleep).toHaveBeenCalled();
+
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(fakeCamera.start).toHaveBeenCalled();
   });
 });
