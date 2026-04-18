@@ -1,0 +1,14 @@
+[build]
+  command = "pnpm run build"
+  publish = "dist"
+
+# Pretty URLs for the three static HTML entry points (PRD E1 — dev parity via Vite middleware).
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+
+[[redirects]]
+  from = "/log"
+  to = "/log.html"
+  status = 200

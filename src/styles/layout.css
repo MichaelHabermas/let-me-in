@@ -1,0 +1,88 @@
+/* Base layout — used by all three pages */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 100dvh;
+  padding: var(--space-8);
+  text-align: center;
+  background: var(--color-bg);
+  color: var(--color-denied);
+}
+
+.error-banner h1 {
+  font-size: 1.75rem;
+}
+
+.error-banner p {
+  color: var(--color-text-muted);
+  max-width: 40ch;
+}
+
+/* HTTPS gate (non-secure remote origins) */
+.https-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: var(--space-8);
+  background: var(--color-bg);
+}
+
+.https-gate__message {
+  max-width: 42ch;
+  text-align: center;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-denied);
+}
+
+/* Epic E1 placeholder pages */
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+}
+
+.page__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.page__lede {
+  color: var(--color-text-muted);
+  max-width: 60ch;
+  line-height: 1.5;
+}

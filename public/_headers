@@ -1,0 +1,5 @@
+/models/*
+  Cache-Control: public, max-age=3600
+
+/*.onnx
+  Cache-Control: public, max-age=3600

@@ -285,7 +285,7 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 
 ## 4. Epics
 
-### Epic E1: Foundation — [ ]
+### Epic E1: Foundation — [x]
 
 **Goal:** Scaffold the project with TypeScript + Prettier + ESLint, stand up the database schema, wire up Netlify HTTPS hosting with model caching headers, and centralize all org-configurable values into a single `config.ts`.
 
@@ -295,8 +295,8 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 
 **Definition of Done (Epic-level):**
 
-- DoD-1: `npm run dev` serves the three pages (`/`, `/admin`, `/log`) with hot reload.
-- DoD-2: `npm run build` produces a static `dist/` deployable to Netlify.
+- DoD-1: `pnpm run dev` serves the three pages (`/`, `/admin`, `/log`) with hot reload.
+- DoD-2: `pnpm run build` produces a static `dist/` deployable to Netlify.
 - DoD-3: Dexie schema for `users`, `accessLog`, `settings` exists and round-trips a synthetic record.
 - DoD-4: Canonical Netlify URL `https://let-me-in-gatekeeper.netlify.app` serves the app over HTTPS with `/models/`* cached for 3600s.
 - DoD-5: All child Stories checked.
@@ -313,19 +313,19 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 - No duplicated logic across modules (DRY).
 - Module boundaries per §2.2 & §2.7 respected.
 
-#### User Story E1.S1: As a developer, I want a reproducible project scaffold so that any agent can clone and run the app. — [ ]
+#### User Story E1.S1: As a developer, I want a reproducible project scaffold so that any agent can clone and run the app. — [x]
 
 **Acceptance criteria:**
 
 - given a fresh clone, when I run `npm install && npm run dev`, then the dev server serves `/`, `/admin`, `/log` on localhost over HTTPS or with a clear localhost exception for getUserMedia.
 - given `npm run build`, then `dist/` contains hashed static assets and is <2 MiB excluding `/models`.
 
-##### Feature E1.S1.F1: Project initialization — [ ]
+##### Feature E1.S1.F1: Project initialization — [x]
 
 **Description:** Initialize Vite + TypeScript, create `package.json`, install runtime and tooling deps.
 **Interfaces/contracts:** `package.json` scripts: `dev`, `build`, `preview`, `typecheck`, `lint`, `format`, `format:check`, `test`.
 
-###### Task E1.S1.F1.T1: Create `package.json` with declared dependencies — [ ]
+###### Task E1.S1.F1.T1: Create `package.json` with declared dependencies — [x]
 
 - Files: `package.json`
 - Preconditions: none
@@ -337,7 +337,7 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 - Acceptance test: `npm install` completes with exit code 0; `npm run typecheck` exits 0 on empty scaffold.
 - SOLID/DRY note: one place declares deps (DRY); no inline versions elsewhere.
 
-###### Task E1.S1.F1.T2: Create `vite.config.ts` with multi-page entry — [ ]
+###### Task E1.S1.F1.T2: Create `vite.config.ts` with multi-page entry — [x]
 
 - Files: `vite.config.ts`, `index.html`, `admin.html`, `log.html`
 - Preconditions: E1.S1.F1.T1 done
@@ -348,7 +348,7 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 - Acceptance test: `npm run build` produces `dist/index.html`, `dist/admin.html`, `dist/log.html`.
 - SOLID/DRY note: one build config handles all pages (DRY).
 
-###### Task E1.S1.F1.T3: Create directory scaffold per §2.7 — [ ]
+###### Task E1.S1.F1.T3: Create directory scaffold per §2.7 — [x]
 
 - Files: all directories + placeholder `.gitkeep` files under `src/app`, `src/infra`, `src/ui/components`, `src/styles`, `tests/scenarios`, `tests/accuracy`, `public/models`.
 - Preconditions: E1.S1.F1.T2 done
@@ -358,7 +358,7 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 - Acceptance test: `ls src/app src/infra src/ui/components` all exist.
 - SOLID/DRY note: folder layout is the SRP enforcement mechanism.
 
-###### Task E1.S1.F1.T4: Create `tsconfig.json` with strict + noEmit — [ ]
+###### Task E1.S1.F1.T4: Create `tsconfig.json` with strict + noEmit — [x]
 
 - Files: `tsconfig.json`
 - Preconditions: E1.S1.F1.T1 done
@@ -366,19 +366,19 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
   1. Set `"strict": true`, `"noEmit": true`, `"target": "ES2022"`, `"module": "ESNext"`, `"moduleResolution": "bundler"`, `"skipLibCheck": true`.
   2. Set `"include": ["src", "tests", "eslint.config.ts"]`.
   3. Do NOT set `"outDir"` — `noEmit` makes it irrelevant; Vite owns transpilation.
-- Acceptance test: `npm run typecheck` exits 0 on the empty scaffold; `npm run build` still succeeds (Vite ignores tsconfig for emit).
+- Acceptance test: `pnpm run typecheck` exits 0 on the empty scaffold; `pnpm run build` still succeeds (Vite ignores tsconfig for emit).
 - SOLID/DRY note: single config owns type-checking; build and type-check are separate concerns (SRP).
 
-###### Task E1.S1.F1.T5: Create `.prettierrc` — [ ]
+###### Task E1.S1.F1.T5: Create `.prettierrc` — [x]
 
 - Files: `.prettierrc`
 - Preconditions: E1.S1.F1.T1 done
 - Steps:
   1. Set: `{ "semi": true, "singleQuote": true, "printWidth": 100, "trailingComma": "all", "tabWidth": 2 }`.
-- Acceptance test: `npm run format:check` exits 0 on the empty scaffold.
+- Acceptance test: `pnpm run format:check` exits 0 on the empty scaffold.
 - SOLID/DRY note: one formatting config for the entire repo (DRY).
 
-###### Task E1.S1.F1.T6: Create `eslint.config.ts` with TS + prettier compat — [ ]
+###### Task E1.S1.F1.T6: Create `eslint.config.ts` with TS + prettier compat — [x]
 
 - Files: `eslint.config.ts`
 - Preconditions: E1.S1.F1.T4, E1.S1.F1.T5 done
@@ -388,25 +388,25 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
   3. Append `eslint-config-prettier` last to disable any rules that conflict with Prettier.
   4. Add `no-restricted-imports` rule banning: `ui/* → dexie`, `ui/* → onnxruntime-web`, `app/* → dexie`, `app/* → onnxruntime-web`.
   5. Enable `max-lines: 300` and `max-lines-per-function: 50`.
-- Acceptance test: `npm run lint` exits 0 on the empty scaffold; a file with a banned import fails lint; a Prettier-style conflict does NOT appear as an ESLint error.
+- Acceptance test: `pnpm run lint` exits 0 on the empty scaffold; a file with a banned import fails lint; a Prettier-style conflict does NOT appear as an ESLint error.
 - SOLID/DRY note: ESLint enforces DIP; Prettier enforces style; no overlap (ISP).
 
-##### Feature E1.S1.F2: Central configuration module — [ ]
+##### Feature E1.S1.F2: Central configuration module — [x]
 
 **Description:** All org-configurable values live in `src/config.ts`. No other file may hardcode a threshold, URL, or org string.
 **Interfaces/contracts:** `export const config: Config` where `Config` is a fully-typed interface exported from `config.ts`.
 
-###### Task E1.S1.F2.T1: Create `src/config.ts` with typed schema — [ ]
+###### Task E1.S1.F2.T1: Create `src/config.ts` with typed schema — [x]
 
 - Files: `src/config.ts`
 - Preconditions: E1.S1.F1.T4 done
 - Steps:
   1. Declare and export `interface Config` with fields: `org: { name: string; logoUrl: string }`, `thresholds: { strong: number; weak: number; unknown: number; margin: number }`, `cooldownMs: number`, `modelUrls: { detector: string; embedder: string }`, `adminCredentialSource: 'env' | 'dev-default'`, `admin: { user: string; pass: string }`, `ortWasmBase: string`, `audioEnabled: boolean`, `ui: { strings: { unknown: string; noFace: string; multiFace: string } }`.
   2. Export `const config: Config` with default values: `thresholds.strong=0.80`, `thresholds.weak=0.65`, `thresholds.unknown=0.60`, `thresholds.margin=0.05`, `cooldownMs=3000`, strings from §3 Glossary.
-- Acceptance test: `npm run typecheck` passes; `import { config } from './config.ts'` resolves; `config.thresholds.strong === 0.80`.
+- Acceptance test: `pnpm run typecheck` passes; `import { config } from './config.ts'` resolves; `config.thresholds.strong === 0.80`.
 - SOLID/DRY note: single source of truth (SRP + DRY); TypeScript enforces the shape.
 
-###### Task E1.S1.F2.T2: Add env-override for admin credential — [ ]
+###### Task E1.S1.F2.T2: Add env-override for admin credential — [x]
 
 - Files: `src/config.ts`, `.env.example`
 - Preconditions: E1.S1.F2.T1 done
@@ -417,14 +417,14 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 - Acceptance test: with `.env` absent, console warns "dev-default credentials"; with env set, no warning and `config.admin.user` reflects env.
 - SOLID/DRY note: DIP — consumers read `config.admin`, never `import.meta.env` directly.
 
-#### User Story E1.S2: As the system, I want a typed IndexedDB schema so that users and logs persist across reloads. — [ ]
+#### User Story E1.S2: As the system, I want a typed IndexedDB schema so that users and logs persist across reloads. — [x]
 
 **Acceptance criteria:**
 
 - given a fresh browser, when a user record is written via `db.users.put(...)`, then after page reload `db.users.toArray()` returns the record.
 - given a schema version bump, when the app loads, then migrations run without data loss.
 
-##### Feature E1.S2.F1: Dexie schema module — [ ]
+##### Feature E1.S2.F1: Dexie schema module — [x]
 
 **Description:** `src/infra/db-dexie.ts` defines three stores and exports narrow APIs per store.
 **Interfaces/contracts:**
@@ -435,7 +435,7 @@ accessLog: { timestamp (pk, number), userId (nullable, indexed), similarity01, d
 settings: { key (pk, string), value }
 ```
 
-###### Task E1.S2.F1.T1: Define Dexie schema v1 — [ ]
+###### Task E1.S2.F1.T1: Define Dexie schema v1 — [x]
 
 - Files: `src/infra/db-dexie.ts`
 - Preconditions: E1.S1.F2.T1 done
@@ -446,7 +446,7 @@ settings: { key (pk, string), value }
 - Acceptance test: unit test writes and reads one record from each store; `Dexie.exists('gatekeeper')` returns true.
 - SOLID/DRY note: ISP — each repo exposes only the verbs its consumers need.
 
-###### Task E1.S2.F1.T2: Export DIP contracts from `src/infra/contracts.ts` — [ ]
+###### Task E1.S2.F1.T2: Export DIP contracts from `src/infra/contracts.ts` — [x]
 
 - Files: `src/infra/contracts.ts`
 - Preconditions: E1.S2.F1.T1 done
@@ -456,7 +456,7 @@ settings: { key (pk, string), value }
 - Acceptance test: `import { usersRepo } from '../infra/contracts.ts'` works from `app/`.
 - SOLID/DRY note: DIP — `app/*` never imports `dexie` directly.
 
-###### Task E1.S2.F1.T3: Seed `settings` with default threshold snapshot — [ ]
+###### Task E1.S2.F1.T3: Seed `settings` with default threshold snapshot — [x]
 
 - Files: `src/infra/db-dexie.ts`
 - Preconditions: E1.S2.F1.T2 done
@@ -465,28 +465,28 @@ settings: { key (pk, string), value }
 - Acceptance test: fresh DB contains two settings rows after first load.
 - SOLID/DRY note: settings decoupled from `config.js` allows runtime override in E8 without code change (OCP).
 
-#### User Story E1.S3: As a developer, I want HTTPS deployment with model caching so that `getUserMedia` works and model loads are fast on return visits. — [ ]
+#### User Story E1.S3: As a developer, I want HTTPS deployment with model caching so that `getUserMedia` works and model loads are fast on return visits. — [x]
 
 **Acceptance criteria:**
 
 - given the canonical URL, when the browser requests `/models/yolov9t.onnx`, then the response includes `Cache-Control: public, max-age=3600`.
 - given any non-HTTPS origin (except `localhost`), when the app boots, then the app shows a hard-stop error and refuses to request camera.
 
-##### Feature E1.S3.F1: Netlify configuration — [ ]
+##### Feature E1.S3.F1: Netlify configuration — [x]
 
 **Description:** `netlify.toml` + `public/_headers` + `public/_redirects` as needed.
 
-###### Task E1.S3.F1.T1: Create `netlify.toml` — [ ]
+###### Task E1.S3.F1.T1: Create `netlify.toml` — [x]
 
 - Files: `netlify.toml`
 - Preconditions: E1.S1.F1.T2 done
 - Steps:
-  1. Declare `[build] command = "npm run build"` and `publish = "dist"`.
+  1. Declare `[build] command = "pnpm run build"` and `publish = "dist"`.
   2. Declare `[[redirects]]` from SPA-style routes if needed (keep minimal; three static HTMLs).
 - Acceptance test: `netlify deploy --build` succeeds locally (or CI dry-run).
 - SOLID/DRY note: deploy config is its own concern (SRP).
 
-###### Task E1.S3.F1.T2: Create `public/_headers` — [ ]
+###### Task E1.S3.F1.T2: Create `public/_headers` — [x]
 
 - Files: `public/_headers`
 - Preconditions: E1.S3.F1.T1 done
@@ -496,11 +496,11 @@ settings: { key (pk, string), value }
 - Acceptance test: after deploy, `curl -I https://let-me-in-gatekeeper.netlify.app/models/yolov9t.onnx` shows the cache header.
 - SOLID/DRY note: single file owns cache policy.
 
-##### Feature E1.S3.F2: HTTPS boot gate — [ ]
+##### Feature E1.S3.F2: HTTPS boot gate — [x]
 
 **Description:** App refuses to run on non-HTTPS origins (except `localhost`).
 
-###### Task E1.S3.F2.T1: Implement HTTPS check in `src/main.ts`, `src/admin.ts`, `src/log.ts` — [ ]
+###### Task E1.S3.F2.T1: Implement HTTPS check in `src/main.ts`, `src/admin.ts`, `src/log.ts` — [x]
 
 - Files: `src/app/https-gate.ts`, `src/main.ts`, `src/admin.ts`, `src/log.ts`
 - Preconditions: E1.S1.F1.T3 done
@@ -524,7 +524,7 @@ settings: { key (pk, string), value }
 >
 > **What you should now see:**
 >
-> - `npm run dev` shows three pages: the gate, admin, and log viewer — all empty.
+> - `pnpm run dev` shows three pages: the gate, admin, and log viewer — all empty.
 > - The canonical Netlify URL loads a mostly-empty page over HTTPS.
 > - Browser DevTools → Application → IndexedDB shows a `gatekeeper` database with three empty stores.
 >
@@ -744,7 +744,7 @@ createOrtSession(modelUrl, preferredEPs) -> Promise<{ session, executionProvider
 - Files: `src/infra/ort-session-factory.ts`, `src/config.ts`
 - Preconditions: E3.S1.F1.T1 done
 - Steps:
-  1. Set `ort.env.wasm.wasmPaths = config.ortWasmBase` (default: `https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/`).
+  1. Set `ort.env.wasm.wasmPaths = config.ortWasmBase` (default: `https://cdn.jsdelivr.net/pnpm/onnxruntime-web@1.22.0/dist/`).
   2. Document in `config.js` that vendoring is an option if CSP tightens (deferred per `## 6`).
 - Acceptance test: page load fetches WASM from jsDelivr; console logs "ORT WASM base: …".
 - SOLID/DRY note: SRP — asset routing lives in one place.
@@ -1115,7 +1115,7 @@ stateDiagram-v2
 >
 > **How to validate it yourself:**
 >
-> 1. Run `npm test`. Expected: all matching + policy + cooldown tests green.
+> 1. Run `pnpm test`. Expected: all matching + policy + cooldown tests green.
 >
 > **Known limitations / follow-ups:** No enrollment UI yet — nothing to match against.
 > **Next epic:** E6 — Minimal Enrollment.
@@ -1986,7 +1986,7 @@ stateDiagram-v2
 
 ## 7. Progress Dashboard
 
-- [ ] E1 Foundation (0/16 tasks)
+- [x] E1 Foundation (16/16 tasks)
 - [ ] E2 Camera & Frame Capture (0/6 tasks)
 - [ ] E3 Face Detection (0/8 tasks)
 - [ ] E4 Face Embedding (0/7 tasks)
@@ -1997,7 +1997,7 @@ stateDiagram-v2
 - [ ] E9 Stretch Features (0/3 tasks)
 - [ ] E10 Validation & Submission (0/15 tasks)
 
-**Total: 0/84 tasks complete.**
+**Total: 16/84 tasks complete.**
 
 **MVP hard-gate path (24 h):** E1 → E2 → E3 → E4 → E5 → E6. 49 tasks.
 
