@@ -541,7 +541,7 @@ settings: { key (pk, string), value }
 
 ---
 
-### Epic E2: Camera & Frame Capture — [ ]
+### Epic E2: Camera & Frame Capture — [x]
 
 **Goal:** Request webcam permission, render the live video to a canvas at ≥15 FPS, and expose a typed `getFrame()` API that downstream ML consumes.
 
@@ -567,7 +567,7 @@ settings: { key (pk, string), value }
 - DRY: all "please allow camera" copy lives in `config.ui.strings`.
 - Module boundaries respected.
 
-#### User Story E2.S1: As a visitor, I want the app to request camera permission and show my face on the screen so that I know the system sees me. — [ ]
+#### User Story E2.S1: As a visitor, I want the app to request camera permission and show my face on the screen so that I know the system sees me. — [x]
 
 **Acceptance criteria:**
 
@@ -575,7 +575,7 @@ settings: { key (pk, string), value }
 - given I deny permission, then a clear error explains I must allow camera access.
 - given no camera is present, then a clear error explains no camera was found.
 
-##### Feature E2.S1.F1: `getUserMedia` wrapper — [ ]
+##### Feature E2.S1.F1: `getUserMedia` wrapper — [x]
 
 **Interfaces/contracts:**
 
@@ -586,7 +586,7 @@ camera.getFrame() -> ImageData
 camera.onError(cb) -> unsubscribe
 ```
 
-###### Task E2.S1.F1.T1: Create `src/infra/camera.ts` skeleton — [ ]
+###### Task E2.S1.F1.T1: Create `src/infra/camera.ts` skeleton — [x]
 
 - Files: `src/infra/camera.ts`, `src/infra/contracts.ts`
 - Preconditions: E1 complete
@@ -597,7 +597,7 @@ camera.onError(cb) -> unsubscribe
 - Acceptance test: `createCamera(v, c)` returns an object with the four methods above.
 - SOLID/DRY note: factory pattern isolates browser API (DIP).
 
-###### Task E2.S1.F1.T2: Implement `start()` with permission + stream bind — [ ]
+###### Task E2.S1.F1.T2: Implement `start()` with permission + stream bind — [x]
 
 - Files: `src/infra/camera.ts`
 - Preconditions: E2.S1.F1.T1 done
@@ -608,7 +608,7 @@ camera.onError(cb) -> unsubscribe
 - Acceptance test: in browser harness, `start()` resolves and `videoEl.videoWidth > 0`.
 - SOLID/DRY note: error taxonomy is explicit (not stringly-typed).
 
-###### Task E2.S1.F1.T3: Implement draw loop via `requestAnimationFrame` — [ ]
+###### Task E2.S1.F1.T3: Implement draw loop via `requestAnimationFrame` — [x]
 
 - Files: `src/infra/camera.ts`
 - Preconditions: E2.S1.F1.T2 done
@@ -618,7 +618,7 @@ camera.onError(cb) -> unsubscribe
 - Acceptance test: measure 60 frame draws; assert ≥15 FPS sustained.
 - SOLID/DRY note: observers decouple camera from pipeline (OCP).
 
-###### Task E2.S1.F1.T4: Implement `getFrame()` as ImageData snapshot — [ ]
+###### Task E2.S1.F1.T4: Implement `getFrame()` as ImageData snapshot — [x]
 
 - Files: `src/infra/camera.ts`
 - Preconditions: E2.S1.F1.T3 done
@@ -627,7 +627,7 @@ camera.onError(cb) -> unsubscribe
 - Acceptance test: returned `ImageData.data.length === width*height*4`.
 - SOLID/DRY note: `ImageData` is a stable W3C contract (LSP for any future frame source).
 
-###### Task E2.S1.F1.T5: Implement `stop()` and cleanup — [ ]
+###### Task E2.S1.F1.T5: Implement `stop()` and cleanup — [x]
 
 - Files: `src/infra/camera.ts`
 - Preconditions: E2.S1.F1.T4 done
@@ -636,11 +636,11 @@ camera.onError(cb) -> unsubscribe
 - Acceptance test: after `stop()`, webcam LED off; `getFrame()` throws "camera-stopped".
 - SOLID/DRY note: explicit lifecycle prevents leaks.
 
-##### Feature E2.S1.F2: Gate view integration — [ ]
+##### Feature E2.S1.F2: Gate view integration — [x]
 
 **Description:** The gate page (`index.html` → `src/main.ts` → `src/ui/gate-view.ts`) wires camera to a `<video>` + `<canvas>` pair with a Start/Stop button.
 
-###### Task E2.S1.F2.T1: Scaffold `gate-view.ts` layout — [ ]
+###### Task E2.S1.F2.T1: Scaffold `gate-view.ts` layout — [x]
 
 - Files: `src/ui/gate-view.ts`, `src/main.ts`, `src/styles/layout.css`
 - Preconditions: E2.S1.F1.T5 done
@@ -650,7 +650,7 @@ camera.onError(cb) -> unsubscribe
 - Acceptance test: clicking Start shows live feed in canvas; clicking Stop blacks it out.
 - SOLID/DRY note: UI reads strings from `config.ui.strings` (DRY).
 
-###### Task E2.S1.F2.T2: Implement FPS counter overlay (dev only) — [ ]
+###### Task E2.S1.F2.T2: Implement FPS counter overlay (dev only) — [x]
 
 - Files: `src/ui/gate-view.ts`
 - Preconditions: E2.S1.F2.T1 done
@@ -1987,7 +1987,7 @@ stateDiagram-v2
 ## 7. Progress Dashboard
 
 - [x] E1 Foundation (16/16 tasks)
-- [ ] E2 Camera & Frame Capture (0/6 tasks)
+- [x] E2 Camera & Frame Capture (7/7 tasks)
 - [ ] E3 Face Detection (0/8 tasks)
 - [ ] E4 Face Embedding (0/7 tasks)
 - [ ] E5 Matching Engine (0/5 tasks)
@@ -1997,7 +1997,7 @@ stateDiagram-v2
 - [ ] E9 Stretch Features (0/3 tasks)
 - [ ] E10 Validation & Submission (0/15 tasks)
 
-**Total: 16/84 tasks complete.**
+**Total: 23/85 tasks complete.**
 
 **MVP hard-gate path (24 h):** E1 → E2 → E3 → E4 → E5 → E6. 49 tasks.
 
