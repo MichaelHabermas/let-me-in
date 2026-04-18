@@ -5,13 +5,16 @@ import { getHttpsStartupState } from './https-gate';
 function renderHttpsBanner(message: string): void {
   const root = document.body;
   root.innerHTML = '';
+  
   const banner = document.createElement('div');
   banner.className = 'https-gate';
   banner.setAttribute('role', 'alert');
+
   const p = document.createElement('p');
   p.className = 'https-gate__message';
   p.textContent = message;
   banner.appendChild(p);
+
   root.appendChild(banner);
 }
 
@@ -26,10 +29,8 @@ export function bootstrapApp(mount: () => void | Promise<void>): void {
       renderHttpsBanner(https.message);
       return;
     }
-    await initDatabase({
-      thresholds: config.thresholds,
-      cooldownMs: config.cooldownMs,
-    });
+
+    await initDatabase({ thresholds: config.thresholds, cooldownMs: config.cooldownMs });
     await mount();
   })();
 }
