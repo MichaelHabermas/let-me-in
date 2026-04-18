@@ -1,13 +1,17 @@
 /// <reference lib="webworker" />
 
-import * as ort from 'onnxruntime-web';
+import * as ort from 'onnxruntime-web/all';
 
 import {
   decodeYoloPredictions,
   DETECTOR_INPUT_SIZE,
   preprocessToChwFloat,
 } from '../infra/detector-core';
-import { configureOrtWasmAssets, createOrtSession, type OrtSessionBundle } from '../infra/ort-session-factory';
+import {
+  configureOrtWasmAssets,
+  createOrtSession,
+  type OrtSessionBundle,
+} from '../infra/ort-session-factory';
 
 let bundle: OrtSessionBundle | null = null;
 
@@ -28,7 +32,11 @@ self.onmessage = async (ev: MessageEvent) => {
       bundle = await createOrtSession(m.modelUrl!);
       self.postMessage({ type: 'init-ok', id: m.id });
     } catch (e) {
-      self.postMessage({ type: 'init-err', id: m.id, error: e instanceof Error ? e.message : String(e) });
+      self.postMessage({
+        type: 'init-err',
+        id: m.id,
+        error: e instanceof Error ? e.message : String(e),
+      });
     }
     return;
   }
@@ -47,7 +55,12 @@ self.onmessage = async (ev: MessageEvent) => {
         colorSpace: 'srgb',
       } as ImageData;
       const { tensorData, meta } = preprocessToChwFloat(imageData);
-      const tensor = new ort.Tensor('float32', tensorData, [1, 3, DETECTOR_INPUT_SIZE, DETECTOR_INPUT_SIZE]);
+      const tensor = new ort.Tensor('float32', tensorData, [
+        1,
+        3,
+        DETECTOR_INPUT_SIZE,
+        DETECTOR_INPUT_SIZE,
+      ]);
       const outputs = await bundle.session.run({ images: tensor });
       const pred = outputs.predictions as ort.Tensor;
       const arr = pred.data as Float32Array;
@@ -57,7 +70,11 @@ self.onmessage = async (ev: MessageEvent) => {
       const dets = decodeYoloPredictions(arr, meta);
       self.postMessage({ type: 'infer-ok', id: m.id, dets });
     } catch (e) {
-      self.postMessage({ type: 'infer-err', id: m.id, error: e instanceof Error ? e.message : String(e) });
+      self.postMessage({
+        type: 'infer-err',
+        id: m.id,
+        error: e instanceof Error ? e.message : String(e),
+      });
     }
   }
 };

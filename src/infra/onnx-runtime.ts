@@ -1,6 +1,6 @@
 /**
- * Sole approved entry point for `onnxruntime-web` from app/ui (see eslint `no-restricted-imports`).
- * Session creation lives in `ort-session-factory.ts` and is re-exported here for a single import seam.
+ * Sole approved ONNX Runtime entry from app/ui (see eslint `no-restricted-imports`).
+ * Session creation uses `onnxruntime-web/all` in `ort-session-factory.ts` so the WebGL EP is registered in the browser bundle.
  */
 
 export { createOrtSession, OrtSessionError, type OrtSessionBundle } from './ort-session-factory';

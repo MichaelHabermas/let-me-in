@@ -1,4 +1,9 @@
-import * as ort from 'onnxruntime-web';
+/**
+ * Default `onnxruntime-web` resolves to a slim bundle without the WebGL EP
+ * ("[webgl] backend not found"). Use `/all` so `executionProviders: ['webgl']` is available.
+ * @see https://github.com/microsoft/onnxruntime/tree/main/js/onnxruntime-web#usage
+ */
+import * as ort from 'onnxruntime-web/all';
 
 import { config } from '../config';
 
@@ -41,11 +46,24 @@ function describeModelSource(source: OrtModelSource): string {
 }
 
 /**
+ * Browser: WebGPU first (broader ops + good on Apple Silicon Chrome), then WASM.
+ * We skip WebGL for shipped YOLO ONNX: it uses `Split` @ opset 19, which ORT WebGL does not implement
+ * (`cannot resolve operator 'Split' with opsets: ai.onnx v19`).
+ * Vitest/Node: WASM first (WebGL/WebGPU are not usable there).
+ */
+function defaultPreferredExecutionProviders(): string[] {
+  if (typeof process !== 'undefined' && process.env.VITEST) {
+    return ['wasm', 'webgl'];
+  }
+  return ['webgpu', 'wasm'];
+}
+
+/**
  * Create an ONNX Runtime inference session, trying execution providers in order.
  */
 export async function createOrtSession(
   modelSource: OrtModelSource,
-  preferredEPs: string[] = ['webgl', 'wasm'],
+  preferredEPs: string[] = defaultPreferredExecutionProviders(),
 ): Promise<OrtSessionBundle> {
   configureOrtWasmAssets();
   const label = describeModelSource(modelSource);

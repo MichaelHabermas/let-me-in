@@ -46,7 +46,7 @@ describe('createOrtSession', () => {
       .mockResolvedValueOnce(fakeSession);
 
     const { createOrtSession } = await import('../src/infra/ort-session-factory');
-    const out = await createOrtSession('/models/x.onnx');
+    const out = await createOrtSession('/models/x.onnx', ['webgl', 'wasm']);
 
     expect(out.executionProvider).toBe('wasm');
     expect(out.session).toBe(fakeSession);

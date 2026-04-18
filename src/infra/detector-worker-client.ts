@@ -14,12 +14,13 @@ export function createYoloWorkerDetector(opts: YoloWorkerDetectorOptions): YoloD
   });
 
   let nextId = 1;
-  const pending = new Map<
-    number,
-    { resolve: (v: unknown) => void; reject: (e: Error) => void }
-  >();
+  const pending = new Map<number, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
 
-  function post<T>(type: string, payload: Record<string, unknown> = {}, transfer: Transferable[] = []): Promise<T> {
+  function post<T>(
+    type: string,
+    payload: Record<string, unknown> = {},
+    transfer: Transferable[] = [],
+  ): Promise<T> {
     const id = nextId++;
     return new Promise<T>((resolve, reject) => {
       pending.set(id, {

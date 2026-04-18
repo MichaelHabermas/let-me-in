@@ -1,4 +1,4 @@
-import * as ort from 'onnxruntime-web';
+import * as ort from 'onnxruntime-web/all';
 
 import { config } from '../config';
 import {
@@ -13,11 +13,7 @@ import { createYoloWorkerDetector } from './detector-worker-client';
 import { createOrtSession, type OrtSessionBundle } from './ort-session-factory';
 
 export type { Detection, LetterboxMeta, YoloDetector };
-export {
-  computeLetterboxMeta,
-  decodeYoloPredictions,
-  preprocessToChwFloat,
-} from './detector-core';
+export { computeLetterboxMeta, decodeYoloPredictions, preprocessToChwFloat } from './detector-core';
 
 function createYoloMainThreadDetector(options?: {
   modelUrl?: string;
@@ -38,7 +34,12 @@ function createYoloMainThreadDetector(options?: {
         throw new Error('detector.load() must be called before infer()');
       }
       const { tensorData, meta } = preprocessToChwFloat(imageData);
-      const tensor = new ort.Tensor('float32', tensorData, [1, 3, DETECTOR_INPUT_SIZE, DETECTOR_INPUT_SIZE]);
+      const tensor = new ort.Tensor('float32', tensorData, [
+        1,
+        3,
+        DETECTOR_INPUT_SIZE,
+        DETECTOR_INPUT_SIZE,
+      ]);
       const outputs = await bundle.session.run({ images: tensor });
       const pred = outputs.predictions as ort.Tensor;
       const data = pred.data as Float32Array;

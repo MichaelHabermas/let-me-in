@@ -36,6 +36,10 @@ export default [
               name: 'onnxruntime-web',
               message: 'Import from infra/onnx-runtime.ts instead (DIP).',
             },
+            {
+              name: 'onnxruntime-web/all',
+              message: 'Import from infra/onnx-runtime.ts instead (DIP).',
+            },
           ],
         },
       ],
