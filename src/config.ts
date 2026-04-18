@@ -5,6 +5,12 @@
  */
 
 export interface Config {
+  /** Default getUserMedia video constraints (OCP: change resolution here only). */
+  camera: {
+    idealWidth: number;
+    idealHeight: number;
+    defaultFacingMode: string;
+  };
   org: {
     name: string;
     logoUrl: string;
@@ -37,6 +43,11 @@ export interface Config {
       unknown: string;
       noFace: string;
       multiFace: string;
+      cameraPermissionDenied: string;
+      cameraNoDevice: string;
+      cameraUnknownError: string;
+      cameraStart: string;
+      cameraStop: string;
     };
   };
 }
@@ -58,6 +69,11 @@ function resolveAdminCredentials(): Pick<Config, 'adminCredentialSource' | 'admi
 const { adminCredentialSource, admin } = resolveAdminCredentials();
 
 export const config: Config = {
+  camera: {
+    idealWidth: 1280,
+    idealHeight: 720,
+    defaultFacingMode: 'user',
+  },
   org: {
     name: 'Gatekeeper',
     logoUrl: '',
@@ -82,6 +98,12 @@ export const config: Config = {
       unknown: 'Unknown',
       noFace: 'No face detected',
       multiFace: 'Multiple faces detected. Please ensure only one person is in frame.',
+      cameraPermissionDenied:
+        'Camera access is required. Allow the camera in your browser settings, then try again.',
+      cameraNoDevice: 'No camera was found. Connect a camera and refresh the page.',
+      cameraUnknownError: 'The camera could not be started. Try again or use a different browser.',
+      cameraStart: 'Start camera',
+      cameraStop: 'Stop camera',
     },
   },
 };

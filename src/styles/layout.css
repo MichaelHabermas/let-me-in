@@ -86,3 +86,87 @@ body {
   max-width: 60ch;
   line-height: 1.5;
 }
+
+/* Gate — live preview (Epic E2) */
+.page--gate {
+  gap: var(--space-6);
+}
+
+.gate-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.gate-toolbar button {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gate-toolbar button:focus-visible {
+  outline: 2px solid var(--color-uncertain);
+  outline-offset: 2px;
+}
+
+.gate-toolbar button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.gate-status {
+  min-height: 1.25rem;
+  color: var(--color-denied);
+  font-weight: 600;
+}
+
+.gate-preview {
+  position: relative;
+  width: 100%;
+  max-width: min(100%, 1280px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #020617;
+}
+
+.gate-preview__canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+
+.gate-preview__video {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gate-preview__fps {
+  position: absolute;
+  right: var(--space-3);
+  top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: rgb(15 23 42 / 0.85);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  border: 1px solid var(--color-border);
+}
+
+.gate-decision {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-border);
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
