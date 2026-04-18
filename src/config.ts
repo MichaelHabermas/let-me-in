@@ -91,7 +91,7 @@ export const config: Config = {
   },
   adminCredentialSource,
   admin,
-  ortWasmBase: 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/',
+  ortWasmBase: 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/',
   audioEnabled: true,
   ui: {
     strings: {

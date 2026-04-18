@@ -332,8 +332,8 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 - Preconditions: none
 - Steps:
   1. Create `package.json` with `"type": "module"`.
-  2. Declare runtime deps: `dexie` (^4), `onnxruntime-web` (pinned to 1.22.0 per `docs/PRE-WORK.md`).
-  3. Declare dev deps: `typescript` (^5), `vite` (^5), `@vitejs/plugin-vue` is NOT needed — plain vite, `vitest` (^2), `eslint` (^9), `@typescript-eslint/eslint-plugin` (^8), `@typescript-eslint/parser` (^8), `eslint-config-prettier` (^10), `prettier` (^3).
+  2. Declare runtime deps: `dexie` (^4), `onnxruntime-web` (^1.24.x per `docs/PRE-WORK.md` / `config.ortWasmBase`).
+  3. Declare dev deps: `typescript` (^6), `vite` (^8), `@vitejs/plugin-vue` is NOT needed — plain vite, `vitest` (^4), `eslint` (^10), `@typescript-eslint/eslint-plugin` (^8), `@typescript-eslint/parser` (^8), `eslint-config-prettier` (^10), `prettier` (^3).
   4. Declare scripts: `dev: vite`, `build: vite build`, `preview: vite preview`, `typecheck: tsc --noEmit`, `lint: eslint src`, `format: prettier --write src`, `format:check: prettier --check src`, `test: vitest run`.
 - Acceptance test: `pnpm install` completes with exit code 0; `pnpm run typecheck` exits 0 on empty scaffold.
 - SOLID/DRY note: one place declares deps (DRY); no inline versions elsewhere.
@@ -745,7 +745,7 @@ createOrtSession(modelUrl, preferredEPs) -> Promise<{ session, executionProvider
 - Files: `src/infra/ort-session-factory.ts`, `src/config.ts`
 - Preconditions: E3.S1.F1.T1 done
 - Steps:
-  1. Set `ort.env.wasm.wasmPaths = config.ortWasmBase` (default: `https://cdn.jsdelivr.net/pnpm/onnxruntime-web@1.22.0/dist/`).
+  1. Set `ort.env.wasm.wasmPaths = config.ortWasmBase` (default: `https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/`).
   2. Document in `config.js` that vendoring is an option if CSP tightens (deferred per `## 6`).
 - Acceptance test: page load fetches WASM from jsDelivr; console logs "ORT WASM base: …".
 - SOLID/DRY note: SRP — asset routing lives in one place.

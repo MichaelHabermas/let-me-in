@@ -135,7 +135,7 @@ Normalized checklist—**not** a full reprint of `SPECS.txt`.
 
 **Detector / ORT gate zero — `[PROVEN]` (non-canonical EP/latency environment)**
 
-- **Artifact path:** Hugging Face **Kalray/yolov9** **`yolov9t.onnx`** — **COCO general-object** YOLOv9-tiny (~**8.33 MiB**, **FP32**), **not** a face-specialized head. Loads and runs under `onnxruntime-web@1.22.0` with `executionProviders: ['webgl','wasm']`, `graphOptimizationLevel: 'all'`.
+- **Artifact path:** Hugging Face **Kalray/yolov9** **`yolov9t.onnx`** — **COCO general-object** YOLOv9-tiny (~**8.33 MiB**, **FP32**), **not** a face-specialized head. Loads and runs under `onnxruntime-web@1.24.3` with `executionProviders: ['webgl','wasm']`, `graphOptimizationLevel: 'all'`.
 - **Reality check:** In probe environment, ORT **dropped WebGL** (`backend not found`); successful runs on **WASM**. **Do not claim WebGL detection** without MBP Chrome evidence.
 - **I/O tensors (this checkpoint):** input **`images`** `float32` **`[1,3,640,640]`** NCHW **[0,1]**; output **`predictions`** `float32` **`[1,84,8400]`**; toy pipeline later ran decode+NMS on this head.
 - **Latency (probe env):** single static `session.run` ~**190 ms**; live-frame median preprocess+infer **~182.9 ms** over **N=12** (warmup excluded).

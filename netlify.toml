@@ -2,6 +2,9 @@
   command = "pnpm run build"
   publish = "dist"
 
+[build.environment]
+  NODE_VERSION = "20.19.0"
+
 # Pretty URLs for the three static HTML entry points (PRD E1 — dev parity via Vite middleware).
 [[redirects]]
   from = "/admin"

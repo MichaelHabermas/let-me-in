@@ -4,7 +4,7 @@ Browser-based facial-recognition door entry — client-side ML only. This repo f
 
 ## Prerequisites
 
-- Node.js 18+ (for the toolchain; the app targets modern Chromium)
+- Node.js **20.19+** (required by Vite 8; the app targets modern Chromium)
 
 ## Getting started
 
