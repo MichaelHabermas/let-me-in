@@ -1,5 +1,17 @@
 import * as ort from 'onnxruntime-web';
 
+import { config } from '../config';
+
+let wasmBaseConfigured = false;
+
+/** Idempotent: sets jsDelivr (or vendored) WASM asset path before first ORT session. */
+export function configureOrtWasmAssets(wasmBaseUrl: string = config.ortWasmBase): void {
+  if (wasmBaseConfigured) return;
+  ort.env.wasm.wasmPaths = wasmBaseUrl;
+  console.info(`ORT WASM base: ${wasmBaseUrl}`);
+  wasmBaseConfigured = true;
+}
+
 export type OrtSessionBundle = {
   session: ort.InferenceSession;
   executionProvider: string;
@@ -24,6 +36,7 @@ export async function createOrtSession(
   modelUrl: string,
   preferredEPs: string[] = ['webgl', 'wasm'],
 ): Promise<OrtSessionBundle> {
+  configureOrtWasmAssets();
   const attempts: { ep: string; message: string }[] = [];
   const createOptionsBase = { graphOptimizationLevel: 'all' as const };
 

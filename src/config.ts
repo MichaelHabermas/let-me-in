@@ -35,7 +35,10 @@ export interface Config {
     user: string;
     pass: string;
   };
-  /** Base URL for onnxruntime-web WASM assets */
+  /**
+   * Base URL for onnxruntime-web WASM assets (default: jsDelivr).
+   * For strict CSP / air-gapped deploys, vendor `dist/*.wasm` under `/ort/` and point here.
+   */
   ortWasmBase: string;
   audioEnabled: boolean;
   ui: {

@@ -2,9 +2,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const inferenceCreate = vi.fn();
 
+const { ortMockEnv } = vi.hoisted(() => {
+  const wasm = { wasmPaths: '' as string };
+  return { ortMockEnv: { wasm } };
+});
+
 vi.mock('onnxruntime-web', () => ({
   __esModule: true as const,
   default: {},
+  env: ortMockEnv,
   InferenceSession: {
     create: (...args: unknown[]) => inferenceCreate(...args),
   },
@@ -13,6 +19,8 @@ vi.mock('onnxruntime-web', () => ({
 describe('createOrtSession', () => {
   beforeEach(() => {
     inferenceCreate.mockReset();
+    ortMockEnv.wasm.wasmPaths = '';
+    vi.resetModules();
   });
 
   it('returns session and first EP when webgl succeeds', async () => {
@@ -56,9 +64,28 @@ describe('createOrtSession', () => {
       modelUrl: 'https://invalid/bad.onnx',
     });
   });
+
+  it('sets ORT WASM base from config once and logs', async () => {
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    inferenceCreate.mockResolvedValue({ dispose: vi.fn() });
+    const { createOrtSession } = await import('../src/infra/ort-session-factory');
+    const { config } = await import('../src/config');
+
+    await createOrtSession('x', ['wasm']);
+
+    expect(ortMockEnv.wasm.wasmPaths).toBe(config.ortWasmBase);
+    expect(infoSpy).toHaveBeenCalledWith(`ORT WASM base: ${config.ortWasmBase}`);
+    infoSpy.mockRestore();
+  });
 });
 
 describe('onnx-runtime re-exports', () => {
+  beforeEach(() => {
+    inferenceCreate.mockReset();
+    ortMockEnv.wasm.wasmPaths = '';
+    vi.resetModules();
+  });
+
   it('exports createOrtSession from onnx-runtime', async () => {
     inferenceCreate.mockResolvedValue({ dispose: vi.fn() });
     const { createOrtSession } = await import('../src/infra/onnx-runtime');
