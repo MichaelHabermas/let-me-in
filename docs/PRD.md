@@ -203,7 +203,7 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 - **Open/Closed:** `policy` reads thresholds from `config`. Adding a new decision band requires editing `policy` + `config` only, never UI or pipeline.
 - **Liskov:** detector/embedder expose a uniform `OrtInferenceSession` contract — any future model swap must satisfy the same interface.
 - **Interface Segregation:** UI views receive narrow event callbacks (`onDecision`, `onFrame`, `onError`) — never the whole pipeline.
-- **Dependency Inversion:** `app/*` depends on `infra/*` via TypeScript interfaces declared in `src/infra/contracts.ts`. No `app/*` file imports `dexie`, `onnxruntime-web`, or `navigator.mediaDevices` directly.
+- **Dependency Inversion:** `app/*` depends on `infra/*` via narrow ports: `src/infra/persistence.ts` (IndexedDB) and `src/infra/camera.ts` (webcam). Domain row types live in `src/domain/types.ts`. No `app/*` file imports `dexie`, `onnxruntime-web`, or `navigator.mediaDevices` directly.
 - **DRY:** thresholds, strings, model URLs, and routes live in exactly one file each. No magic numbers in logic.
 - **Modularity:** folder layout mirrors §2.2. No file may exceed 300 lines. No function may exceed 50 lines. Refactor if exceeded.
 
@@ -242,7 +242,8 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
       https-gate.ts
       consent.ts
     infra/
-      contracts.ts             # DIP — TypeScript interfaces & re-exports
+      persistence.ts           # DIP — IndexedDB port (re-exports + domain types)
+      domain/types.ts          # User, Decision, AccessLogRow, match shapes
       camera.ts
       detector-ort.ts
       embedder-ort.ts
@@ -306,10 +307,10 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 **SOLID/DRY/Modularity checklist for this Epic:**
 
 - Single Responsibility: `config.ts` holds values only, no logic.
-- Open/Closed: adding a new config key requires editing `config.ts` + `contracts.ts` only.
+- Open/Closed: adding a new config key requires editing `config.ts` + persistence seeding / settings usage as needed.
 - Liskov: n/a this epic (no polymorphism yet).
 - Interface Segregation: `db-dexie.ts` exports per-store APIs, not a god-object.
-- Dependency Inversion: `app/*` and `ui/*` import from `infra/contracts.ts` re-exports, not from `dexie`.
+- Dependency Inversion: `app/*` and `ui/*` import from `infra/persistence.ts` and `app/camera.ts` (camera policy), not from `dexie`.
 - No duplicated logic across modules (DRY).
 - Module boundaries per §2.2 & §2.7 respected.
 
@@ -446,14 +447,14 @@ settings: { key (pk, string), value }
 - Acceptance test: unit test writes and reads one record from each store; `Dexie.exists('gatekeeper')` returns true.
 - SOLID/DRY note: ISP — each repo exposes only the verbs its consumers need.
 
-###### Task E1.S2.F1.T2: Export DIP contracts from `src/infra/contracts.ts` — [x]
+###### Task E1.S2.F1.T2: Export DIP persistence port from `src/infra/persistence.ts` — [x]
 
-- Files: `src/infra/contracts.ts`
+- Files: `src/infra/persistence.ts`, `src/infra/db-dexie.ts`
 - Preconditions: E1.S2.F1.T1 done
 - Steps:
   1. Re-export `usersRepo`, `accessLogRepo`, `settingsRepo` from `db-dexie.ts`.
   2. Declare and export TypeScript interfaces: `User`, `AccessLogRow`, `Decision` (`'GRANTED' | 'UNCERTAIN' | 'DENIED'`), `MatchResult`, `BboxPixels`.
-- Acceptance test: `import { usersRepo } from '../infra/contracts.ts'` works from `app/`.
+- Acceptance test: `import { usersRepo } from '../infra/persistence.ts'` works from `app/`.
 - SOLID/DRY note: DIP — `app/*` never imports `dexie` directly.
 
 ###### Task E1.S2.F1.T3: Seed `settings` with default threshold snapshot — [x]
@@ -563,7 +564,7 @@ settings: { key (pk, string), value }
 - Open/Closed: adding a new camera-constraint (e.g., 4K) edits `config.js` only.
 - Liskov: n/a.
 - Interface Segregation: `camera` exposes `start`, `stop`, `getFrame`, `onError` only.
-- Dependency Inversion: `gate-view` imports `camera` from `infra/contracts.ts`.
+- Dependency Inversion: `gate-view` imports `camera` from `app/camera.ts` (policy re-export of `infra/camera.ts`).
 - DRY: all "please allow camera" copy lives in `config.ui.strings`.
 - Module boundaries respected.
 
@@ -588,12 +589,12 @@ camera.onError(cb) -> unsubscribe
 
 ###### Task E2.S1.F1.T1: Create `src/infra/camera.ts` skeleton — [x]
 
-- Files: `src/infra/camera.ts`, `src/infra/contracts.ts`
+- Files: `src/infra/camera.ts`, `src/app/camera.ts`
 - Preconditions: E1 complete
 - Steps:
   1. Export `createCamera(videoEl, canvasEl)` factory.
   2. Internally hold `stream`, `rafId`, `errorListeners`.
-  3. Re-export factory from `contracts.ts`.
+  3. Re-export factory from `app/camera.ts` for UI; persistence remains in `persistence.ts`.
 - Acceptance test: `createCamera(v, c)` returns an object with the four methods above.
 - SOLID/DRY note: factory pattern isolates browser API (DIP).
 
@@ -708,7 +709,7 @@ camera.onError(cb) -> unsubscribe
 - OCP: swap detector model by editing `config.modelUrls.detector` + `detector-ort.ts` only.
 - LSP: `detector-ort` implements `{ load, infer }` contract shared with `embedder-ort` in E4.
 - ISP: public API is `detect(imageData) → [{bbox, confidence}]` only.
-- DIP: `pipeline.ts` imports `detect` from `contracts.ts`.
+- DIP: `pipeline.ts` imports `detect` from a dedicated infra port (alongside `persistence.ts` / `camera.ts`).
 - DRY: preprocessing math lives in one helper.
 - Module boundaries respected.
 
@@ -729,7 +730,7 @@ createOrtSession(modelUrl, preferredEPs) -> Promise<{ session, executionProvider
 
 ###### Task E3.S1.F1.T1: Create `src/infra/ort-session-factory.ts` — [ ]
 
-- Files: `src/infra/ort-session-factory.ts`, `src/infra/contracts.ts`
+- Files: `src/infra/ort-session-factory.ts`, plus the appropriate infra re-export surface (not UI-facing).
 - Preconditions: E1 complete
 - Steps:
   1. Import `* as ort` from `onnxruntime-web` (via Vite — Vite resolves from jsDelivr CDN proxy per `config`).
@@ -871,7 +872,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - OCP: swap embedder by editing `config.modelUrls.embedder`.
 - LSP: implements same `{ load, infer }` contract as detector.
 - ISP: public API is `embed(crop) → Float32Array(512)`.
-- DIP: `pipeline.ts` imports from `contracts.ts`.
+- DIP: `pipeline.ts` imports from infra ports (`persistence.ts`, camera / ORT modules).
 - DRY: shared preprocess helpers (normalize, channel-first).
 - Module boundaries respected.
 
@@ -1147,7 +1148,7 @@ stateDiagram-v2
 - OCP: adding a new enrollment field (e.g., `photoUrl`) edits the view + repo only.
 - LSP: n/a.
 - ISP: view receives `{ onSave, onCancel, camera }`.
-- DIP: view imports from `contracts.ts`.
+- DIP: view imports camera via `app/camera.ts` and session wiring via `app/gate-session.ts`.
 - DRY: enrollment flow reuses `pipeline.embedFace`.
 - Module boundaries respected.
 
@@ -1458,7 +1459,7 @@ stateDiagram-v2
 - OCP: adding a new filter edits log-view + its filter helper only.
 - LSP: import parser output is `User[]` — same type the enrollment flow produces.
 - ISP: `bulkImport.parse(json) -> {valid, errors}` is its only export.
-- DIP: views import from `contracts.ts`.
+- DIP: views import from `app/*` re-exports and `infra/persistence.ts` where persistence is required.
 - DRY: filter predicates reused between sort/filter.
 - Module boundaries respected.
 
@@ -1608,7 +1609,7 @@ stateDiagram-v2
 - OCP: adding a new audio cue edits `audio.ts` only.
 - LSP: n/a.
 - ISP: each feature's API is narrow.
-- DIP: UI imports each via `contracts.ts`.
+- DIP: UI imports each capability via `app/*` and `infra/persistence.ts` as appropriate.
 - DRY: CSV escaping helper shared if needed elsewhere.
 - Module boundaries respected.
 
@@ -1707,7 +1708,7 @@ stateDiagram-v2
 - OCP: adding a new scenario = new file in `tests/scenarios/`.
 - LSP: n/a.
 - ISP: reports are data, not coupled to test harness internals.
-- DIP: tests import from `contracts.ts` where code is used.
+- DIP: tests import from `app/camera.ts` or `infra/persistence.ts` at the same boundary as production callers.
 - DRY: common setup in a shared fixture.
 - Module boundaries respected.
 

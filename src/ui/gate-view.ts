@@ -1,59 +1,13 @@
-import { createCamera, type Camera } from '../app/camera';
+import { wireGatePreviewSession } from '../app/gate-session';
 import {
   getCameraStartLabel,
   getCameraStopLabel,
-  getCameraUserFacingMessage,
   getDefaultVideoConstraintsForCamera,
+  getCameraUserFacingMessage,
   getGatePageTitle,
   getOrgName,
 } from '../app/config-bridge';
-
-function wireCameraControls(
-  camera: Camera,
-  startBtn: HTMLButtonElement,
-  stopBtn: HTMLButtonElement,
-  statusEl: HTMLElement,
-): void {
-  startBtn.addEventListener('click', async () => {
-    statusEl.textContent = '';
-    startBtn.disabled = true;
-    try {
-      await camera.start();
-      stopBtn.disabled = false;
-    } catch {
-      startBtn.disabled = false;
-    }
-  });
-
-  stopBtn.addEventListener('click', () => {
-    camera.stop();
-    startBtn.disabled = false;
-    stopBtn.disabled = true;
-  });
-}
-
-function maybeMountFpsOverlay(camera: Camera, host: HTMLElement): () => void {
-  if (!import.meta.env.DEV) return () => {};
-
-  const fpsEl = document.createElement('div');
-  fpsEl.id = 'fps';
-  fpsEl.className = 'gate-preview__fps';
-  host.appendChild(fpsEl);
-
-  let lastTs = 0;
-  const rolling: number[] = [];
-
-  return camera.onFrame((ts) => {
-    if (lastTs > 0) {
-      const dt = ts - lastTs;
-      if (dt > 0) rolling.push(1000 / dt);
-      if (rolling.length > 30) rolling.shift();
-      const avg = rolling.reduce((a, b) => a + b, 0) / rolling.length;
-      fpsEl.textContent = `${avg.toFixed(1)} FPS`;
-    }
-    lastTs = ts;
-  });
-}
+import { createCamera } from '../app/camera';
 
 function createGateToolbar(): {
   toolbar: HTMLElement;
@@ -155,24 +109,15 @@ export function mountGateView(): void {
   const { main, startBtn, stopBtn, statusEl, previewWrap, video, canvas } = buildGateDom();
   app.appendChild(main);
 
-  const camera = createCamera(video, canvas, {
-    defaultConstraints: getDefaultVideoConstraintsForCamera(),
-  });
-
-  camera.onError((err) => {
-    const msg = getCameraUserFacingMessage(err.code);
-    if (msg) statusEl.textContent = msg;
-  });
-
-  const unsubFps = maybeMountFpsOverlay(camera, previewWrap);
-  wireCameraControls(camera, startBtn, stopBtn, statusEl);
-
-  window.addEventListener(
-    'beforeunload',
-    () => {
-      unsubFps();
-      camera.stop();
+  const teardown = wireGatePreviewSession(
+    { startBtn, stopBtn, statusEl, previewWrap, video, canvas },
+    {
+      createCamera,
+      getDefaultVideoConstraintsForCamera,
+      getCameraUserFacingMessage,
     },
-    { once: true },
+    { showFpsOverlay: import.meta.env.DEV },
   );
+
+  window.addEventListener('beforeunload', teardown, { once: true });
 }

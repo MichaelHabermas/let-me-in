@@ -1,4 +1,4 @@
-/** Domain types — imported by db-dexie and re-exported from contracts (DIP). */
+/** Domain row and match shapes — persistence maps these; UI and future matching consume them. */
 
 export type Decision = 'GRANTED' | 'UNCERTAIN' | 'DENIED';
 

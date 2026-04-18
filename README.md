@@ -24,7 +24,6 @@ Open:
 
 ## Scripts
 
-
 | Script                  | Purpose                     |
 | ----------------------- | --------------------------- |
 | `pnpm run dev`          | Vite dev server with HMR    |
@@ -35,7 +34,6 @@ Open:
 | `pnpm run format`       | Prettier write (`src/`)     |
 | `pnpm run format:check` | Prettier check              |
 | `pnpm test`             | Vitest                      |
-
 
 ## Configuration
 
@@ -59,4 +57,3 @@ The app uses database name `**gatekeeper**` with stores `users`, `accessLog`, an
 1. `pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm test` — all exit 0.
 2. `pnpm run build` — `dist/` contains `index.html`, `admin.html`, `log.html`.
 3. In Chrome DevTools → Application → IndexedDB → `gatekeeper` — three stores; `settings` has two keys (`thresholds`, `cooldownMs`) after load.
-

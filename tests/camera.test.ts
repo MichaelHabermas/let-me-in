@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createCamera, type CameraBrowserDeps, type CameraError } from '../src/infra/camera';
+import { createCamera, type CameraBrowserDeps, type CameraError } from '../src/app/camera';
 
 const defaults = { idealWidth: 1280, idealHeight: 720, facingMode: 'user' };
 

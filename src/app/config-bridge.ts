@@ -2,8 +2,13 @@
  * UI layer may import only from `app/*`. Re-exports org-facing copy from config.
  */
 
-import type { CameraErrorCode } from '../infra/contracts';
+import type { CameraErrorCode } from '../infra/camera';
+import type { DatabaseSeedSettings } from '../infra/persistence';
 import { config } from '../config';
+
+export function getDatabaseSeedSettings(): DatabaseSeedSettings {
+  return { thresholds: { ...config.thresholds }, cooldownMs: config.cooldownMs };
+}
 
 export function getOrgName(): string {
   return config.org.name;

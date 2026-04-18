@@ -1,14 +1,15 @@
 import Dexie from 'dexie';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import type { DatabaseSeedSettings } from '../src/infra/contracts';
+import type { DatabaseSeedSettings } from '../src/infra/persistence';
 import {
   accessLogRepo,
+  createDexiePersistence,
   initDatabase,
   resetIndexedDbClientForTests,
   settingsRepo,
   usersRepo,
-} from '../src/infra/contracts';
+} from '../src/infra/persistence';
 
 const defaultTestSeed = {
   thresholds: { strong: 0.8, weak: 0.65, unknown: 0.6, margin: 0.05 },
@@ -82,5 +83,29 @@ describe('Dexie schema v1', () => {
     });
     const all = await accessLogRepo.toArray();
     expect(all.length).toBe(2);
+  });
+});
+
+describe('createDexiePersistence', () => {
+  it('isolates data by database name', async () => {
+    const dbName = `gatekeeper-isolated-${crypto.randomUUID()}`;
+    const p = createDexiePersistence(dbName);
+    try {
+      await p.initDatabase(defaultTestSeed);
+      expect(await Dexie.exists(dbName)).toBe(true);
+      const id = '00000000-0000-4000-8000-000000000099';
+      await p.usersRepo.put({
+        id,
+        name: 'Isolated',
+        role: 'staff',
+        referenceImageBlob: new Blob(['y'], { type: 'image/jpeg' }),
+        embedding: new Float32Array(8).fill(0.5),
+        createdAt: Date.now(),
+      });
+      expect((await p.usersRepo.get(id))?.name).toBe('Isolated');
+    } finally {
+      await p.resetIndexedDbClientForTests();
+      await Dexie.delete(dbName);
+    }
   });
 });

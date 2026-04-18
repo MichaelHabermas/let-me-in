@@ -30,11 +30,11 @@ export default [
           paths: [
             {
               name: 'dexie',
-              message: 'Import from infra/contracts.ts instead (DIP).',
+              message: 'Import from infra/persistence.ts instead (DIP).',
             },
             {
               name: 'onnxruntime-web',
-              message: 'Import from infra/contracts.ts instead (DIP).',
+              message: 'Import from infra/camera.ts (or future pipeline ports) instead (DIP).',
             },
           ],
         },

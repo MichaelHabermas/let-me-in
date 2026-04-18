@@ -2,7 +2,7 @@
  * UI-facing entry for camera — re-exports infra so `src/ui/*` never imports `infra/*` (PRD §2.2).
  */
 
-export { createCamera } from '../infra/contracts';
+export { createCamera } from '../infra/camera';
 
 export type {
   Camera,
@@ -12,4 +12,4 @@ export type {
   CameraStartOptions,
   CreateCameraOptions,
   DefaultVideoConstraints,
-} from '../infra/contracts';
+} from '../infra/camera';

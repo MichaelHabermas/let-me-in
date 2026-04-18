@@ -1,18 +1,19 @@
 /**
- * Multi-page dev server: `/admin` and `/log` are rewritten to `admin.html` / `log.html` below
- * (dev-only). Production uses `netlify.toml` redirects for the same paths. When adding another
- * HTML entry, update Rollup `build.rollupOptions.input`, this middleware map, and Netlify redirects.
+ * Multi-page dev + build: routes and Rollup inputs come from `multi-page.ts`.
+ * Production pretty URLs: keep `netlify.toml` in sync (guarded by tests).
  */
-import path from 'path';
 import type { Connect, Plugin } from 'vite';
 import { defineConfig } from 'vite';
 
+import { devPrettyRoutes, rollupHtmlInputs } from './multi-page';
+
 const shortHtmlRoutes: Connect.NextHandleFunction = (req, _res, next) => {
-  if (req.url === '/admin' || req.url === '/admin/') {
-    req.url = '/admin.html';
-  } else if (req.url === '/log' || req.url === '/log/') {
-    req.url = '/log.html';
+  if (!req.url) {
+    next();
+    return;
   }
+  const hit = devPrettyRoutes.find((r) => req.url === r.path || req.url === `${r.path}/`);
+  if (hit) req.url = hit.html;
   next();
 };
 
@@ -29,11 +30,7 @@ export default defineConfig({
   plugins: [shortHtmlRoutesPlugin()],
   build: {
     rollupOptions: {
-      input: {
-        main: path.resolve(__dirname, 'index.html'),
-        admin: path.resolve(__dirname, 'admin.html'),
-        log: path.resolve(__dirname, 'log.html'),
-      },
+      input: { ...rollupHtmlInputs },
     },
   },
 });

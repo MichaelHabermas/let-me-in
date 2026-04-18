@@ -1,5 +1,5 @@
-import { config } from '../config';
-import { initDatabase } from '../infra/contracts';
+import { initDatabase } from '../infra/persistence';
+import { getDatabaseSeedSettings } from './config-bridge';
 import { getHttpsStartupState } from './https-gate';
 
 function renderHttpsBanner(message: string): void {
@@ -30,7 +30,7 @@ export function bootstrapApp(mount: () => void | Promise<void>): void {
       return;
     }
 
-    await initDatabase({ thresholds: config.thresholds, cooldownMs: config.cooldownMs });
+    await initDatabase(getDatabaseSeedSettings());
     await mount();
   })();
 }
