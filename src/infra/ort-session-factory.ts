@@ -54,10 +54,17 @@ export async function createOrtSession(
 
   for (const ep of preferredEPs) {
     try {
-      const session = await ort.InferenceSession.create(modelSource, {
-        ...createOptionsBase,
-        executionProviders: [ep],
-      });
+      // Ort accepts URL string or Uint8Array; overload typing is narrowed per call site.
+      const session =
+        typeof modelSource === 'string'
+          ? await ort.InferenceSession.create(modelSource, {
+              ...createOptionsBase,
+              executionProviders: [ep],
+            })
+          : await ort.InferenceSession.create(modelSource, {
+              ...createOptionsBase,
+              executionProviders: [ep],
+            });
       return { session, executionProvider: ep };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);

@@ -30,7 +30,7 @@ Use this when mapping prose in older notes to the **current** tree (supersedes p
 | --- | --- |
 | HTML entrypoints calling bootstrap | `src/main.ts`, `src/admin.ts`, `src/log.ts` — each uses `void bootstrapApp({ mount, persistence? })` from `src/app/bootstrap-app.ts`. |
 | HTTPS check + IndexedDB init + mount | `src/app/bootstrap-app.ts` (inject `persistence` in tests via `createDexiePersistence` from `src/infra/persistence.ts`). |
-| Gate page DOM + camera preview wiring | `src/app/mount-gate.ts` + `src/app/gate-session.ts` (`wireGatePreviewSession`). |
+| Gate page DOM + camera preview + YOLO overlay | `src/app/mount-gate.ts` + `src/app/gate-session.ts` (`wireGatePreviewSession`, optional `yoloDetector` + `#detector-overlay`) + `src/app/pipeline.ts` + `src/app/bbox-overlay.ts`. |
 | Org titles, camera copy, preview canvas size, DB seed snapshot, dev FPS flag | `src/app/runtime-settings.ts` (`resolveGateRuntime()`). |
 | Default IndexedDB port | `src/infra/persistence.ts` (`getDefaultPersistence`, repo facades, `createDexiePersistence` for isolation). |
 | `onnxruntime-web` import boundary | `src/infra/ort-session-factory.ts` (+ re-exports in `onnx-runtime.ts`); ESLint `no-restricted-imports` for `app/*` and `ui/*` only (`eslint.config.ts`). |

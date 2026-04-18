@@ -20,6 +20,8 @@ export type GateUiRuntimeSlice = {
   getCameraUserFacingMessage(code: CameraErrorCode): string;
   getCameraStartLabel(): string;
   getCameraStopLabel(): string;
+  getDetectorLoadingMessage(): string;
+  getDetectorLoadFailedMessage(): string;
 };
 
 /**
@@ -66,6 +68,12 @@ export function createGateUiRuntimeSlice(
     },
     getCameraStopLabel(): string {
       return cfg.ui.strings.cameraStop;
+    },
+    getDetectorLoadingMessage(): string {
+      return cfg.ui.strings.detectorLoading;
+    },
+    getDetectorLoadFailedMessage(): string {
+      return cfg.ui.strings.detectorLoadFailed;
     },
   };
 }

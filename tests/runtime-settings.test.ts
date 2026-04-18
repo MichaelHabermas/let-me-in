@@ -21,6 +21,8 @@ const uiCfg: Pick<Config, 'org' | 'camera' | 'ui'> = {
       cameraUnknownError: 'unk',
       cameraStart: 'start',
       cameraStop: 'stop',
+      detectorLoading: 'det-loading',
+      detectorLoadFailed: 'det-fail',
     },
   },
 };
@@ -43,6 +45,12 @@ describe('createGateUiRuntimeSlice', () => {
     const rt = createGateUiRuntimeSlice(uiCfg, false);
     expect(rt.getCameraUserFacingMessage('permission-denied')).toBe('perm');
     expect(rt.getCameraUserFacingMessage('camera-stopped')).toBe('');
+  });
+
+  it('exposes detector status strings', () => {
+    const rt = createGateUiRuntimeSlice(uiCfg, false);
+    expect(rt.getDetectorLoadingMessage()).toBe('det-loading');
+    expect(rt.getDetectorLoadFailedMessage()).toBe('det-fail');
   });
 });
 

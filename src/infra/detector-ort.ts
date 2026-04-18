@@ -52,8 +52,7 @@ function sampleRgb(
   const i01 = (y1 * srcW + x0) * 4;
   const i11 = (y1 * srcW + x1) * 4;
   const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-  const r =
-    lerp(lerp(data[i00]!, data[i10]!, fx), lerp(data[i01]!, data[i11]!, fx), fy) / 255;
+  const r = lerp(lerp(data[i00]!, data[i10]!, fx), lerp(data[i01]!, data[i11]!, fx), fy) / 255;
   const g =
     lerp(lerp(data[i00 + 1]!, data[i10 + 1]!, fx), lerp(data[i01 + 1]!, data[i11 + 1]!, fx), fy) /
     255;
@@ -158,10 +157,7 @@ function applyHeadBand(box: BoxModel): BoxModel {
 /**
  * Decode YOLO [1,84,8400] predictions: cxcywh in letterboxed space, 80 class logits.
  */
-export function decodeYoloPredictions(
-  predictions: Float32Array,
-  meta: LetterboxMeta,
-): Detection[] {
+export function decodeYoloPredictions(predictions: Float32Array, meta: LetterboxMeta): Detection[] {
   const numAnchors = 8400;
   const numClasses = 80;
   const boxes: BoxModel[] = [];

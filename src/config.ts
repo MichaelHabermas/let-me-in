@@ -51,6 +51,8 @@ export interface Config {
       cameraUnknownError: string;
       cameraStart: string;
       cameraStop: string;
+      detectorLoading: string;
+      detectorLoadFailed: string;
     };
   };
 }
@@ -107,6 +109,8 @@ export const config: Config = {
       cameraUnknownError: 'The camera could not be started. Try again or use a different browser.',
       cameraStart: 'Start camera',
       cameraStop: 'Stop camera',
+      detectorLoading: 'Loading face detector…',
+      detectorLoadFailed: 'Face detector could not load. Check your connection and refresh.',
     },
   },
 };

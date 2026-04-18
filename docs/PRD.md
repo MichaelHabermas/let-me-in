@@ -228,11 +228,12 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
     app/
       bootstrap-app.ts         # composition root: HTTPS check, persistence.initDatabase, mount
       runtime-settings.ts      # config + env → page titles, camera strings, DB seed snapshot, dev FPS flag
-      mount-gate.ts            # gate page DOM + wireGatePreviewSession (orchestration lives in app/)
-      gate-session.ts          # preview controls ↔ camera wiring
+      mount-gate.ts            # gate DOM, overlay canvas, YOLO detector + wireGatePreviewSession
+      gate-session.ts          # preview controls, optional detector load + detection pipeline
+      bbox-overlay.ts          # drawBbox helper for gate overlay canvas
       camera.ts                # DIP re-export of infra/camera for UI/app callers
       https-gate.ts
-      pipeline.ts              # Epic E3+ (planned)
+      pipeline.ts              # createDetectionPipeline — camera frames → detector.infer → overlay
       match.ts
       policy.ts
       cooldown.ts
@@ -251,7 +252,7 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
       persistence.ts           # DIP — IndexedDB port; getDefaultPersistence + repo facades
       db-dexie.ts
       camera.ts
-      onnx-runtime.ts          # sole onnxruntime-web import boundary (ESLint enforced)
+      onnx-runtime.ts          # re-exports ORT session factory; ESLint blocks app/ui from onnxruntime-web
       detector-ort.ts
       embedder-ort.ts
       ort-session-factory.ts
@@ -691,7 +692,7 @@ camera.onError(cb) -> unsubscribe
 
 ---
 
-### Epic E3: Face Detection — [ ]
+### Epic E3: Face Detection — [x]
 
 **Goal:** Load YOLOv9-tiny via ONNX Runtime Web, run detection on each frame, and render bounding boxes on the canvas overlay.
 
@@ -718,14 +719,14 @@ camera.onError(cb) -> unsubscribe
 - DRY: preprocessing math lives in one helper.
 - Module boundaries respected.
 
-#### User Story E3.S1: As the system, I want to load the detector model once and reuse the session so that frame-by-frame detection is fast. — [ ]
+#### User Story E3.S1: As the system, I want to load the detector model once and reuse the session so that frame-by-frame detection is fast. — [x]
 
 **Acceptance criteria:**
 
 - given a fresh page load, when I call `detector.load()`, then the ORT session is ready in <8 s.
 - given a loaded session, when I call `detector.infer(frame)`, then inference returns in <500 ms.
 
-##### Feature E3.S1.F1: ORT session factory — [ ]
+##### Feature E3.S1.F1: ORT session factory — [x]
 
 **Interfaces/contracts:**
 
@@ -733,7 +734,7 @@ camera.onError(cb) -> unsubscribe
 createOrtSession(modelUrl, preferredEPs) -> Promise<{ session, executionProvider }>
 ```
 
-###### Task E3.S1.F1.T1: Create `src/infra/ort-session-factory.ts` — [ ]
+###### Task E3.S1.F1.T1: Create `src/infra/ort-session-factory.ts` — [x]
 
 - Files: `src/infra/ort-session-factory.ts`, plus the appropriate infra re-export surface (not UI-facing).
 - Preconditions: E1 complete
@@ -745,7 +746,7 @@ createOrtSession(modelUrl, preferredEPs) -> Promise<{ session, executionProvider
 - Acceptance test: call with a valid URL; receive a session + EP string; call with invalid URL → typed error.
 - SOLID/DRY note: both detector + embedder use this factory (DRY + LSP).
 
-###### Task E3.S1.F1.T2: Configure ORT WASM asset base — [ ]
+###### Task E3.S1.F1.T2: Configure ORT WASM asset base — [x]
 
 - Files: `src/infra/ort-session-factory.ts`, `src/config.ts`
 - Preconditions: E3.S1.F1.T1 done
@@ -755,7 +756,7 @@ createOrtSession(modelUrl, preferredEPs) -> Promise<{ session, executionProvider
 - Acceptance test: page load fetches WASM from jsDelivr; console logs "ORT WASM base: …".
 - SOLID/DRY note: SRP — asset routing lives in one place.
 
-##### Feature E3.S1.F2: YOLOv9-tiny detector — [ ]
+##### Feature E3.S1.F2: YOLOv9-tiny detector — [x]
 
 **Interfaces/contracts:**
 
@@ -765,7 +766,7 @@ detector.infer(imageData) -> Promise<Detection[]>
 Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 ```
 
-###### Task E3.S1.F2.T1: Download and place `yolov9t.onnx` in `public/models/` — [ ]
+###### Task E3.S1.F2.T1: Download and place `yolov9t.onnx` in `public/models/` — [x]
 
 - Files: `public/models/yolov9t.onnx`, `public/models/README.md`
 - Preconditions: E1 complete
@@ -776,7 +777,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - Acceptance test: file exists; `sha256sum` matches recorded value.
 - SOLID/DRY note: model provenance documented.
 
-###### Task E3.S1.F2.T2: Implement `detector-ort.ts` preprocess — [ ]
+###### Task E3.S1.F2.T2: Implement `detector-ort.ts` preprocess — [x]
 
 - Files: `src/infra/detector-ort.ts`
 - Preconditions: E3.S1.F2.T1, E3.S1.F1.T2 done
@@ -786,7 +787,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - Acceptance test: unit test with 1280×720 fixture produces a Float32Array of length 1*3*640*640.
 - SOLID/DRY note: preprocessing is pure + testable (SRP).
 
-###### Task E3.S1.F2.T3: Implement `detector.infer()` — [ ]
+###### Task E3.S1.F2.T3: Implement `detector.infer()` — [x]
 
 - Files: `src/infra/detector-ort.ts`
 - Preconditions: E3.S1.F2.T2 done
@@ -796,7 +797,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - Acceptance test: on warmed session, `infer()` returns raw output in <500 ms.
 - SOLID/DRY note: raw output boundary; parsing lives next task.
 
-###### Task E3.S1.F2.T4: Implement NMS + person-head-band decode — [ ]
+###### Task E3.S1.F2.T4: Implement NMS + person-head-band decode — [x]
 
 - Files: `src/infra/detector-ort.ts`
 - Preconditions: E3.S1.F2.T3 done
@@ -809,23 +810,23 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - Acceptance test: on a still photo of a single person, returns exactly one `Detection` with bbox inside the face area.
 - SOLID/DRY note: SRP — decode has no I/O.
 
-##### Feature E3.S1.F3: Bounding-box overlay — [ ]
+##### Feature E3.S1.F3: Bounding-box overlay — [x]
 
-###### Task E3.S1.F3.T1: Implement `drawBbox(ctx, bbox, color, label)` helper — [ ]
+###### Task E3.S1.F3.T1: Implement `drawBbox(ctx, bbox, color, label)` helper — [x]
 
-- Files: `src/ui/components/overlay.ts`
+- Files: `src/app/bbox-overlay.ts` (app layer — gate must not import `ui/*` per §2.2)
 - Preconditions: E3.S1.F2.T4 done
 - Steps:
   1. Draw stroked rect with 2 px line + optional label above.
 - Acceptance test: unit test with mock ctx records 1 rect + 1 fillText call.
 - SOLID/DRY note: one helper; all overlay drawing goes through it (DRY).
 
-###### Task E3.S1.F3.T2: Integrate detection into gate view — [ ]
+###### Task E3.S1.F3.T2: Integrate detection into gate view — [x]
 
-- Files: `src/app/mount-gate.ts`, `src/app/pipeline.ts`
+- Files: `src/app/mount-gate.ts`, `src/app/gate-session.ts`, `src/app/pipeline.ts`, `src/app/bbox-overlay.ts`
 - Preconditions: E3.S1.F3.T1 done
 - Steps:
-  1. Create `src/app/pipeline.ts` exporting `createPipeline({ camera, detector, ... })`.
+  1. Create `src/app/pipeline.ts` exporting `createDetectionPipeline({ camera, detector, overlayCtx, ... })`.
   2. Pipeline subscribes to `camera.onFrame`; when detector is ready and no inference is in-flight, call `detector.infer()`; draw returned bboxes on a second overlay canvas.
 - Acceptance test: live demo shows green box around face tracking movement.
 - SOLID/DRY note: pipeline is the orchestrator; no ML code inside UI (DIP).
@@ -1994,7 +1995,7 @@ stateDiagram-v2
 
 - [x] E1 Foundation (16/16 tasks)
 - [x] E2 Camera & Frame Capture (7/7 tasks)
-- [ ] E3 Face Detection (0/8 tasks)
+- [x] E3 Face Detection (8/8 tasks)
 - [ ] E4 Face Embedding (0/7 tasks)
 - [ ] E5 Matching Engine (0/5 tasks)
 - [ ] E6 Minimal Enrollment — MVP gate (0/7 tasks)
@@ -2003,7 +2004,7 @@ stateDiagram-v2
 - [ ] E9 Stretch Features (0/3 tasks)
 - [ ] E10 Validation & Submission (0/15 tasks)
 
-**Total: 23/85 tasks complete.**
+**Total: 31/85 tasks complete.**
 
 **MVP hard-gate path (24 h):** E1 → E2 → E3 → E4 → E5 → E6. 49 tasks.
 

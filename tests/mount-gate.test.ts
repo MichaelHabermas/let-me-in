@@ -6,6 +6,7 @@ import type { Camera } from '../src/app/camera';
 import { wireGatePreviewSession } from '../src/app/gate-session';
 import { mountGateIntoHost } from '../src/app/mount-gate';
 import type { GateRuntime } from '../src/app/runtime-settings';
+import type { YoloDetector } from '../src/infra/detector-ort';
 
 function fakeRuntime(): GateRuntime {
   return {
@@ -28,7 +29,17 @@ function fakeRuntime(): GateRuntime {
     getCameraUserFacingMessage: () => '',
     getCameraStartLabel: () => 'Start',
     getCameraStopLabel: () => 'Stop',
+    getDetectorLoadingMessage: () => 'Loading detector…',
+    getDetectorLoadFailedMessage: () => 'Detector failed.',
   };
+}
+
+function fakeYoloDetector(): YoloDetector {
+  return {
+    load: vi.fn().mockResolvedValue(undefined),
+    infer: vi.fn().mockResolvedValue([]),
+    dispose: vi.fn().mockResolvedValue(undefined),
+  } as unknown as YoloDetector;
 }
 
 describe('mountGateIntoHost', () => {
@@ -51,6 +62,7 @@ describe('mountGateIntoHost', () => {
       rt: fakeRuntime(),
       createCamera,
       wireGatePreviewSession,
+      createYoloDetector: fakeYoloDetector,
       addBeforeUnload: false,
     });
 
@@ -58,6 +70,7 @@ describe('mountGateIntoHost', () => {
     expect(host.querySelector('.page--gate')).toBeTruthy();
     expect(host.querySelector('#start')).toBeTruthy();
     expect(host.querySelector('#preview')).toBeTruthy();
+    expect(host.querySelector('#detector-overlay')).toBeTruthy();
     expect(host.querySelector('#decision')?.textContent).toBe('—');
 
     expect(createCamera).toHaveBeenCalled();
@@ -80,6 +93,7 @@ describe('mountGateIntoHost', () => {
       rt: fakeRuntime(),
       createCamera: () => fakeCamera,
       wireGatePreviewSession,
+      createYoloDetector: fakeYoloDetector,
       addBeforeUnload: false,
     });
 

@@ -1,5 +1,6 @@
 import type { Camera, CreateCameraOptions } from './camera';
 import { createCamera } from './camera';
+import { createYoloDetector, type YoloDetector } from '../infra/detector-ort';
 import { wireGatePreviewSession } from './gate-session';
 import type { GateRuntime } from './runtime-settings';
 import { resolveGateRuntime } from './runtime-settings';
@@ -32,6 +33,7 @@ function createGatePreview(rt: GateRuntime): {
   previewWrap: HTMLElement;
   video: HTMLVideoElement;
   canvas: HTMLCanvasElement;
+  overlayCanvas: HTMLCanvasElement;
 } {
   const previewWrap = document.createElement('div');
   previewWrap.className = 'gate-preview';
@@ -50,9 +52,17 @@ function createGatePreview(rt: GateRuntime): {
   canvas.height = rt.previewCanvasHeight;
   canvas.className = 'gate-preview__canvas';
 
+  const overlayCanvas = document.createElement('canvas');
+  overlayCanvas.id = 'detector-overlay';
+  overlayCanvas.width = rt.previewCanvasWidth;
+  overlayCanvas.height = rt.previewCanvasHeight;
+  overlayCanvas.className = 'gate-preview__overlay';
+  overlayCanvas.setAttribute('aria-hidden', 'true');
+
   previewWrap.appendChild(video);
   previewWrap.appendChild(canvas);
-  return { previewWrap, video, canvas };
+  previewWrap.appendChild(overlayCanvas);
+  return { previewWrap, video, canvas, overlayCanvas };
 }
 
 function buildGateDom(rt: GateRuntime): {
@@ -63,6 +73,7 @@ function buildGateDom(rt: GateRuntime): {
   previewWrap: HTMLElement;
   video: HTMLVideoElement;
   canvas: HTMLCanvasElement;
+  overlayCanvas: HTMLCanvasElement;
 } {
   const main = document.createElement('main');
   main.className = 'page page--gate';
@@ -77,7 +88,7 @@ function buildGateDom(rt: GateRuntime): {
   statusEl.className = 'gate-status';
   statusEl.setAttribute('role', 'status');
 
-  const { previewWrap, video, canvas } = createGatePreview(rt);
+  const { previewWrap, video, canvas, overlayCanvas } = createGatePreview(rt);
 
   const decision = document.createElement('div');
   decision.id = 'decision';
@@ -91,7 +102,7 @@ function buildGateDom(rt: GateRuntime): {
   main.appendChild(previewWrap);
   main.appendChild(decision);
 
-  return { main, startBtn, stopBtn, statusEl, previewWrap, video, canvas };
+  return { main, startBtn, stopBtn, statusEl, previewWrap, video, canvas, overlayCanvas };
 }
 
 export type MountGateHostDeps = {
@@ -102,6 +113,7 @@ export type MountGateHostDeps = {
     options: CreateCameraOptions,
   ) => Camera;
   wireGatePreviewSession: typeof wireGatePreviewSession;
+  createYoloDetector?: () => YoloDetector;
   /** When true (default), register `beforeunload` teardown like production. */
   addBeforeUnload?: boolean;
 };
@@ -115,21 +127,28 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
     rt,
     createCamera: createCam,
     wireGatePreviewSession: wireSession,
+    createYoloDetector: createDet = createYoloDetector,
     addBeforeUnload = true,
   } = deps;
 
   document.title = rt.gatePageTitle;
   host.innerHTML = '';
 
-  const { main, startBtn, stopBtn, statusEl, previewWrap, video, canvas } = buildGateDom(rt);
+  const { main, startBtn, stopBtn, statusEl, previewWrap, video, canvas, overlayCanvas } =
+    buildGateDom(rt);
   host.appendChild(main);
 
+  const yoloDetector = createDet();
+
   const teardown = wireSession(
-    { startBtn, stopBtn, statusEl, previewWrap, video, canvas },
+    { startBtn, stopBtn, statusEl, previewWrap, video, canvas, overlayCanvas },
     {
       createCamera: createCam,
       getDefaultVideoConstraintsForCamera: () => rt.getDefaultVideoConstraintsForCamera(),
       getCameraUserFacingMessage: (code) => rt.getCameraUserFacingMessage(code),
+      yoloDetector,
+      detectorLoadingMessage: rt.getDetectorLoadingMessage(),
+      detectorLoadFailedMessage: rt.getDetectorLoadFailedMessage(),
     },
     { showFpsOverlay: rt.showFpsOverlay },
   );
