@@ -1,6 +1,6 @@
 import type { Camera } from './camera';
 import { drawBbox } from './bbox-overlay';
-import type { YoloDetector } from '../infra/detector-ort';
+import type { YoloDetector } from '../infra/detector-core';
 
 export type DetectionPipelineOptions = {
   camera: Camera;

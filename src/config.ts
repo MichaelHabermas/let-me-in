@@ -40,6 +40,11 @@ export interface Config {
    * For strict CSP / air-gapped deploys, vendor `dist/*.wasm` under `/ort/` and point here.
    */
   ortWasmBase: string;
+  /**
+   * Run the YOLO detector in a Web Worker so ORT inference does not block the camera RAF loop.
+   * Set false only for debugging (e.g. worker init issues).
+   */
+  detectorUseWorker: boolean;
   audioEnabled: boolean;
   ui: {
     strings: {
@@ -97,6 +102,7 @@ export const config: Config = {
   adminCredentialSource,
   admin,
   ortWasmBase: 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/',
+  detectorUseWorker: true,
   audioEnabled: true,
   ui: {
     strings: {

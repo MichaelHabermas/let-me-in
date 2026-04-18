@@ -1,6 +1,7 @@
 import type { Camera, CreateCameraOptions } from './camera';
 import { createCamera } from './camera';
-import { createYoloDetector, type YoloDetector } from '../infra/detector-ort';
+import type { YoloDetector } from '../infra/detector-core';
+import { createYoloDetector } from '../infra/detector-ort';
 import { wireGatePreviewSession } from './gate-session';
 import type { GateRuntime } from './runtime-settings';
 import { resolveGateRuntime } from './runtime-settings';

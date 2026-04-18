@@ -1,5 +1,5 @@
 import type { CameraErrorCode } from '../infra/camera';
-import type { YoloDetector } from '../infra/detector-ort';
+import type { YoloDetector } from '../infra/detector-core';
 import type { Camera, CreateCameraOptions } from './camera';
 import { createDetectionPipeline } from './pipeline';
 
