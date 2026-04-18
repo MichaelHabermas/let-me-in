@@ -300,7 +300,7 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 - DoD-3: Dexie schema for `users`, `accessLog`, `settings` exists and round-trips a synthetic record.
 - DoD-4: Canonical Netlify URL `https://let-me-in-gatekeeper.netlify.app` serves the app over HTTPS with `/models/`* cached for 3600s.
 - DoD-5: All child Stories checked.
-- DoD-6: `npm run typecheck` exits 0, `npm run lint` exits 0, `npm run format:check` exits 0, `npm test` green (even if empty).
+- DoD-6: `pnpm run typecheck` exits 0, `pnpm run lint` exits 0, `pnpm run format:check` exits 0, `pnpm test` green (even if empty).
 - DoD-7: Human validation report delivered.
 
 **SOLID/DRY/Modularity checklist for this Epic:**
@@ -317,8 +317,8 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 
 **Acceptance criteria:**
 
-- given a fresh clone, when I run `npm install && npm run dev`, then the dev server serves `/`, `/admin`, `/log` on localhost over HTTPS or with a clear localhost exception for getUserMedia.
-- given `npm run build`, then `dist/` contains hashed static assets and is <2 MiB excluding `/models`.
+- given a fresh clone, when I run `pnpm install && pnpm run dev`, then the dev server serves `/`, `/admin`, `/log` on localhost over HTTPS or with a clear localhost exception for getUserMedia.
+- given `pnpm run build`, then `dist/` contains hashed static assets and is <2 MiB excluding `/models`.
 
 ##### Feature E1.S1.F1: Project initialization — [x]
 
@@ -334,7 +334,7 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
   2. Declare runtime deps: `dexie` (^4), `onnxruntime-web` (pinned to 1.22.0 per `docs/PRE-WORK.md`).
   3. Declare dev deps: `typescript` (^5), `vite` (^5), `@vitejs/plugin-vue` is NOT needed — plain vite, `vitest` (^2), `eslint` (^9), `@typescript-eslint/eslint-plugin` (^8), `@typescript-eslint/parser` (^8), `eslint-config-prettier` (^10), `prettier` (^3).
   4. Declare scripts: `dev: vite`, `build: vite build`, `preview: vite preview`, `typecheck: tsc --noEmit`, `lint: eslint src`, `format: prettier --write src`, `format:check: prettier --check src`, `test: vitest run`.
-- Acceptance test: `npm install` completes with exit code 0; `npm run typecheck` exits 0 on empty scaffold.
+- Acceptance test: `pnpm install` completes with exit code 0; `pnpm run typecheck` exits 0 on empty scaffold.
 - SOLID/DRY note: one place declares deps (DRY); no inline versions elsewhere.
 
 ###### Task E1.S1.F1.T2: Create `vite.config.ts` with multi-page entry — [x]
@@ -345,7 +345,7 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
   1. Configure Vite `build.rollupOptions.input` to three HTML entries.
   2. Each HTML file loads its matching entry (`src/main.ts`, `src/admin.ts`, `src/log.ts`) via `<script type="module" src="...">`.
   3. Place minimal `<div id="app">` + script tag in each HTML.
-- Acceptance test: `npm run build` produces `dist/index.html`, `dist/admin.html`, `dist/log.html`.
+- Acceptance test: `pnpm run build` produces `dist/index.html`, `dist/admin.html`, `dist/log.html`.
 - SOLID/DRY note: one build config handles all pages (DRY).
 
 ###### Task E1.S1.F1.T3: Create directory scaffold per §2.7 — [x]
