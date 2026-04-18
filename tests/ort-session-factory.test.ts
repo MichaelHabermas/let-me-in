@@ -61,7 +61,7 @@ describe('createOrtSession', () => {
     expect(err).toBeInstanceOf(OrtSessionError);
     expect(err).toMatchObject({
       name: 'OrtSessionError',
-      modelUrl: 'https://invalid/bad.onnx',
+      modelLabel: 'https://invalid/bad.onnx',
     });
   });
 
