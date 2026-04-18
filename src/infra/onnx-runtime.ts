@@ -1,7 +1,13 @@
 /**
- * Sole approved entry point for `onnxruntime-web` (see eslint `no-restricted-imports`).
- * Wire detection / embedding sessions here when the ML pipeline lands.
+ * Sole approved entry point for `onnxruntime-web` from app/ui (see eslint `no-restricted-imports`).
+ * Session creation lives in `ort-session-factory.ts` and is re-exported here for a single import seam.
  */
+
+export {
+  createOrtSession,
+  OrtSessionError,
+  type OrtSessionBundle,
+} from './ort-session-factory';
 
 export type OnnxRuntimeStatus = 'disabled' | 'ready';
 
