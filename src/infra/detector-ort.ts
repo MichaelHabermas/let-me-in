@@ -106,6 +106,15 @@ function sigmoid(x: number): number {
   return 1 / (1 + Math.exp(-x));
 }
 
+/**
+ * YOLOv8/v9 ONNX class head is usually already in ~[0,1] (see Ultralytics ONNX sample — no sigmoid).
+ * If a row looks like logits (outside (0,1)), apply sigmoid.
+ */
+function classProbability(raw: number): number {
+  if (raw > 1 || raw < 0) return sigmoid(raw);
+  return Math.min(1, Math.max(0, raw));
+}
+
 type BoxModel = { x1: number; y1: number; x2: number; y2: number; score: number; classId: number };
 
 function modelToSource(
@@ -174,8 +183,8 @@ export function decodeYoloPredictions(predictions: Float32Array, meta: Letterbox
     let bestScore = -Infinity;
     let secondScore = -Infinity;
     for (let c = 0; c < numClasses; c++) {
-      const logit = predictions[(4 + c) * numAnchors + i]!;
-      const s = sigmoid(logit);
+      const raw = predictions[(4 + c) * numAnchors + i]!;
+      const s = classProbability(raw);
       if (s > bestScore) {
         secondScore = bestScore;
         bestScore = s;

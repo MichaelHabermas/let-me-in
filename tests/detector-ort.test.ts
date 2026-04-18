@@ -9,6 +9,8 @@ import {
   decodeYoloPredictions,
   preprocessToChwFloat,
 } from '../src/infra/detector-ort';
+
+// classProbability is internal; exercise via decode on tiny fixture
 import { configureOrtWasmAssets, resetOrtWasmConfigForTests } from '../src/infra/ort-session-factory';
 
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
