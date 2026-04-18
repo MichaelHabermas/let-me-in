@@ -96,7 +96,6 @@ Physical access control via badges/PINs is easily transferred, lost, or shared. 
 | Preview FPS              | ≥15 FPS while detection runs   | `docs/SPECS.txt` |
 | Stretch features shipped | ≥3 of 7                        | `docs/SPECS.txt` |
 
-
 ---
 
 ## 2. Architecture & Constraints
@@ -123,18 +122,16 @@ flowchart LR
     US -.read on match.-> M
 ```
 
-
-
 ### 2.2 Module boundaries
 
 ```mermaid
 flowchart TB
     subgraph UI[UI layer]
-        GATE[gate-view]
         ADMIN[admin-view]
         LOG[log-view]
     end
     subgraph APP[application layer]
+        GATE[mount-gate]
         PIPE[pipeline]
         MATCH[match]
         POLICY[decision-policy]
@@ -203,7 +200,7 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 - **Open/Closed:** `policy` reads thresholds from `config`. Adding a new decision band requires editing `policy` + `config` only, never UI or pipeline.
 - **Liskov:** detector/embedder expose a uniform `OrtInferenceSession` contract — any future model swap must satisfy the same interface.
 - **Interface Segregation:** UI views receive narrow event callbacks (`onDecision`, `onFrame`, `onError`) — never the whole pipeline.
-- **Dependency Inversion:** `app/*` depends on `infra/*` via narrow ports: `src/infra/persistence.ts` (IndexedDB) and `src/infra/camera.ts` (webcam). Domain row types live in `src/domain/types.ts`. No `app/*` file imports `dexie`, `onnxruntime-web`, or `navigator.mediaDevices` directly.
+- **Dependency Inversion:** `app/*` depends on `infra/*` via narrow ports: `src/infra/persistence.ts` (IndexedDB), `src/infra/camera.ts` (webcam), and `src/infra/onnx-runtime.ts` (onnxruntime-web — all ORT imports go through this file). Domain row types live in `src/domain/types.ts`. No `app/*` file imports `dexie`, `onnxruntime-web`, or `navigator.mediaDevices` directly.
 - **DRY:** thresholds, strings, model URLs, and routes live in exactly one file each. No magic numbers in logic.
 - **Modularity:** folder layout mirrors §2.2. No file may exceed 300 lines. No function may exceed 50 lines. Refactor if exceeded.
 
@@ -219,6 +216,7 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
   .prettierrc                  # single formatting config
   eslint.config.ts             # flat config: @typescript-eslint + prettier compat
   package.json
+  multi-page.ts              # Rollup HTML inputs, dev pretty routes, Netlify redirect TOML helper
   public/
     _headers
     models/                    # yolov9t.onnx, w600k_mbf.onnx (LFS or CDN)
@@ -228,7 +226,13 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
     admin.ts                   # admin entry
     log.ts                     # log viewer entry
     app/
-      pipeline.ts
+      bootstrap-app.ts         # composition root: HTTPS check, persistence.initDatabase, mount
+      runtime-settings.ts      # config + env → page titles, camera strings, DB seed snapshot, dev FPS flag
+      mount-gate.ts            # gate page DOM + wireGatePreviewSession (orchestration lives in app/)
+      gate-session.ts          # preview controls ↔ camera wiring
+      camera.ts                # DIP re-export of infra/camera for UI/app callers
+      https-gate.ts
+      pipeline.ts              # Epic E3+ (planned)
       match.ts
       policy.ts
       cooldown.ts
@@ -239,18 +243,19 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
       bulk-import.ts
       audio.ts
       csv-export.ts
-      https-gate.ts
       consent.ts
+    domain/
+      types.ts                 # User, Decision, AccessLogRow, MatchResult, …
+      access-policy.ts         # pure decideFromMatch (thresholds) — shipped
     infra/
-      persistence.ts           # DIP — IndexedDB port (re-exports + domain types)
-      domain/types.ts          # User, Decision, AccessLogRow, match shapes
+      persistence.ts           # DIP — IndexedDB port; getDefaultPersistence + repo facades
+      db-dexie.ts
       camera.ts
+      onnx-runtime.ts          # sole onnxruntime-web import boundary (ESLint enforced)
       detector-ort.ts
       embedder-ort.ts
-      db-dexie.ts
       ort-session-factory.ts
     ui/
-      gate-view.ts
       admin-view.ts
       log-view.ts
       components/              # reusable: decision-banner.ts, confidence-meter.ts, etc.
@@ -553,18 +558,18 @@ settings: { key (pk, string), value }
 **Definition of Done (Epic-level):**
 
 - DoD-1: On the gate page, clicking "Start camera" shows a live feed within 2 s of permission grant (source: `docs/SPECS.txt` scenario 1).
-- DoD-2: A headless unit test measures canvas draw loop at ≥15 FPS on a 1280×720 synthetic stream.
+- DoD-2: A headless unit test measures canvas draw loop at ≥15 FPS on a synthetic stream at the preview resolution from `config.camera` (default 1280×720).
 - DoD-3: `camera.getFrame()` returns an `ImageData` at the canvas's current dimensions within 20 ms.
 - DoD-4: All child Stories checked; lint/tests green.
 - DoD-5: Human validation report delivered.
 
 **SOLID/DRY/Modularity checklist:**
 
-- Single Responsibility: `camera.ts` owns device selection + stream; `gate-view` owns layout.
+- Single Responsibility: `camera.ts` owns device selection + stream; `mount-gate.ts` owns gate page layout and preview wiring.
 - Open/Closed: adding a new camera-constraint (e.g., 4K) edits `config.js` only.
 - Liskov: n/a.
 - Interface Segregation: `camera` exposes `start`, `stop`, `getFrame`, `onError` only.
-- Dependency Inversion: `gate-view` imports `camera` from `app/camera.ts` (policy re-export of `infra/camera.ts`).
+- Dependency Inversion: `mount-gate.ts` imports `createCamera` from `app/camera.ts` (policy re-export of `infra/camera.ts`); org strings and constraints resolve via `app/runtime-settings.ts` (config + env), not scattered `import.meta.env` in UI.
 - DRY: all "please allow camera" copy lives in `config.ui.strings`.
 - Module boundaries respected.
 
@@ -639,24 +644,24 @@ camera.onError(cb) -> unsubscribe
 
 ##### Feature E2.S1.F2: Gate view integration — [x]
 
-**Description:** The gate page (`index.html` → `src/main.ts` → `src/ui/gate-view.ts`) wires camera to a `<video>` + `<canvas>` pair with a Start/Stop button.
+**Description:** The gate page (`index.html` → `src/main.ts` → `void bootstrapApp({ mount: mountGateView })` → `src/app/mount-gate.ts`) wires camera to a `<video>` + `<canvas>` pair with a Start/Stop button.
 
-###### Task E2.S1.F2.T1: Scaffold `gate-view.ts` layout — [x]
+###### Task E2.S1.F2.T1: Scaffold gate layout (`mount-gate.ts`) — [x]
 
-- Files: `src/ui/gate-view.ts`, `src/main.ts`, `src/styles/layout.css`
+- Files: `src/app/mount-gate.ts`, `src/main.ts`, `src/styles/layout.css`
 - Preconditions: E2.S1.F1.T5 done
 - Steps:
-  1. Create DOM: `<video autoplay muted playsinline hidden>`, `<canvas id="preview" width=1280 height=720>`, `<button id="start">`, decision banner `<div id="decision">`.
+  1. Create DOM: `<video autoplay muted playsinline hidden>`, `<canvas id="preview">` with width/height from `config.camera` (via `resolveGateRuntime()`), `<button id="start">`, decision banner `<div id="decision">`.
   2. Wire start button to `camera.start()`; stop button to `camera.stop()`.
 - Acceptance test: clicking Start shows live feed in canvas; clicking Stop blacks it out.
 - SOLID/DRY note: UI reads strings from `config.ui.strings` (DRY).
 
 ###### Task E2.S1.F2.T2: Implement FPS counter overlay (dev only) — [x]
 
-- Files: `src/ui/gate-view.ts`
+- Files: `src/app/mount-gate.ts`, `src/app/runtime-settings.ts`
 - Preconditions: E2.S1.F2.T1 done
 - Steps:
-  1. If `import.meta.env.DEV`, show `<div id="fps">` updating via `onFrame` callback with rolling average.
+  1. If `resolveGateRuntime().showFpsOverlay` (true when `import.meta.env.DEV`), show `<div id="fps">` updating via `onFrame` callback with rolling average.
 - Acceptance test: in dev mode, FPS reads ≥15 at idle.
 - SOLID/DRY note: dev-only concern is gated (no prod bloat).
 
@@ -817,7 +822,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 
 ###### Task E3.S1.F3.T2: Integrate detection into gate view — [ ]
 
-- Files: `src/ui/gate-view.ts`, `src/app/pipeline.ts`
+- Files: `src/app/mount-gate.ts`, `src/app/pipeline.ts`
 - Preconditions: E3.S1.F3.T1 done
 - Steps:
   1. Create `src/app/pipeline.ts` exporting `createPipeline({ camera, detector, ... })`.
@@ -1374,7 +1379,7 @@ stateDiagram-v2
 
 ###### Task E7.S3.F1.T1: Multi-face guard — [ ]
 
-- Files: `src/app/pipeline.ts`, `src/ui/gate-view.ts`
+- Files: `src/app/pipeline.ts`, `src/app/mount-gate.ts`
 - Preconditions: E3 complete
 - Steps:
   1. If detector returns >1 detection, skip embedding + match; show banner with `config.ui.strings.multiFace`.
@@ -1384,7 +1389,7 @@ stateDiagram-v2
 
 ###### Task E7.S3.F1.T2: No-face prompt — [ ]
 
-- Files: `src/app/pipeline.ts`, `src/ui/gate-view.ts`
+- Files: `src/app/pipeline.ts`, `src/app/mount-gate.ts`
 - Preconditions: E7.S3.F1.T1 done
 - Steps:
   1. If detector returns 0 detections for >1 s, show `config.ui.strings.noFace`.

@@ -34,6 +34,15 @@ Open:
 | `pnpm run format`       | Prettier write (`src/`)     |
 | `pnpm run format:check` | Prettier check              |
 | `pnpm test`             | Vitest                      |
+| `pnpm sync:netlify`     | Rewrite `netlify.toml` redirect blocks from `multi-page.ts` |
+| `pnpm verify:netlify`   | Fail if redirects drift from `multi-page.ts` (no writes)   |
+
+## Source layout (current)
+
+- **Entries:** [`src/main.ts`](src/main.ts), [`src/admin.ts`](src/admin.ts), [`src/log.ts`](src/log.ts) each call [`bootstrapApp({ mount })`](src/app/bootstrap-app.ts) (optional `persistence` for tests).
+- **Gate page:** [`src/app/mount-gate.ts`](src/app/mount-gate.ts) builds DOM and wires the camera preview via [`src/app/gate-session.ts`](src/app/gate-session.ts).
+- **Runtime copy / seed:** [`src/app/runtime-settings.ts`](src/app/runtime-settings.ts) centralizes config- and env-derived values (page titles, camera strings, preview canvas size, dev FPS overlay).
+- **Deploy routes:** [`multi-page.ts`](multi-page.ts) feeds Vite and `netlify.toml` (keep in sync with `pnpm sync:netlify` or `pnpm verify:netlify`).
 
 ## Configuration
 
@@ -50,7 +59,7 @@ Open:
 
 ## IndexedDB
 
-The app uses database name `**gatekeeper**` with stores `users`, `accessLog`, and `settings` (Dexie). After first load, `settings` is seeded with default threshold and cooldown snapshots supplied at bootstrap (same values as [`src/config.ts`](src/config.ts); persistence does not read `config` directly).
+The app uses database name `**gatekeeper**` with stores `users`, `accessLog`, and `settings` (Dexie). After first load, `settings` is seeded with default threshold and cooldown snapshots supplied at bootstrap from [`resolveGateRuntime().getDatabaseSeedSettings()`](src/app/runtime-settings.ts) (same numbers as [`src/config.ts`](src/config.ts); [`src/infra/persistence.ts`](src/infra/persistence.ts) does not import `config` directly).
 
 ## Validation checklist (Epic E1)
 

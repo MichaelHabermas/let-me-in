@@ -1,4 +1,4 @@
 import { bootstrapApp } from './app/bootstrap-app';
 import { mountAdminView } from './ui/admin-view';
 
-void bootstrapApp(mountAdminView);
+void bootstrapApp({ mount: mountAdminView });

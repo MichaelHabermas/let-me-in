@@ -1,4 +1,4 @@
 import { bootstrapApp } from './app/bootstrap-app';
-import { mountGateView } from './ui/gate-view';
+import { mountGateView } from './app/mount-gate';
 
-void bootstrapApp(mountGateView);
+void bootstrapApp({ mount: mountGateView });

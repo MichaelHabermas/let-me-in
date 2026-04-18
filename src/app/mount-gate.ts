@@ -1,15 +1,8 @@
-import { wireGatePreviewSession } from '../app/gate-session';
-import {
-  getCameraStartLabel,
-  getCameraStopLabel,
-  getDefaultVideoConstraintsForCamera,
-  getCameraUserFacingMessage,
-  getGatePageTitle,
-  getOrgName,
-} from '../app/config-bridge';
-import { createCamera } from '../app/camera';
+import { createCamera } from './camera';
+import { wireGatePreviewSession } from './gate-session';
+import { resolveGateRuntime } from './runtime-settings';
 
-function createGateToolbar(): {
+function createGateToolbar(rt: ReturnType<typeof resolveGateRuntime>): {
   toolbar: HTMLElement;
   startBtn: HTMLButtonElement;
   stopBtn: HTMLButtonElement;
@@ -20,12 +13,12 @@ function createGateToolbar(): {
   const startBtn = document.createElement('button');
   startBtn.type = 'button';
   startBtn.id = 'start';
-  startBtn.textContent = getCameraStartLabel();
+  startBtn.textContent = rt.getCameraStartLabel();
 
   const stopBtn = document.createElement('button');
   stopBtn.type = 'button';
   stopBtn.id = 'stop';
-  stopBtn.textContent = getCameraStopLabel();
+  stopBtn.textContent = rt.getCameraStopLabel();
   stopBtn.disabled = true;
 
   toolbar.appendChild(startBtn);
@@ -33,7 +26,7 @@ function createGateToolbar(): {
   return { toolbar, startBtn, stopBtn };
 }
 
-function createGatePreview(): {
+function createGatePreview(rt: ReturnType<typeof resolveGateRuntime>): {
   previewWrap: HTMLElement;
   video: HTMLVideoElement;
   canvas: HTMLCanvasElement;
@@ -51,8 +44,8 @@ function createGatePreview(): {
 
   const canvas = document.createElement('canvas');
   canvas.id = 'preview';
-  canvas.width = 1280;
-  canvas.height = 720;
+  canvas.width = rt.previewCanvasWidth;
+  canvas.height = rt.previewCanvasHeight;
   canvas.className = 'gate-preview__canvas';
 
   previewWrap.appendChild(video);
@@ -60,7 +53,7 @@ function createGatePreview(): {
   return { previewWrap, video, canvas };
 }
 
-function buildGateDom(): {
+function buildGateDom(rt: ReturnType<typeof resolveGateRuntime>): {
   main: HTMLElement;
   startBtn: HTMLButtonElement;
   stopBtn: HTMLButtonElement;
@@ -74,15 +67,15 @@ function buildGateDom(): {
 
   const h1 = document.createElement('h1');
   h1.className = 'page__title';
-  h1.textContent = getOrgName();
+  h1.textContent = rt.orgName;
 
-  const { toolbar, startBtn, stopBtn } = createGateToolbar();
+  const { toolbar, startBtn, stopBtn } = createGateToolbar(rt);
 
   const statusEl = document.createElement('p');
   statusEl.className = 'gate-status';
   statusEl.setAttribute('role', 'status');
 
-  const { previewWrap, video, canvas } = createGatePreview();
+  const { previewWrap, video, canvas } = createGatePreview(rt);
 
   const decision = document.createElement('div');
   decision.id = 'decision';
@@ -103,20 +96,21 @@ export function mountGateView(): void {
   const app = document.getElementById('app');
   if (!app) return;
 
-  document.title = getGatePageTitle();
+  const rt = resolveGateRuntime();
+  document.title = rt.gatePageTitle;
   app.innerHTML = '';
 
-  const { main, startBtn, stopBtn, statusEl, previewWrap, video, canvas } = buildGateDom();
+  const { main, startBtn, stopBtn, statusEl, previewWrap, video, canvas } = buildGateDom(rt);
   app.appendChild(main);
 
   const teardown = wireGatePreviewSession(
     { startBtn, stopBtn, statusEl, previewWrap, video, canvas },
     {
       createCamera,
-      getDefaultVideoConstraintsForCamera,
-      getCameraUserFacingMessage,
+      getDefaultVideoConstraintsForCamera: () => rt.getDefaultVideoConstraintsForCamera(),
+      getCameraUserFacingMessage: (code) => rt.getCameraUserFacingMessage(code),
     },
-    { showFpsOverlay: import.meta.env.DEV },
+    { showFpsOverlay: rt.showFpsOverlay },
   );
 
   window.addEventListener('beforeunload', teardown, { once: true });

@@ -35,6 +35,7 @@ If the product forbids mode switching, still **plan first in the same session** 
 ### 1. Discovery and understanding
 
 - Locate all documentation for the epic (e.g. `docs/PRD.md`, `docs/SPECS.txt`, ADRs, tickets mirrored in-repo).
+- For **where code actually lives**, cross-check `docs/PRE-WORK.md` **As-built repository pointers**, `docs/PRD.md` §2.7 (repository tree), and `README.md` **Source layout (current)** — e.g. gate orchestration is `src/app/mount-gate.ts` + `src/app/gate-session.ts`, not `src/ui/gate-view.ts`; bootstrap is `bootstrapApp({ mount, persistence? })`; ORT imports are funneled through `src/infra/onnx-runtime.ts`.
 - Infer requirements, constraints, and acceptance criteria; map relevant code and tests.
 - Flag gaps, ambiguities, or conflicts. If something critical is unknown, **state assumptions explicitly** before building on them.
 
@@ -63,7 +64,7 @@ If the product forbids mode switching, still **plan first in the same session** 
 
 ### 6. Documentation
 
-- Update only docs that the epic touches or that future maintainers need (README section, architecture notes, inline comments where non-obvious).
+- Update only docs that the epic touches or that future maintainers need (README section, `docs/PRD.md` §2.7 / task file lists if paths changed, `docs/PRE-WORK.md` **As-built repository pointers** if you introduced a new seam, architecture notes, inline comments where non-obvious).
 - Explain what was built, why key decisions were made, and how to extend.
 
 ## Completion criteria

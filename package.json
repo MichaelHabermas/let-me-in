@@ -15,7 +15,9 @@
     "format": "prettier --write src",
     "format:check": "prettier --check src",
     "test": "vitest run",
-    "sweep": "pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm test",
+    "sync:netlify": "node scripts/sync-netlify-redirects.mjs",
+    "verify:netlify": "node scripts/sync-netlify-redirects.mjs --check",
+    "sweep": "pnpm run typecheck && pnpm run lint && pnpm run format && pnpm test",
     "construct": "pnpm run sweep && pnpm run build"
   },
   "dependencies": {

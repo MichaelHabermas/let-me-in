@@ -22,6 +22,27 @@
 
 ---
 
+## As-built repository pointers (keep in sync with code)
+
+Use this when mapping prose in older notes to the **current** tree (supersedes pre-refactor filenames in archived spikes or mental models that put the gate only under `src/ui/`).
+
+| Concern | Where it lives |
+| --- | --- |
+| HTML entrypoints calling bootstrap | `src/main.ts`, `src/admin.ts`, `src/log.ts` — each uses `void bootstrapApp({ mount, persistence? })` from `src/app/bootstrap-app.ts`. |
+| HTTPS check + IndexedDB init + mount | `src/app/bootstrap-app.ts` (inject `persistence` in tests via `createDexiePersistence` from `src/infra/persistence.ts`). |
+| Gate page DOM + camera preview wiring | `src/app/mount-gate.ts` + `src/app/gate-session.ts` (`wireGatePreviewSession`). |
+| Org titles, camera copy, preview canvas size, DB seed snapshot, dev FPS flag | `src/app/runtime-settings.ts` (`resolveGateRuntime()`). |
+| Default IndexedDB port | `src/infra/persistence.ts` (`getDefaultPersistence`, repo facades, `createDexiePersistence` for isolation). |
+| `onnxruntime-web` import boundary | `src/infra/onnx-runtime.ts` (ESLint `no-restricted-imports` in `eslint.config.ts`). |
+| Pure threshold → decision helper | `src/domain/access-policy.ts` (`decideFromMatch`). |
+| Shared row / match types | `src/domain/types.ts`. |
+| Vite multi-page inputs, dev pretty URLs, Netlify redirect TOML canonical string | `multi-page.ts`; keep `netlify.toml` aligned with `pnpm sync:netlify` or `pnpm verify:netlify` (see `README.md`). |
+| Thin admin/log HTML shells | `src/ui/admin-view.ts`, `src/ui/log-view.ts`, `src/ui/page-shell.ts`. |
+
+**Authoritative layout:** `docs/PRD.md` §2.7 repository tree + `README.md` **Source layout (current)**.
+
+---
+
 ## [HARD FLOOR] Spec requirements (from `SPECS.txt` only)
 
 Normalized checklist—**not** a full reprint of `SPECS.txt`.
@@ -135,7 +156,7 @@ Normalized checklist—**not** a full reprint of `SPECS.txt`.
 
 **Detector / ORT gate zero — `[PROVEN]` (non-canonical EP/latency environment)**
 
-- **Artifact path:** Hugging Face **Kalray/yolov9** **`yolov9t.onnx`** — **COCO general-object** YOLOv9-tiny (~**8.33 MiB**, **FP32**), **not** a face-specialized head. Loads and runs under `onnxruntime-web@1.24.3` with `executionProviders: ['webgl','wasm']`, `graphOptimizationLevel: 'all'`.
+- **Artifact path:** Hugging Face **Kalray/yolov9** **`yolov9t.onnx`** — **COCO general-object** YOLOv9-tiny (~**8.33 MiB**, **FP32**), **not** a face-specialized head. Loads and runs under `onnxruntime-web@1.24.3` with `executionProviders: ['webgl','wasm']`, `graphOptimizationLevel: 'all'`. **Implementation rule:** every `onnxruntime-web` import must go through `src/infra/onnx-runtime.ts` (enforced by ESLint) so the ORT seam stays one place.
 - **Reality check:** In probe environment, ORT **dropped WebGL** (`backend not found`); successful runs on **WASM**. **Do not claim WebGL detection** without MBP Chrome evidence.
 - **I/O tensors (this checkpoint):** input **`images`** `float32` **`[1,3,640,640]`** NCHW **[0,1]**; output **`predictions`** `float32` **`[1,84,8400]`**; toy pipeline later ran decode+NMS on this head.
 - **Latency (probe env):** single static `session.run` ~**190 ms**; live-frame median preprocess+infer **~182.9 ms** over **N=12** (warmup excluded).

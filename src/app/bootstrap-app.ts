@@ -1,5 +1,6 @@
-import { initDatabase } from '../infra/persistence';
-import { getDatabaseSeedSettings } from './config-bridge';
+import type { DexiePersistence } from '../infra/persistence';
+import { getDefaultPersistence } from '../infra/persistence';
+import { resolveGateRuntime } from './runtime-settings';
 import { getHttpsStartupState } from './https-gate';
 
 function renderHttpsBanner(message: string): void {
@@ -18,11 +19,19 @@ function renderHttpsBanner(message: string): void {
   root.appendChild(banner);
 }
 
+export type BootstrapAppOptions = {
+  mount: () => void | Promise<void>;
+  persistence?: DexiePersistence;
+};
+
 /**
  * Single entry orchestration: HTTPS gate, IndexedDB init with org defaults from config, then mount.
- * Call as `void bootstrapApp(mountGateView)` from each HTML entry.
+ * Call as `void bootstrapApp({ mount: mountGateView })` from each HTML entry.
  */
-export function bootstrapApp(mount: () => void | Promise<void>): void {
+export function bootstrapApp(options: BootstrapAppOptions): void {
+  const { mount, persistence: persistenceOverride } = options;
+  const persistence = persistenceOverride ?? getDefaultPersistence();
+
   void (async () => {
     const https = getHttpsStartupState();
     if (!https.ok) {
@@ -30,7 +39,7 @@ export function bootstrapApp(mount: () => void | Promise<void>): void {
       return;
     }
 
-    await initDatabase(getDatabaseSeedSettings());
+    await persistence.initDatabase(resolveGateRuntime().getDatabaseSeedSettings());
     await mount();
   })();
 }

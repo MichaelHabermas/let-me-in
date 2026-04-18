@@ -201,16 +201,3 @@ export function createDexiePersistence(databaseName: string): DexiePersistence {
     settingsRepo: makeSettingsRepo(db, ensureDbReady),
   };
 }
-
-const defaultPersistence = createDexiePersistence('gatekeeper');
-
-/** Open DB and ensure default settings rows exist (E1.S2.F1.T3). Idempotent per process until reset. */
-export const initDatabase = defaultPersistence.initDatabase.bind(defaultPersistence);
-
-/** Close client and drop init promise — use in tests after Dexie.delete. */
-export const resetIndexedDbClientForTests =
-  defaultPersistence.resetIndexedDbClientForTests.bind(defaultPersistence);
-
-export const usersRepo = defaultPersistence.usersRepo;
-export const accessLogRepo = defaultPersistence.accessLogRepo;
-export const settingsRepo = defaultPersistence.settingsRepo;

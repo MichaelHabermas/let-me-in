@@ -34,7 +34,7 @@ export default [
             },
             {
               name: 'onnxruntime-web',
-              message: 'Import from infra/camera.ts (or future pipeline ports) instead (DIP).',
+              message: 'Import from infra/onnx-runtime.ts instead (DIP).',
             },
           ],
         },

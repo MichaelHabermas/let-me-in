@@ -12,9 +12,21 @@ export const rollupHtmlInputs: Record<string, string> = {
 
 /**
  * Dev-only pretty paths → served HTML filename (leading slash on `html`).
- * Keep [[redirects]] in netlify.toml aligned; `tests/multi-page-sync.test.ts` guards drift.
+ * Netlify: run `pnpm sync:netlify` so `netlify.toml` matches; `pnpm verify:netlify` / tests guard drift.
  */
 export const devPrettyRoutes: { path: string; html: string }[] = [
   { path: '/admin', html: '/admin.html' },
   { path: '/log', html: '/log.html' },
 ];
+
+/** Canonical Netlify `[[redirects]]` blocks (must match `netlify.toml`; use `pnpm sync:netlify` to rewrite). */
+export function netlifyRedirectsTomlBlocks(): string {
+  return (
+    devPrettyRoutes
+      .map(
+        (r) =>
+          `[[redirects]]\n  from = "${r.path}"\n  to = "${r.html}"\n  status = 200`,
+      )
+      .join('\n\n') + '\n'
+  );
+}
