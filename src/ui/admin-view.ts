@@ -1,12 +1,6 @@
 import { resolveGateRuntime } from '../app/runtime-settings';
-import { mountStaticPage } from './page-shell';
+import { mountOrgBrandedStaticPage } from './org-static-pages';
 
 export function mountAdminView(): void {
-  const rt = resolveGateRuntime();
-  mountStaticPage({
-    documentTitle: rt.adminPageTitle,
-    pageClass: 'page page--admin',
-    headingText: `${rt.orgName} — Admin`,
-    ledeText: 'Enrollment and authentication will be wired in Epic E6.',
-  });
+  mountOrgBrandedStaticPage('admin', resolveGateRuntime());
 }

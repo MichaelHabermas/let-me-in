@@ -3,12 +3,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { DatabaseSeedSettings } from '../src/infra/persistence';
 import {
-  accessLogRepo,
   createDexiePersistence,
+  getDefaultPersistence,
   initDatabase,
   resetIndexedDbClientForTests,
-  settingsRepo,
-  usersRepo,
 } from '../src/infra/persistence';
 
 const defaultTestSeed = {
@@ -38,7 +36,7 @@ describe('Dexie schema v1', () => {
 
   it('seeds default settings on first open', async () => {
     await initDatabase(defaultTestSeed);
-    const rows = await settingsRepo.toArray();
+    const rows = await getDefaultPersistence().settingsRepo.toArray();
     const keys = rows.map((r) => r.key).sort();
     expect(keys).toEqual(['cooldownMs', 'thresholds']);
     const th = rows.find((r) => r.key === 'thresholds');
@@ -47,6 +45,7 @@ describe('Dexie schema v1', () => {
 
   it('round-trips a user record', async () => {
     await initDatabase(defaultTestSeed);
+    const db = getDefaultPersistence();
     const id = '00000000-0000-4000-8000-000000000001';
     const user = {
       id,
@@ -56,32 +55,33 @@ describe('Dexie schema v1', () => {
       embedding: new Float32Array(512).fill(0.01),
       createdAt: Date.now(),
     };
-    await usersRepo.put(user);
-    const read = await usersRepo.get(id);
+    await db.usersRepo.put(user);
+    const read = await db.usersRepo.get(id);
     expect(read?.name).toBe('Test User');
     expect(read?.embedding.length).toBe(512);
   });
 
   it('round-trips access log and supports appendDecision', async () => {
     await initDatabase(defaultTestSeed);
+    const log = getDefaultPersistence().accessLogRepo;
     const ts = Date.now();
-    await accessLogRepo.put({
+    await log.put({
       timestamp: ts,
       userId: null,
       similarity01: 0.42,
       decision: 'DENIED',
       capturedFrameBlob: new Blob(['f'], { type: 'image/png' }),
     });
-    const row = await accessLogRepo.get(ts);
+    const row = await log.get(ts);
     expect(row?.decision).toBe('DENIED');
 
-    await accessLogRepo.appendDecision({
+    await log.appendDecision({
       userId: 'u1',
       similarity01: 0.9,
       decision: 'GRANTED',
       capturedFrameBlob: new Blob(['g'], { type: 'image/png' }),
     });
-    const all = await accessLogRepo.toArray();
+    const all = await log.toArray();
     expect(all.length).toBe(2);
   });
 });

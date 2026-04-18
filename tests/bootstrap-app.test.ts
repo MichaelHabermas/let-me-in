@@ -21,17 +21,32 @@ describe('bootstrapApp', () => {
     const persistence = createDexiePersistence(testDbName);
     const mount = vi.fn();
 
-    bootstrapApp({ mount, persistence });
+    const result = await bootstrapApp({
+      mount,
+      persistence,
+      getHttpsStartupState: () => ({ ok: true }),
+    });
 
-    await vi.waitFor(
-      async () => {
-        expect(mount).toHaveBeenCalled();
-      },
-      { timeout: 3000 },
-    );
+    expect(result).toEqual({ ok: true });
+    expect(mount).toHaveBeenCalledOnce();
 
     const settings = await persistence.settingsRepo.toArray();
     expect(settings.some((r) => r.key === 'thresholds')).toBe(true);
     expect(settings.some((r) => r.key === 'cooldownMs')).toBe(true);
+  });
+
+  it('returns https result without mounting when HTTPS check fails', async () => {
+    const mount = vi.fn();
+    const renderHttpsBanner = vi.fn();
+
+    const result = await bootstrapApp({
+      mount,
+      getHttpsStartupState: () => ({ ok: false, message: 'no https' }),
+      renderHttpsBanner,
+    });
+
+    expect(result).toEqual({ ok: false, reason: 'https', message: 'no https' });
+    expect(mount).not.toHaveBeenCalled();
+    expect(renderHttpsBanner).toHaveBeenCalledWith('no https');
   });
 });

@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie';
 
+import type { DatabaseSeedSettings } from '../domain/database-seed';
 import type { AccessLogRow, Decision, User } from '../domain/types';
 
 export interface SettingsRow {
@@ -7,16 +8,7 @@ export interface SettingsRow {
   value: unknown;
 }
 
-/** Default rows written to `settings` when the store is empty (caller supplies values). */
-export interface DatabaseSeedSettings {
-  thresholds: {
-    strong: number;
-    weak: number;
-    unknown: number;
-    margin: number;
-  };
-  cooldownMs: number;
-}
+export type { DatabaseSeedSettings } from '../domain/database-seed';
 
 export interface DexiePersistence {
   initDatabase(seed: DatabaseSeedSettings): Promise<void>;

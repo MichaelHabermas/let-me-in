@@ -1,9 +1,11 @@
 import type { DexiePersistence } from '../infra/persistence';
 import { getDefaultPersistence } from '../infra/persistence';
+import { getHttpsStartupState as defaultGetHttpsStartupState } from './https-gate';
 import { resolveGateRuntime } from './runtime-settings';
-import { getHttpsStartupState } from './https-gate';
 
-function renderHttpsBanner(message: string): void {
+export type HttpsStartupState = ReturnType<typeof defaultGetHttpsStartupState>;
+
+function defaultRenderHttpsBanner(message: string): void {
   const root = document.body;
   root.innerHTML = '';
 
@@ -22,24 +24,43 @@ function renderHttpsBanner(message: string): void {
 export type BootstrapAppOptions = {
   mount: () => void | Promise<void>;
   persistence?: DexiePersistence;
+  getHttpsStartupState?: () => HttpsStartupState;
+  renderHttpsBanner?: (message: string) => void;
 };
+
+export type BootstrapResult =
+  | { ok: true }
+  | { ok: false; reason: 'https'; message: string }
+  | { ok: false; reason: 'database'; cause: unknown }
+  | { ok: false; reason: 'mount'; cause: unknown };
 
 /**
  * Single entry orchestration: HTTPS gate, IndexedDB init with org defaults from config, then mount.
- * Call as `void bootstrapApp({ mount: mountGateView })` from each HTML entry.
+ * Call from each HTML entry: `void bootstrapApp({ mount }).then(handleBootstrapResult)`.
  */
-export function bootstrapApp(options: BootstrapAppOptions): void {
+export async function bootstrapApp(options: BootstrapAppOptions): Promise<BootstrapResult> {
   const { mount, persistence: persistenceOverride } = options;
   const persistence = persistenceOverride ?? getDefaultPersistence();
+  const getHttps = options.getHttpsStartupState ?? defaultGetHttpsStartupState;
+  const renderHttpsBanner = options.renderHttpsBanner ?? defaultRenderHttpsBanner;
 
-  void (async () => {
-    const https = getHttpsStartupState();
-    if (!https.ok) {
-      renderHttpsBanner(https.message);
-      return;
-    }
+  const https = getHttps();
+  if (!https.ok) {
+    renderHttpsBanner(https.message);
+    return { ok: false, reason: 'https', message: https.message };
+  }
 
+  try {
     await persistence.initDatabase(resolveGateRuntime().getDatabaseSeedSettings());
+  } catch (cause) {
+    return { ok: false, reason: 'database', cause };
+  }
+
+  try {
     await mount();
-  })();
+  } catch (cause) {
+    return { ok: false, reason: 'mount', cause };
+  }
+
+  return { ok: true };
 }

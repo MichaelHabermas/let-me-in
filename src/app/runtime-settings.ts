@@ -4,70 +4,23 @@
  */
 
 import { config } from '../config';
-import type { CameraErrorCode } from '../infra/camera';
-import type { DatabaseSeedSettings } from '../infra/persistence';
+import type { DatabaseSeedSettings } from '../domain/database-seed';
+import { createGateUiRuntimeSlice } from './gate-ui-runtime';
+import { getDatabaseSeedSettingsFromConfig } from './gate-seed-settings';
 
-export type GateRuntime = {
-  orgName: string;
-  gatePageTitle: string;
-  adminPageTitle: string;
-  logPageTitle: string;
-  previewCanvasWidth: number;
-  previewCanvasHeight: number;
-  /** Dev-only FPS overlay on gate preview (maps `import.meta.env.DEV`). */
-  showFpsOverlay: boolean;
+export type GateRuntime = ReturnType<typeof createGateUiRuntimeSlice> & {
   getDatabaseSeedSettings(): DatabaseSeedSettings;
-  getDefaultVideoConstraintsForCamera(): {
-    idealWidth: number;
-    idealHeight: number;
-    facingMode: string;
-  };
-  getCameraUserFacingMessage(code: CameraErrorCode): string;
-  getCameraStartLabel(): string;
-  getCameraStopLabel(): string;
 };
 
-export function resolveGateRuntime(): GateRuntime {
-  const orgName = config.org.name;
+/**
+ * @param isDev - When omitted, uses `import.meta.env.DEV`. Tests should pass an explicit boolean.
+ */
+export function resolveGateRuntime(isDev: boolean = import.meta.env.DEV): GateRuntime {
+  const ui = createGateUiRuntimeSlice(config, Boolean(isDev));
   return {
-    orgName,
-    gatePageTitle: `${orgName} — Entry`,
-    adminPageTitle: `${orgName} — Admin`,
-    logPageTitle: `${orgName} — Entry log`,
-    previewCanvasWidth: config.camera.idealWidth,
-    previewCanvasHeight: config.camera.idealHeight,
-    showFpsOverlay: Boolean(import.meta.env.DEV),
+    ...ui,
     getDatabaseSeedSettings(): DatabaseSeedSettings {
-      return { thresholds: { ...config.thresholds }, cooldownMs: config.cooldownMs };
-    },
-    getDefaultVideoConstraintsForCamera() {
-      return {
-        idealWidth: config.camera.idealWidth,
-        idealHeight: config.camera.idealHeight,
-        facingMode: config.camera.defaultFacingMode,
-      };
-    },
-    getCameraUserFacingMessage(code: CameraErrorCode): string {
-      switch (code) {
-        case 'permission-denied':
-          return config.ui.strings.cameraPermissionDenied;
-        case 'no-device':
-          return config.ui.strings.cameraNoDevice;
-        case 'unknown':
-          return config.ui.strings.cameraUnknownError;
-        case 'camera-stopped':
-          return '';
-        default: {
-          const _exhaustive: never = code;
-          return _exhaustive;
-        }
-      }
-    },
-    getCameraStartLabel(): string {
-      return config.ui.strings.cameraStart;
-    },
-    getCameraStopLabel(): string {
-      return config.ui.strings.cameraStop;
+      return getDatabaseSeedSettingsFromConfig(config);
     },
   };
 }

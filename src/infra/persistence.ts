@@ -2,15 +2,13 @@
  * IndexedDB port — app imports from here, not from dexie directly.
  */
 
-import {
-  createDexiePersistence,
-  type DexiePersistence,
-  type DatabaseSeedSettings,
-} from './db-dexie';
+import { createDexiePersistence, type DexiePersistence } from './db-dexie';
+import type { DatabaseSeedSettings } from '../domain/database-seed';
 
 export type { BboxPixels, Decision, MatchResult, User, AccessLogRow } from '../domain/types';
 
-export type { DatabaseSeedSettings, SettingsRow } from './db-dexie';
+export type { DatabaseSeedSettings } from '../domain/database-seed';
+export type { SettingsRow } from './db-dexie';
 
 export type { DexiePersistence } from './db-dexie';
 
@@ -33,40 +31,5 @@ export async function initDatabase(seed: DatabaseSeedSettings): Promise<void> {
 export async function resetIndexedDbClientForTests(): Promise<void> {
   await getDefaultPersistence().resetIndexedDbClientForTests();
 }
-
-export const usersRepo = {
-  put: (...args: Parameters<DexiePersistence['usersRepo']['put']>) =>
-    getDefaultPersistence().usersRepo.put(...args),
-  get: (...args: Parameters<DexiePersistence['usersRepo']['get']>) =>
-    getDefaultPersistence().usersRepo.get(...args),
-  delete: (...args: Parameters<DexiePersistence['usersRepo']['delete']>) =>
-    getDefaultPersistence().usersRepo.delete(...args),
-  toArray: (...args: Parameters<DexiePersistence['usersRepo']['toArray']>) =>
-    getDefaultPersistence().usersRepo.toArray(...args),
-};
-
-export const accessLogRepo = {
-  put: (...args: Parameters<DexiePersistence['accessLogRepo']['put']>) =>
-    getDefaultPersistence().accessLogRepo.put(...args),
-  get: (...args: Parameters<DexiePersistence['accessLogRepo']['get']>) =>
-    getDefaultPersistence().accessLogRepo.get(...args),
-  delete: (...args: Parameters<DexiePersistence['accessLogRepo']['delete']>) =>
-    getDefaultPersistence().accessLogRepo.delete(...args),
-  toArray: (...args: Parameters<DexiePersistence['accessLogRepo']['toArray']>) =>
-    getDefaultPersistence().accessLogRepo.toArray(...args),
-  appendDecision: (...args: Parameters<DexiePersistence['accessLogRepo']['appendDecision']>) =>
-    getDefaultPersistence().accessLogRepo.appendDecision(...args),
-};
-
-export const settingsRepo = {
-  put: (...args: Parameters<DexiePersistence['settingsRepo']['put']>) =>
-    getDefaultPersistence().settingsRepo.put(...args),
-  get: (...args: Parameters<DexiePersistence['settingsRepo']['get']>) =>
-    getDefaultPersistence().settingsRepo.get(...args),
-  delete: (...args: Parameters<DexiePersistence['settingsRepo']['delete']>) =>
-    getDefaultPersistence().settingsRepo.delete(...args),
-  toArray: (...args: Parameters<DexiePersistence['settingsRepo']['toArray']>) =>
-    getDefaultPersistence().settingsRepo.toArray(...args),
-};
 
 export { createDexiePersistence } from './db-dexie';

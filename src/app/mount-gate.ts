@@ -1,8 +1,10 @@
+import type { Camera, CreateCameraOptions } from './camera';
 import { createCamera } from './camera';
 import { wireGatePreviewSession } from './gate-session';
+import type { GateRuntime } from './runtime-settings';
 import { resolveGateRuntime } from './runtime-settings';
 
-function createGateToolbar(rt: ReturnType<typeof resolveGateRuntime>): {
+function createGateToolbar(rt: GateRuntime): {
   toolbar: HTMLElement;
   startBtn: HTMLButtonElement;
   stopBtn: HTMLButtonElement;
@@ -26,7 +28,7 @@ function createGateToolbar(rt: ReturnType<typeof resolveGateRuntime>): {
   return { toolbar, startBtn, stopBtn };
 }
 
-function createGatePreview(rt: ReturnType<typeof resolveGateRuntime>): {
+function createGatePreview(rt: GateRuntime): {
   previewWrap: HTMLElement;
   video: HTMLVideoElement;
   canvas: HTMLCanvasElement;
@@ -53,7 +55,7 @@ function createGatePreview(rt: ReturnType<typeof resolveGateRuntime>): {
   return { previewWrap, video, canvas };
 }
 
-function buildGateDom(rt: ReturnType<typeof resolveGateRuntime>): {
+function buildGateDom(rt: GateRuntime): {
   main: HTMLElement;
   startBtn: HTMLButtonElement;
   stopBtn: HTMLButtonElement;
@@ -92,26 +94,60 @@ function buildGateDom(rt: ReturnType<typeof resolveGateRuntime>): {
   return { main, startBtn, stopBtn, statusEl, previewWrap, video, canvas };
 }
 
-export function mountGateView(): void {
-  const app = document.getElementById('app');
-  if (!app) return;
+export type MountGateHostDeps = {
+  rt: GateRuntime;
+  createCamera: (
+    video: HTMLVideoElement,
+    canvas: HTMLCanvasElement,
+    options: CreateCameraOptions,
+  ) => Camera;
+  wireGatePreviewSession: typeof wireGatePreviewSession;
+  /** When true (default), register `beforeunload` teardown like production. */
+  addBeforeUnload?: boolean;
+};
 
-  const rt = resolveGateRuntime();
+/**
+ * Mount the gate UI into an existing host (tests inject `#app` or a detached div).
+ * Returns teardown (stop camera, remove listeners) — also registered on `beforeunload` when enabled.
+ */
+export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): () => void {
+  const {
+    rt,
+    createCamera: createCam,
+    wireGatePreviewSession: wireSession,
+    addBeforeUnload = true,
+  } = deps;
+
   document.title = rt.gatePageTitle;
-  app.innerHTML = '';
+  host.innerHTML = '';
 
   const { main, startBtn, stopBtn, statusEl, previewWrap, video, canvas } = buildGateDom(rt);
-  app.appendChild(main);
+  host.appendChild(main);
 
-  const teardown = wireGatePreviewSession(
+  const teardown = wireSession(
     { startBtn, stopBtn, statusEl, previewWrap, video, canvas },
     {
-      createCamera,
+      createCamera: createCam,
       getDefaultVideoConstraintsForCamera: () => rt.getDefaultVideoConstraintsForCamera(),
       getCameraUserFacingMessage: (code) => rt.getCameraUserFacingMessage(code),
     },
     { showFpsOverlay: rt.showFpsOverlay },
   );
 
-  window.addEventListener('beforeunload', teardown, { once: true });
+  if (addBeforeUnload) {
+    window.addEventListener('beforeunload', teardown, { once: true });
+  }
+
+  return teardown;
+}
+
+export function mountGateView(): void {
+  const app = document.getElementById('app');
+  if (!app) return;
+
+  mountGateIntoHost(app, {
+    rt: resolveGateRuntime(),
+    createCamera,
+    wireGatePreviewSession,
+  });
 }
