@@ -1,30 +1,42 @@
 import Dexie from 'dexie';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import type { DatabaseSeedSettings } from '../src/infra/contracts';
 import {
   accessLogRepo,
   initDatabase,
+  resetIndexedDbClientForTests,
   settingsRepo,
   usersRepo,
 } from '../src/infra/contracts';
 
+const defaultTestSeed = {
+  thresholds: { strong: 0.8, weak: 0.65, unknown: 0.6, margin: 0.05 },
+  cooldownMs: 3000,
+} satisfies DatabaseSeedSettings;
+
+async function resetDb(): Promise<void> {
+  await resetIndexedDbClientForTests();
+  await Dexie.delete('gatekeeper');
+}
+
 describe('Dexie schema v1', () => {
   beforeEach(async () => {
-    await Dexie.delete('gatekeeper');
+    await resetDb();
   });
 
   afterEach(async () => {
-    await Dexie.delete('gatekeeper');
+    await resetDb();
   });
 
   it('opens gatekeeper database', async () => {
-    await initDatabase();
+    await initDatabase(defaultTestSeed);
     const exists = await Dexie.exists('gatekeeper');
     expect(exists).toBe(true);
   });
 
   it('seeds default settings on first open', async () => {
-    await initDatabase();
+    await initDatabase(defaultTestSeed);
     const rows = await settingsRepo.toArray();
     const keys = rows.map((r) => r.key).sort();
     expect(keys).toEqual(['cooldownMs', 'thresholds']);
@@ -33,7 +45,7 @@ describe('Dexie schema v1', () => {
   });
 
   it('round-trips a user record', async () => {
-    await initDatabase();
+    await initDatabase(defaultTestSeed);
     const id = '00000000-0000-4000-8000-000000000001';
     const user = {
       id,
@@ -50,7 +62,7 @@ describe('Dexie schema v1', () => {
   });
 
   it('round-trips access log and supports appendDecision', async () => {
-    await initDatabase();
+    await initDatabase(defaultTestSeed);
     const ts = Date.now();
     await accessLogRepo.put({
       timestamp: ts,

@@ -1,11 +1,21 @@
 import Dexie, { type Table } from 'dexie';
 
-import { config } from '../config';
 import type { AccessLogRow, Decision, User } from './types';
 
 export interface SettingsRow {
   key: string;
   value: unknown;
+}
+
+/** Default rows written to `settings` when the store is empty (caller supplies values). */
+export interface DatabaseSeedSettings {
+  thresholds: {
+    strong: number;
+    weak: number;
+    unknown: number;
+    margin: number;
+  };
+  cooldownMs: number;
 }
 
 class GatekeeperDB extends Dexie {
@@ -25,58 +35,85 @@ class GatekeeperDB extends Dexie {
 
 const db = new GatekeeperDB();
 
-async function seedSettingsIfEmpty(): Promise<void> {
+let dbReady: Promise<void> | null = null;
+
+async function seedSettingsIfEmpty(seed: DatabaseSeedSettings): Promise<void> {
   const n = await db.settings.count();
   if (n > 0) return;
   await db.transaction('rw', db.settings, async () => {
     await db.settings.put({
       key: 'thresholds',
-      value: { ...config.thresholds },
+      value: { ...seed.thresholds },
     });
-    await db.settings.put({ key: 'cooldownMs', value: config.cooldownMs });
+    await db.settings.put({ key: 'cooldownMs', value: seed.cooldownMs });
   });
 }
 
-/** Open DB and ensure default settings rows exist (E1.S2.F1.T3). */
-export async function initDatabase(): Promise<void> {
+async function openAndSeed(seed: DatabaseSeedSettings): Promise<void> {
   await db.open();
-  await seedSettingsIfEmpty();
+  await seedSettingsIfEmpty(seed);
+}
+
+/** Open DB and ensure default settings rows exist (E1.S2.F1.T3). Idempotent per process until reset. */
+export async function initDatabase(seed: DatabaseSeedSettings): Promise<void> {
+  if (!dbReady) {
+    dbReady = openAndSeed(seed);
+  }
+  await dbReady;
+}
+
+async function ensureDbReady(): Promise<void> {
+  if (!dbReady) {
+    throw new Error('initDatabase() must be called before using repositories');
+  }
+  await dbReady;
+}
+
+/** Close client and drop init promise — use in tests after Dexie.delete. */
+export async function resetIndexedDbClientForTests(): Promise<void> {
+  try {
+    const maybePromise = db.close() as Promise<void> | void;
+    if (maybePromise) await maybePromise;
+  } catch {
+    /* ignore: already closed or delete in progress */
+  }
+  dbReady = null;
 }
 
 export const usersRepo = {
   async put(user: User): Promise<string> {
-    await initDatabase();
+    await ensureDbReady();
     return db.users.put(user);
   },
   async get(id: string): Promise<User | undefined> {
-    await initDatabase();
+    await ensureDbReady();
     return db.users.get(id);
   },
   async delete(id: string): Promise<void> {
-    await initDatabase();
+    await ensureDbReady();
     await db.users.delete(id);
   },
   async toArray(): Promise<User[]> {
-    await initDatabase();
+    await ensureDbReady();
     return db.users.toArray();
   },
 };
 
 export const accessLogRepo = {
   async put(row: AccessLogRow): Promise<number> {
-    await initDatabase();
+    await ensureDbReady();
     return db.accessLog.put(row);
   },
   async get(timestamp: number): Promise<AccessLogRow | undefined> {
-    await initDatabase();
+    await ensureDbReady();
     return db.accessLog.get(timestamp);
   },
   async delete(timestamp: number): Promise<void> {
-    await initDatabase();
+    await ensureDbReady();
     await db.accessLog.delete(timestamp);
   },
   async toArray(): Promise<AccessLogRow[]> {
-    await initDatabase();
+    await ensureDbReady();
     return db.accessLog.toArray();
   },
   async appendDecision(payload: {
@@ -85,6 +122,7 @@ export const accessLogRepo = {
     decision: Decision;
     capturedFrameBlob: Blob;
   }): Promise<void> {
+    await ensureDbReady();
     let timestamp = Date.now();
     while (await db.accessLog.get(timestamp)) {
       timestamp += 1;
@@ -96,25 +134,25 @@ export const accessLogRepo = {
       decision: payload.decision,
       capturedFrameBlob: payload.capturedFrameBlob,
     };
-    await this.put(row);
+    await accessLogRepo.put(row);
   },
 };
 
 export const settingsRepo = {
   async put(row: SettingsRow): Promise<string> {
-    await initDatabase();
+    await ensureDbReady();
     return db.settings.put(row);
   },
   async get(key: string): Promise<SettingsRow | undefined> {
-    await initDatabase();
+    await ensureDbReady();
     return db.settings.get(key);
   },
   async delete(key: string): Promise<void> {
-    await initDatabase();
+    await ensureDbReady();
     await db.settings.delete(key);
   },
   async toArray(): Promise<SettingsRow[]> {
-    await initDatabase();
+    await ensureDbReady();
     return db.settings.toArray();
   },
 };

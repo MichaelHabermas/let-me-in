@@ -11,7 +11,9 @@
     "lint": "eslint src",
     "format": "prettier --write src",
     "format:check": "prettier --check src",
-    "test": "vitest run"
+    "test": "vitest run",
+    "sweep": "pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm test",
+    "construct": "pnpm run sweep && pnpm run build"
   },
   "dependencies": {
     "dexie": "^4.0.0",

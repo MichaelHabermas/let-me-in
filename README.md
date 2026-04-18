@@ -52,7 +52,7 @@ Open:
 
 ## IndexedDB
 
-The app uses database name `**gatekeeper**` with stores `users`, `accessLog`, and `settings` (Dexie). After first load, `settings` is seeded with default threshold and cooldown snapshots from config.
+The app uses database name `**gatekeeper**` with stores `users`, `accessLog`, and `settings` (Dexie). After first load, `settings` is seeded with default threshold and cooldown snapshots supplied at bootstrap (same values as [`src/config.ts`](src/config.ts); persistence does not read `config` directly).
 
 ## Validation checklist (Epic E1)
 

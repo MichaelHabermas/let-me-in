@@ -4,6 +4,12 @@
 
 export type { BboxPixels, Decision, MatchResult, User, AccessLogRow } from './types';
 
-export { accessLogRepo, initDatabase, settingsRepo, usersRepo } from './db-dexie';
+export {
+  accessLogRepo,
+  initDatabase,
+  resetIndexedDbClientForTests,
+  settingsRepo,
+  usersRepo,
+} from './db-dexie';
 
-export type { SettingsRow } from './db-dexie';
+export type { DatabaseSeedSettings, SettingsRow } from './db-dexie';

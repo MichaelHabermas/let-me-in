@@ -1,3 +1,8 @@
+/**
+ * Multi-page dev server: `/admin` and `/log` are rewritten to `admin.html` / `log.html` below
+ * (dev-only). Production uses `netlify.toml` redirects for the same paths. When adding another
+ * HTML entry, update Rollup `build.rollupOptions.input`, this middleware map, and Netlify redirects.
+ */
 import path from 'path';
 import type { Connect, Plugin } from 'vite';
 import { defineConfig } from 'vite';

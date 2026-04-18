@@ -15,3 +15,8 @@ export function assertHttps(): void {
 export function getHttpsRequiredMessage(): string {
   return HTTPS_MESSAGE;
 }
+
+export function getHttpsStartupState(): { ok: true } | { ok: false; message: string } {
+  if (isHttpsOrLocalhost()) return { ok: true };
+  return { ok: false, message: getHttpsRequiredMessage() };
+}
