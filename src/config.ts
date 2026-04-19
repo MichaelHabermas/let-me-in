@@ -45,6 +45,11 @@ export interface Config {
    * Set false only for debugging (e.g. worker init issues).
    */
   detectorUseWorker: boolean;
+  /**
+   * When true, gate pipeline logs embedding wall time and vector length to the console (dev only).
+   * Set `VITE_LOG_EMBEDDING_TIMINGS=true` at build time.
+   */
+  devLogEmbeddingTimings: boolean;
   audioEnabled: boolean;
   ui: {
     strings: {
@@ -103,6 +108,7 @@ export const config: Config = {
   admin,
   ortWasmBase: 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/',
   detectorUseWorker: true,
+  devLogEmbeddingTimings: import.meta.env.VITE_LOG_EMBEDDING_TIMINGS === 'true',
   audioEnabled: true,
   ui: {
     strings: {
@@ -133,5 +139,18 @@ export function getDetectorRuntimeSettings(c: Config = config): DetectorRuntimeS
     detectorModelUrl: c.modelUrls.detector,
     ortWasmBase: c.ortWasmBase,
     detectorUseWorker: c.detectorUseWorker,
+  };
+}
+
+/** Subset of `Config` for InsightFace ONNX embedder (keeps infra free of unrelated config). */
+export type EmbedderRuntimeSettings = {
+  embedderModelUrl: string;
+  ortWasmBase: string;
+};
+
+export function getEmbedderRuntimeSettings(c: Config = config): EmbedderRuntimeSettings {
+  return {
+    embedderModelUrl: c.modelUrls.embedder,
+    ortWasmBase: c.ortWasmBase,
   };
 }
