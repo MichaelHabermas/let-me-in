@@ -138,8 +138,6 @@ describe('wireGatePreviewSession', () => {
     expect(fakeCamera.start).not.toHaveBeenCalled();
     expect(sleep).toHaveBeenCalled();
 
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(fakeCamera.start).toHaveBeenCalled();
+    await vi.waitFor(() => expect(fakeCamera.start).toHaveBeenCalled());
   });
 });

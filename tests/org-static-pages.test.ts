@@ -14,6 +14,7 @@ function fakeRuntime(): GateRuntime {
     previewCanvasWidth: 1,
     previewCanvasHeight: 1,
     showFpsOverlay: false,
+    devLogEmbeddingTimings: false,
     getDatabaseSeedSettings: () => ({
       thresholds: { strong: 1, weak: 1, unknown: 1, margin: 1 },
       cooldownMs: 0,

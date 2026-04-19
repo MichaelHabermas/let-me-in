@@ -4,6 +4,8 @@ import type { GatePreviewElements, GatePreviewSessionDeps } from './gate-session
 
 export type DetectorGateState = {
   loadState: 'none' | 'pending' | 'ready' | 'failed';
+  /** Mirrors detector lifecycle when an embedder is mounted (E4). */
+  embedderLoadState?: 'none' | 'pending' | 'ready' | 'failed';
   stopPipeline?: () => void;
 };
 
@@ -16,21 +18,37 @@ export function beginDetectorLoad(ctx: {
   failedMsg: string;
 }): void {
   const { deps, camera, statusEl, state, loadingMsg, failedMsg } = ctx;
-  if (!deps.yoloDetector) {
+  const promises: Promise<void>[] = [];
+
+  if (deps.yoloDetector) {
+    state.loadState = 'pending';
+    promises.push(deps.yoloDetector.load());
+  } else {
     state.loadState = 'none';
+  }
+
+  if (deps.faceEmbedder) {
+    state.embedderLoadState = 'pending';
+    promises.push(deps.faceEmbedder.load());
+  } else {
+    state.embedderLoadState = 'none';
+  }
+
+  if (promises.length === 0) {
     return;
   }
-  state.loadState = 'pending';
+
   statusEl.textContent = loadingMsg;
-  void deps.yoloDetector
-    .load()
+  void Promise.all(promises)
     .then(() => {
-      state.loadState = 'ready';
+      if (deps.yoloDetector) state.loadState = 'ready';
+      if (deps.faceEmbedder) state.embedderLoadState = 'ready';
       if (!camera.isRunning()) statusEl.textContent = '';
     })
     .catch((e) => {
-      console.error('[gate] detector load failed', e);
-      state.loadState = 'failed';
+      console.error('[gate] model load failed', e);
+      if (deps.yoloDetector) state.loadState = 'failed';
+      if (deps.faceEmbedder) state.embedderLoadState = 'failed';
       statusEl.textContent = failedMsg;
     });
 }
@@ -44,12 +62,22 @@ export async function waitForDetectorReady(ctx: {
   sleep: (ms: number) => Promise<void>;
 }): Promise<boolean> {
   const { deps, statusEl, state, loadingMsg, failedMsg, sleep } = ctx;
-  if (!deps.yoloDetector) return true;
-  while (state.loadState === 'pending') {
+  if (!deps.yoloDetector && !deps.faceEmbedder) return true;
+  const waitDetector = Boolean(deps.yoloDetector);
+  const waitEmbedder = Boolean(deps.faceEmbedder);
+  while (
+    (waitDetector && state.loadState === 'pending') ||
+    (waitEmbedder && state.embedderLoadState === 'pending')
+  ) {
     statusEl.textContent = loadingMsg;
     await sleep(50);
+    // Let `Promise.all` microtasks from model `.load()` run before re-checking state (tests use sync mocks).
+    await new Promise<void>((r) => queueMicrotask(r));
   }
-  if (state.loadState === 'failed') {
+  if (
+    (waitDetector && state.loadState === 'failed') ||
+    (waitEmbedder && state.embedderLoadState === 'failed')
+  ) {
     statusEl.textContent = failedMsg;
     return false;
   }
@@ -64,6 +92,7 @@ export function attachPipeline(ctx: {
 }): void {
   const { camera, deps, elements, state } = ctx;
   if (!deps.yoloDetector || !elements.overlayCanvas || state.loadState !== 'ready') return;
+  if (deps.faceEmbedder && state.embedderLoadState !== 'ready') return;
   const octx = elements.overlayCanvas.getContext('2d');
   if (!octx) return;
   state.stopPipeline?.();
@@ -73,5 +102,7 @@ export function attachPipeline(ctx: {
     overlayCtx: octx,
     overlayWidth: elements.overlayCanvas.width,
     overlayHeight: elements.overlayCanvas.height,
+    faceEmbedder: deps.faceEmbedder,
+    logEmbeddingTimings: deps.logEmbeddingTimings,
   });
 }

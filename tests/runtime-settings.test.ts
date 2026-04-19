@@ -4,7 +4,7 @@ import { createGateUiRuntimeSlice } from '../src/app/gate-ui-runtime';
 import { getDatabaseSeedSettingsFromConfig } from '../src/app/gate-seed-settings';
 import type { Config } from '../src/config';
 
-const uiCfg: Pick<Config, 'org' | 'camera' | 'ui'> = {
+const uiCfg: Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'> = {
   org: { name: 'TestOrg', logoUrl: '' },
   camera: {
     idealWidth: 640,
@@ -25,6 +25,7 @@ const uiCfg: Pick<Config, 'org' | 'camera' | 'ui'> = {
       detectorLoadFailed: 'det-fail',
     },
   },
+  devLogEmbeddingTimings: false,
 };
 
 describe('createGateUiRuntimeSlice', () => {

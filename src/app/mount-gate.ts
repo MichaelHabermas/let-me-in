@@ -1,6 +1,7 @@
-import { getDetectorRuntimeSettings } from '../config';
+import { getDetectorRuntimeSettings, getEmbedderRuntimeSettings } from '../config';
 import type { YoloDetector } from '../infra/detector-core';
 import { createYoloDetector } from '../infra/detector-ort';
+import { createFaceEmbedder, type FaceEmbedder } from '../infra/embedder-ort';
 import type { Camera, CreateCameraOptions } from './camera';
 import { createCamera } from './camera';
 import { buildGateDom } from './gate-preview-dom';
@@ -17,6 +18,7 @@ export type MountGateHostDeps = {
   ) => Camera;
   wireGatePreviewSession: typeof wireGatePreviewSession;
   createYoloDetector?: () => YoloDetector;
+  createFaceEmbedder?: () => FaceEmbedder;
   /** When true (default), register `beforeunload` teardown like production. */
   addBeforeUnload?: boolean;
 };
@@ -31,6 +33,7 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
     createCamera: createCam,
     wireGatePreviewSession: wireSession,
     createYoloDetector: createDet = () => createYoloDetector(getDetectorRuntimeSettings()),
+    createFaceEmbedder: createEmb = () => createFaceEmbedder(getEmbedderRuntimeSettings()),
     addBeforeUnload = true,
   } = deps;
 
@@ -42,6 +45,7 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
   host.appendChild(main);
 
   const yoloDetector = createDet();
+  const faceEmbedder = createEmb();
 
   const teardown = wireSession(
     { startBtn, stopBtn, statusEl, previewWrap, video, canvas, overlayCanvas },
@@ -50,6 +54,8 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
       getDefaultVideoConstraintsForCamera: () => rt.getDefaultVideoConstraintsForCamera(),
       getCameraUserFacingMessage: (code) => rt.getCameraUserFacingMessage(code),
       yoloDetector,
+      faceEmbedder,
+      logEmbeddingTimings: rt.devLogEmbeddingTimings,
       detectorLoadingMessage: rt.getDetectorLoadingMessage(),
       detectorLoadFailedMessage: rt.getDetectorLoadFailedMessage(),
     },

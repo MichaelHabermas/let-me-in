@@ -6,8 +6,8 @@
  *   `onnxruntime-web/all` so WebGL/WebGPU execution providers register in the browser bundle.
  * - **Live YOLO detection** does not use this file for inference: use `createYoloDetector` from
  *   `detector-ort.ts`, which delegates to `ort-session-factory` (main thread) or the YOLO worker.
- * - **`createOnnxRuntimePlaceholder`** is a no-op handle reserved for a future embedder / ORT
- *   lifecycle path that is not wired through the detector yet.
+ * - **Face embedder sessions** are created in `embedder-ort.ts` via `createFaceEmbedder` (same
+ *   `createOrtSession` factory as the detector).
  *
  * Infra and tests may import `ort-session-factory` directly; app/ui should prefer this module
  * when they need `createOrtSession` without pulling `onnxruntime-web` through the bundle boundary.

@@ -7,6 +7,7 @@ import { wireGatePreviewSession } from '../src/app/gate-session';
 import { mountGateIntoHost } from '../src/app/mount-gate';
 import type { GateRuntime } from '../src/app/runtime-settings';
 import type { YoloDetector } from '../src/infra/detector-core';
+import type { FaceEmbedder } from '../src/infra/embedder-ort';
 
 function fakeRuntime(): GateRuntime {
   return {
@@ -17,6 +18,7 @@ function fakeRuntime(): GateRuntime {
     previewCanvasWidth: 320,
     previewCanvasHeight: 240,
     showFpsOverlay: false,
+    devLogEmbeddingTimings: false,
     getDatabaseSeedSettings: () => ({
       thresholds: { strong: 0.8, weak: 0.65, unknown: 0.6, margin: 0.05 },
       cooldownMs: 3000,
@@ -42,6 +44,14 @@ function fakeYoloDetector(): YoloDetector {
   } as unknown as YoloDetector;
 }
 
+function fakeFaceEmbedder(): FaceEmbedder {
+  return {
+    load: vi.fn().mockResolvedValue(undefined),
+    infer: vi.fn().mockResolvedValue(new Float32Array(512)),
+    dispose: vi.fn().mockResolvedValue(undefined),
+  } as unknown as FaceEmbedder;
+}
+
 describe('mountGateIntoHost', () => {
   it('renders gate DOM and wires session with injected createCamera', () => {
     const host = document.createElement('div');
@@ -63,6 +73,7 @@ describe('mountGateIntoHost', () => {
       createCamera,
       wireGatePreviewSession,
       createYoloDetector: fakeYoloDetector,
+      createFaceEmbedder: fakeFaceEmbedder,
       addBeforeUnload: false,
     });
 
@@ -94,6 +105,7 @@ describe('mountGateIntoHost', () => {
       createCamera: () => fakeCamera,
       wireGatePreviewSession,
       createYoloDetector: fakeYoloDetector,
+      createFaceEmbedder: fakeFaceEmbedder,
       addBeforeUnload: false,
     });
 

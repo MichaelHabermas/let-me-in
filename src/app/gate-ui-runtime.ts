@@ -2,7 +2,7 @@ import type { Config } from '../config';
 import type { CameraErrorCode } from '../infra/camera';
 
 /** Config fields needed for titles, preview layout, and camera UX strings. */
-export type GateUiConfigSlice = Pick<Config, 'org' | 'camera' | 'ui'>;
+export type GateUiConfigSlice = Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'>;
 
 export type GateUiRuntimeSlice = {
   orgName: string;
@@ -12,6 +12,7 @@ export type GateUiRuntimeSlice = {
   previewCanvasWidth: number;
   previewCanvasHeight: number;
   showFpsOverlay: boolean;
+  devLogEmbeddingTimings: boolean;
   getDefaultVideoConstraintsForCamera(): {
     idealWidth: number;
     idealHeight: number;
@@ -27,6 +28,23 @@ export type GateUiRuntimeSlice = {
 /**
  * UI-facing runtime derived from org config only (no `import.meta` here — pass `isDev` explicitly).
  */
+function cameraMessage(cfg: GateUiConfigSlice, code: CameraErrorCode): string {
+  switch (code) {
+    case 'permission-denied':
+      return cfg.ui.strings.cameraPermissionDenied;
+    case 'no-device':
+      return cfg.ui.strings.cameraNoDevice;
+    case 'unknown':
+      return cfg.ui.strings.cameraUnknownError;
+    case 'camera-stopped':
+      return '';
+    default: {
+      const _exhaustive: never = code;
+      return _exhaustive;
+    }
+  }
+}
+
 export function createGateUiRuntimeSlice(
   cfg: GateUiConfigSlice,
   isDev: boolean,
@@ -40,6 +58,7 @@ export function createGateUiRuntimeSlice(
     previewCanvasWidth: cfg.camera.idealWidth,
     previewCanvasHeight: cfg.camera.idealHeight,
     showFpsOverlay: isDev,
+    devLogEmbeddingTimings: cfg.devLogEmbeddingTimings,
     getDefaultVideoConstraintsForCamera() {
       return {
         idealWidth: cfg.camera.idealWidth,
@@ -48,20 +67,7 @@ export function createGateUiRuntimeSlice(
       };
     },
     getCameraUserFacingMessage(code: CameraErrorCode): string {
-      switch (code) {
-        case 'permission-denied':
-          return cfg.ui.strings.cameraPermissionDenied;
-        case 'no-device':
-          return cfg.ui.strings.cameraNoDevice;
-        case 'unknown':
-          return cfg.ui.strings.cameraUnknownError;
-        case 'camera-stopped':
-          return '';
-        default: {
-          const _exhaustive: never = code;
-          return _exhaustive;
-        }
-      }
+      return cameraMessage(cfg, code);
     },
     getCameraStartLabel(): string {
       return cfg.ui.strings.cameraStart;

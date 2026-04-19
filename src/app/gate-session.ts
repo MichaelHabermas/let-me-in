@@ -1,5 +1,6 @@
 import type { CameraErrorCode } from '../infra/camera';
 import type { YoloDetector } from '../infra/detector-core';
+import type { FaceEmbedder } from '../infra/embedder-ort';
 import type { Camera, CreateCameraOptions } from './camera';
 import {
   attachPipeline,
@@ -17,6 +18,9 @@ export type GatePreviewSessionDeps = {
   getDefaultVideoConstraintsForCamera: () => CreateCameraOptions['defaultConstraints'];
   getCameraUserFacingMessage: (code: CameraErrorCode) => string;
   yoloDetector?: YoloDetector;
+  faceEmbedder?: FaceEmbedder;
+  /** When true, logs `[gate] embed: …` from the detection pipeline (see `config.devLogEmbeddingTimings`). */
+  logEmbeddingTimings?: boolean;
   detectorLoadingMessage?: string;
   detectorLoadFailedMessage?: string;
   /** Injected for tests; defaults to `setTimeout` delay. */
@@ -129,6 +133,7 @@ export function wireGatePreviewSession(
     stopControls();
     unsubFps();
     void deps.yoloDetector?.dispose();
+    void deps.faceEmbedder?.dispose();
     camera.stop();
   };
 }
