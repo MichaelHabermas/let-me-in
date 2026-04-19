@@ -21,10 +21,8 @@ export type GatePreviewSessionDeps = {
   faceEmbedder?: FaceEmbedder;
   /** When true, logs `[gate] embed: …` from the detection pipeline (see `config.devLogEmbeddingTimings`). */
   logEmbeddingTimings?: boolean;
-  detectorLoadingMessage?: string;
-  detectorLoadFailedMessage?: string;
-  /** Injected for tests; defaults to `setTimeout` delay. */
-  sleep?: (ms: number) => Promise<void>;
+  detectorLoadingMessage: string;
+  detectorLoadFailedMessage: string;
 };
 
 export type GatePreviewElements = {
@@ -43,18 +41,15 @@ function wireCameraControls(
   deps: GatePreviewSessionDeps,
 ): () => void {
   const { startBtn, stopBtn, statusEl } = elements;
-  const loadingMsg = deps.detectorLoadingMessage ?? 'Loading face detector…';
-  const failedMsg =
-    deps.detectorLoadFailedMessage ?? 'Face detector could not load. Try refreshing.';
+  const loadingMsg = deps.detectorLoadingMessage;
+  const failedMsg = deps.detectorLoadFailedMessage;
   const state: DetectorGateState = { loadState: deps.yoloDetector ? 'pending' : 'none' };
-  const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
-
   beginDetectorLoad({ deps, camera, statusEl, state, loadingMsg, failedMsg });
 
   const onStart = async () => {
     startBtn.disabled = true;
     try {
-      if (!(await waitForDetectorReady({ deps, statusEl, state, loadingMsg, failedMsg, sleep }))) {
+      if (!(await waitForDetectorReady({ deps, statusEl, state, loadingMsg }))) {
         startBtn.disabled = false;
         return;
       }

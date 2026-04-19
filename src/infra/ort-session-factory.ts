@@ -2,6 +2,10 @@
  * Default `onnxruntime-web` resolves to a slim bundle without the WebGL EP
  * ("[webgl] backend not found"). Use `/all` so `executionProviders: ['webgl']` is available.
  * @see https://github.com/microsoft/onnxruntime/tree/main/js/onnxruntime-web#usage
+ *
+ * **WASM ownership:** main-thread detectors/embedders call `configureOrtWasmAssets` via
+ * `createOrtSession`. The YOLO dedicated worker (`yolo-detector.worker.ts`) configures WASM
+ * and sessions **in the worker global** — separate from the main thread.
  */
 import * as ort from 'onnxruntime-web/all';
 
@@ -46,24 +50,12 @@ function describeModelSource(source: OrtModelSource): string {
 }
 
 /**
- * Browser: WebGPU first (broader ops + good on Apple Silicon Chrome), then WASM.
- * We skip WebGL for shipped YOLO ONNX: it uses `Split` @ opset 19, which ORT WebGL does not implement
- * (`cannot resolve operator 'Split' with opsets: ai.onnx v19`).
- * Vitest/Node: WASM first (WebGL/WebGPU are not usable there).
- */
-function defaultPreferredExecutionProviders(): string[] {
-  if (typeof process !== 'undefined' && process.env.VITEST) {
-    return ['wasm', 'webgl'];
-  }
-  return ['webgpu', 'wasm'];
-}
-
-/**
  * Create an ONNX Runtime inference session, trying execution providers in order.
+ * @param preferredEPs - Caller supplies order (e.g. {@link ORT_EP_ORDER_BROWSER} from `ort-execution-defaults`).
  */
 export async function createOrtSession(
   modelSource: OrtModelSource,
-  preferredEPs: string[] = defaultPreferredExecutionProviders(),
+  preferredEPs: string[],
   /** When set, configures WASM paths before session creation (falls back to `config.ortWasmBase`). */
   wasmAssetsBaseUrl?: string,
 ): Promise<OrtSessionBundle> {

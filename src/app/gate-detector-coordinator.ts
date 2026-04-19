@@ -6,6 +6,8 @@ export type DetectorGateState = {
   loadState: 'none' | 'pending' | 'ready' | 'failed';
   /** Mirrors detector lifecycle when an embedder is mounted (E4). */
   embedderLoadState?: 'none' | 'pending' | 'ready' | 'failed';
+  /** Started in `beginDetectorLoad`; await in `waitForDetectorReady` (no polling). */
+  modelsSettled?: Promise<boolean>;
   stopPipeline?: () => void;
 };
 
@@ -39,18 +41,21 @@ export function beginDetectorLoad(ctx: {
   }
 
   statusEl.textContent = loadingMsg;
-  void Promise.all(promises)
-    .then(() => {
+  state.modelsSettled = (async (): Promise<boolean> => {
+    try {
+      await Promise.all(promises);
       if (deps.yoloDetector) state.loadState = 'ready';
       if (deps.faceEmbedder) state.embedderLoadState = 'ready';
       if (!camera.isRunning()) statusEl.textContent = '';
-    })
-    .catch((e) => {
+      return true;
+    } catch (e) {
       console.error('[gate] model load failed', e);
       if (deps.yoloDetector) state.loadState = 'failed';
       if (deps.faceEmbedder) state.embedderLoadState = 'failed';
       statusEl.textContent = failedMsg;
-    });
+      return false;
+    }
+  })();
 }
 
 export async function waitForDetectorReady(ctx: {
@@ -58,30 +63,12 @@ export async function waitForDetectorReady(ctx: {
   statusEl: HTMLElement;
   state: DetectorGateState;
   loadingMsg: string;
-  failedMsg: string;
-  sleep: (ms: number) => Promise<void>;
 }): Promise<boolean> {
-  const { deps, statusEl, state, loadingMsg, failedMsg, sleep } = ctx;
+  const { deps, statusEl, state, loadingMsg } = ctx;
   if (!deps.yoloDetector && !deps.faceEmbedder) return true;
-  const waitDetector = Boolean(deps.yoloDetector);
-  const waitEmbedder = Boolean(deps.faceEmbedder);
-  while (
-    (waitDetector && state.loadState === 'pending') ||
-    (waitEmbedder && state.embedderLoadState === 'pending')
-  ) {
-    statusEl.textContent = loadingMsg;
-    await sleep(50);
-    // Let `Promise.all` microtasks from model `.load()` run before re-checking state (tests use sync mocks).
-    await new Promise<void>((r) => queueMicrotask(r));
-  }
-  if (
-    (waitDetector && state.loadState === 'failed') ||
-    (waitEmbedder && state.embedderLoadState === 'failed')
-  ) {
-    statusEl.textContent = failedMsg;
-    return false;
-  }
-  return true;
+  if (!state.modelsSettled) return true;
+  statusEl.textContent = loadingMsg;
+  return state.modelsSettled;
 }
 
 export function attachPipeline(ctx: {

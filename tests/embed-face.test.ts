@@ -6,6 +6,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { embedFace } from '../src/app/pipeline';
 import { getEmbedderRuntimeSettings } from '../src/config';
 import { createFaceEmbedder } from '../src/infra/embedder-ort';
+import { ORT_EP_ORDER_NODE_TEST } from '../src/infra/ort-execution-defaults';
 import { configureOrtWasmAssets, resetOrtWasmConfigForTests } from '../src/infra/ort-session-factory';
 
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -23,7 +24,13 @@ describe('embedFace (E4.S1.F3.T3)', () => {
     async () => {
       const modelPath = path.join(repoRoot, 'public/models/w600k_mbf.onnx');
       const modelBytes = new Uint8Array(readFileSync(modelPath));
-      const emb = createFaceEmbedder(getEmbedderRuntimeSettings(), { modelBytes });
+      const emb = createFaceEmbedder(
+        {
+          ...getEmbedderRuntimeSettings(),
+          preferredExecutionProviders: [...ORT_EP_ORDER_NODE_TEST],
+        },
+        { modelBytes },
+      );
       await emb.load();
       const frame = new ImageData(256, 256);
       for (let i = 0; i < frame.data.length; i += 4) {

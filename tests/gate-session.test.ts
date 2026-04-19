@@ -7,6 +7,11 @@ import { wireGatePreviewSession } from '../src/app/gate-session';
 import type { YoloDetector } from '../src/infra/detector-core';
 import { makeCameraError } from '../src/infra/camera';
 
+import {
+  testDetectorLoadFailedMessage,
+  testDetectorLoadingMessage,
+} from './fixtures/gate-copy';
+
 function buildElements() {
   const startBtn = document.createElement('button');
   const stopBtn = document.createElement('button');
@@ -47,6 +52,8 @@ describe('wireGatePreviewSession', () => {
       createCamera,
       getDefaultVideoConstraintsForCamera: () => defaultConstraints,
       getCameraUserFacingMessage: () => '',
+      detectorLoadingMessage: testDetectorLoadingMessage,
+      detectorLoadFailedMessage: testDetectorLoadFailedMessage,
     });
 
     expect(createCamera).toHaveBeenCalledWith(els.video, els.canvas, { defaultConstraints });
@@ -85,13 +92,15 @@ describe('wireGatePreviewSession', () => {
       }),
       getCameraUserFacingMessage: (code) =>
         code === 'permission-denied' ? 'Camera blocked' : 'other',
+      detectorLoadingMessage: testDetectorLoadingMessage,
+      detectorLoadFailedMessage: testDetectorLoadFailedMessage,
     });
 
     onErrorCb?.(makeCameraError('permission-denied', 'nope'));
     expect(els.statusEl.textContent).toBe('Camera blocked');
   });
 
-  it('defers camera.start until YOLO detector load finishes (injectable sleep)', async () => {
+  it('defers camera.start until YOLO detector load finishes', async () => {
     let resolveLoad!: () => void;
     const loadPromise = new Promise<void>((r) => {
       resolveLoad = r;
@@ -101,9 +110,6 @@ describe('wireGatePreviewSession', () => {
       infer: vi.fn().mockResolvedValue([]),
       dispose: vi.fn(),
     };
-    const sleep = vi.fn().mockImplementation(async () => {
-      resolveLoad();
-    });
 
     const els = buildElements();
     const overlayCanvas = document.createElement('canvas');
@@ -130,14 +136,16 @@ describe('wireGatePreviewSession', () => {
         }),
         getCameraUserFacingMessage: () => '',
         yoloDetector,
-        sleep,
+        detectorLoadingMessage: testDetectorLoadingMessage,
+        detectorLoadFailedMessage: testDetectorLoadFailedMessage,
       },
     );
 
     els.startBtn.click();
     expect(fakeCamera.start).not.toHaveBeenCalled();
-    expect(sleep).toHaveBeenCalled();
-
+    await Promise.resolve();
+    await Promise.resolve();
+    resolveLoad();
     await vi.waitFor(() => expect(fakeCamera.start).toHaveBeenCalled());
   });
 });

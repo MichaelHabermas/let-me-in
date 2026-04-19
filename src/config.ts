@@ -1,3 +1,5 @@
+import { ORT_EP_ORDER_BROWSER } from './infra/ort-execution-defaults';
+
 /**
  * Central configuration module — all org-configurable values live here.
  * No other file may hardcode a threshold, URL, or org string.
@@ -132,6 +134,7 @@ export type DetectorRuntimeSettings = {
   detectorModelUrl: string;
   ortWasmBase: string;
   detectorUseWorker: boolean;
+  preferredExecutionProviders: string[];
 };
 
 export function getDetectorRuntimeSettings(c: Config = config): DetectorRuntimeSettings {
@@ -139,6 +142,7 @@ export function getDetectorRuntimeSettings(c: Config = config): DetectorRuntimeS
     detectorModelUrl: c.modelUrls.detector,
     ortWasmBase: c.ortWasmBase,
     detectorUseWorker: c.detectorUseWorker,
+    preferredExecutionProviders: [...ORT_EP_ORDER_BROWSER],
   };
 }
 
@@ -146,11 +150,13 @@ export function getDetectorRuntimeSettings(c: Config = config): DetectorRuntimeS
 export type EmbedderRuntimeSettings = {
   embedderModelUrl: string;
   ortWasmBase: string;
+  preferredExecutionProviders: string[];
 };
 
 export function getEmbedderRuntimeSettings(c: Config = config): EmbedderRuntimeSettings {
   return {
     embedderModelUrl: c.modelUrls.embedder,
     ortWasmBase: c.ortWasmBase,
+    preferredExecutionProviders: [...ORT_EP_ORDER_BROWSER],
   };
 }

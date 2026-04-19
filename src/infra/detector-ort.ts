@@ -18,7 +18,11 @@ function createYoloMainThreadDetector(
   return {
     async load() {
       if (bundle) return;
-      bundle = await createOrtSession(modelSource, undefined, settings.ortWasmBase);
+      bundle = await createOrtSession(
+        modelSource,
+        settings.preferredExecutionProviders,
+        settings.ortWasmBase,
+      );
     },
 
     async infer(imageData: ImageData) {

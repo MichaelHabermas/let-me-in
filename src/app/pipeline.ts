@@ -3,8 +3,8 @@ import { drawBbox } from './bbox-overlay';
 import { squareCropWithMargin, resizeTo112, type Bbox } from './crop';
 import { l2normalize } from './match';
 import type { YoloDetector } from '../infra/detector-core';
+import { toEmbedderTensor } from '../infra/embedder-preprocess';
 import type { FaceEmbedder } from '../infra/embedder-ort';
-import { toEmbedderTensor } from '../infra/embedder-ort';
 
 export type DetectionPipelineOptions = {
   camera: Camera;

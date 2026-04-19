@@ -27,6 +27,23 @@ export type MountGateHostDeps = {
  * Mount the gate UI into an existing host (tests inject `#app` or a detached div).
  * Returns teardown (stop camera, remove listeners) — also registered on `beforeunload` when enabled.
  */
+/** Composition-root helper: binds default detector/embedder factories to `get*RuntimeSettings()`. */
+export function createMountGateHostDeps(
+  rt: GateRuntime,
+  overrides?: Partial<Omit<MountGateHostDeps, 'rt'>>,
+): MountGateHostDeps {
+  return {
+    rt,
+    createCamera: overrides?.createCamera ?? createCamera,
+    wireGatePreviewSession: overrides?.wireGatePreviewSession ?? wireGatePreviewSession,
+    createYoloDetector:
+      overrides?.createYoloDetector ?? (() => createYoloDetector(getDetectorRuntimeSettings())),
+    createFaceEmbedder:
+      overrides?.createFaceEmbedder ?? (() => createFaceEmbedder(getEmbedderRuntimeSettings())),
+    addBeforeUnload: overrides?.addBeforeUnload,
+  };
+}
+
 export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): () => void {
   const {
     rt,
@@ -73,9 +90,5 @@ export function mountGateView(): void {
   const app = document.getElementById('app');
   if (!app) return;
 
-  mountGateIntoHost(app, {
-    rt: resolveGateRuntime(),
-    createCamera,
-    wireGatePreviewSession,
-  });
+  mountGateIntoHost(app, createMountGateHostDeps(resolveGateRuntime()));
 }

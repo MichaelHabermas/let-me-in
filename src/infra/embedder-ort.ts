@@ -5,9 +5,11 @@
 import * as ort from 'onnxruntime-web/all';
 
 import type { EmbedderRuntimeSettings } from '../config';
+import { EMBEDDER_INPUT_SIZE } from './embedder-preprocess';
 import { createOrtSession, type OrtSessionBundle } from './ort-session-factory';
 
-export const EMBEDDER_INPUT_SIZE = 112;
+export { EMBEDDER_INPUT_SIZE, toEmbedderTensor } from './embedder-preprocess';
+
 export const EMBEDDER_DIM = 512;
 
 const INPUT_NAME = 'input.1';
@@ -19,33 +21,6 @@ export type FaceEmbedder = {
   infer(chwFloat32: Float32Array): Promise<Float32Array>;
   dispose(): Promise<void>;
 };
-
-/**
- * NCHW RGB float32, `(pixel - 127.5) / 127.5` per PRE-WORK [PROVEN].
- */
-export function toEmbedderTensor(imageData: ImageData): Float32Array {
-  const { width, height, data } = imageData;
-  if (width !== EMBEDDER_INPUT_SIZE || height !== EMBEDDER_INPUT_SIZE) {
-    throw new Error(
-      `toEmbedderTensor: expected ${EMBEDDER_INPUT_SIZE}×${EMBEDDER_INPUT_SIZE}, got ${width}×${height}`,
-    );
-  }
-  const plane = EMBEDDER_INPUT_SIZE * EMBEDDER_INPUT_SIZE;
-  const out = new Float32Array(3 * plane);
-  for (let y = 0; y < EMBEDDER_INPUT_SIZE; y++) {
-    for (let x = 0; x < EMBEDDER_INPUT_SIZE; x++) {
-      const i = (y * EMBEDDER_INPUT_SIZE + x) * 4;
-      const r = data[i]!;
-      const g = data[i + 1]!;
-      const b = data[i + 2]!;
-      const idx = y * EMBEDDER_INPUT_SIZE + x;
-      out[idx] = (r - 127.5) / 127.5;
-      out[plane + idx] = (g - 127.5) / 127.5;
-      out[2 * plane + idx] = (b - 127.5) / 127.5;
-    }
-  }
-  return out;
-}
 
 export type CreateFaceEmbedderOptions = {
   modelUrl?: string;
@@ -63,7 +38,11 @@ export function createFaceEmbedder(
   return {
     async load() {
       if (bundle) return;
-      bundle = await createOrtSession(modelSource, undefined, settings.ortWasmBase);
+      bundle = await createOrtSession(
+        modelSource,
+        settings.preferredExecutionProviders,
+        settings.ortWasmBase,
+      );
     },
 
     async infer(chwFloat32: Float32Array) {

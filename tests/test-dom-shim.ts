@@ -1,6 +1,7 @@
 /**
- * `ImageData` constructor for Node workers where Vitest uses `environment: 'node'`.
- * Canvas / `document` come from `@vitest-environment happy-dom` on files that need them.
+ * `ImageData` when Vitest uses `environment: 'node'` (see [vitest.config.ts](../vitest.config.ts)).
+ * Suites that need `document` use `/** @vitest-environment happy-dom *\/` (Vitest 4 has no
+ * `environmentMatchGlobs`); see vitest.config comment for the list of DOM test files.
  */
 
 type PredefinedColorSpace = 'srgb';

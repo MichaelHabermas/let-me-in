@@ -3,38 +3,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { Camera } from '../src/app/camera';
-import { wireGatePreviewSession } from '../src/app/gate-session';
-import { mountGateIntoHost } from '../src/app/mount-gate';
-import type { GateRuntime } from '../src/app/runtime-settings';
+import { createMountGateHostDeps, mountGateIntoHost } from '../src/app/mount-gate';
 import type { YoloDetector } from '../src/infra/detector-core';
 import type { FaceEmbedder } from '../src/infra/embedder-ort';
 
-function fakeRuntime(): GateRuntime {
-  return {
-    orgName: 'TestOrg',
-    gatePageTitle: 'TestOrg — Entry',
-    adminPageTitle: 'TestOrg — Admin',
-    logPageTitle: 'TestOrg — Entry log',
-    previewCanvasWidth: 320,
-    previewCanvasHeight: 240,
-    showFpsOverlay: false,
-    devLogEmbeddingTimings: false,
-    getDatabaseSeedSettings: () => ({
-      thresholds: { strong: 0.8, weak: 0.65, unknown: 0.6, margin: 0.05 },
-      cooldownMs: 3000,
-    }),
-    getDefaultVideoConstraintsForCamera: () => ({
-      idealWidth: 320,
-      idealHeight: 240,
-      facingMode: 'user',
-    }),
-    getCameraUserFacingMessage: () => '',
-    getCameraStartLabel: () => 'Start',
-    getCameraStopLabel: () => 'Stop',
-    getDetectorLoadingMessage: () => 'Loading detector…',
-    getDetectorLoadFailedMessage: () => 'Detector failed.',
-  };
-}
+import { createTestGateRuntime } from './support/create-test-gate-runtime';
 
 function fakeYoloDetector(): YoloDetector {
   return {
@@ -52,6 +25,13 @@ function fakeFaceEmbedder(): FaceEmbedder {
   } as unknown as FaceEmbedder;
 }
 
+describe('createMountGateHostDeps', () => {
+  it('keeps the same GateRuntime reference', () => {
+    const rt = createTestGateRuntime();
+    expect(createMountGateHostDeps(rt).rt).toBe(rt);
+  });
+});
+
 describe('mountGateIntoHost', () => {
   it('renders gate DOM and wires session with injected createCamera', () => {
     const host = document.createElement('div');
@@ -68,14 +48,15 @@ describe('mountGateIntoHost', () => {
 
     const createCamera = vi.fn(() => fakeCamera);
 
-    mountGateIntoHost(host, {
-      rt: fakeRuntime(),
-      createCamera,
-      wireGatePreviewSession,
-      createYoloDetector: fakeYoloDetector,
-      createFaceEmbedder: fakeFaceEmbedder,
-      addBeforeUnload: false,
-    });
+    mountGateIntoHost(
+      host,
+      createMountGateHostDeps(createTestGateRuntime(), {
+        createCamera,
+        createYoloDetector: fakeYoloDetector,
+        createFaceEmbedder: fakeFaceEmbedder,
+        addBeforeUnload: false,
+      }),
+    );
 
     expect(document.title).toBe('TestOrg — Entry');
     expect(host.querySelector('.page--gate')).toBeTruthy();
@@ -100,14 +81,15 @@ describe('mountGateIntoHost', () => {
       isRunning: vi.fn(() => false),
     } as unknown as Camera;
 
-    const teardown = mountGateIntoHost(host, {
-      rt: fakeRuntime(),
-      createCamera: () => fakeCamera,
-      wireGatePreviewSession,
-      createYoloDetector: fakeYoloDetector,
-      createFaceEmbedder: fakeFaceEmbedder,
-      addBeforeUnload: false,
-    });
+    const teardown = mountGateIntoHost(
+      host,
+      createMountGateHostDeps(createTestGateRuntime(), {
+        createCamera: () => fakeCamera,
+        createYoloDetector: fakeYoloDetector,
+        createFaceEmbedder: fakeFaceEmbedder,
+        addBeforeUnload: false,
+      }),
+    );
 
     teardown();
     expect(fakeCamera.stop).toHaveBeenCalled();

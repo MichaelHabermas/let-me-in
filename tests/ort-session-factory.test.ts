@@ -57,7 +57,7 @@ describe('createOrtSession', () => {
     inferenceCreate.mockRejectedValue(new Error('nope'));
 
     const { createOrtSession, OrtSessionError } = await import('../src/infra/ort-session-factory');
-    const err = await createOrtSession('https://invalid/bad.onnx').catch((e: unknown) => e);
+    const err = await createOrtSession('https://invalid/bad.onnx', ['wasm']).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(OrtSessionError);
     expect(err).toMatchObject({
       name: 'OrtSessionError',

@@ -1,5 +1,8 @@
 /// <reference lib="webworker" />
 
+/** ORT + WASM paths are configured inside this worker only (isolated from the main thread). */
+
+import { ORT_EP_ORDER_BROWSER } from '../infra/ort-execution-defaults';
 import {
   configureOrtWasmAssets,
   createOrtSession,
@@ -17,7 +20,7 @@ async function handleInitMessage(msg: {
 }): Promise<void> {
   try {
     configureOrtWasmAssets(msg.ortWasmBase);
-    bundle = await createOrtSession(msg.modelUrl);
+    bundle = await createOrtSession(msg.modelUrl, [...ORT_EP_ORDER_BROWSER]);
     self.postMessage({ type: YOLO_WORKER_MSG.initOk, id: msg.id });
   } catch (e) {
     self.postMessage({
