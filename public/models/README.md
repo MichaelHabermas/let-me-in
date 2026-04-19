@@ -11,3 +11,15 @@ Verify locally:
 ```bash
 shasum -a 256 public/models/yolov9t.onnx
 ```
+
+## `w600k_mbf.onnx`
+
+- **Source:** [Hugging Face — deepghs/insightface](https://huggingface.co/deepghs/insightface) (`buffalo_s/w600k_mbf.onnx`, InsightFace MobileFaceNet / w600k).
+- **Approximate size:** ~12.99 MiB (13 616 099 bytes on disk).
+- **SHA-256:** `9cc6e4a75f0e2bf0b1aed94578f144d15175f357bdc05e815e5c4a02b319eb4f`
+
+Verify locally:
+
+```bash
+shasum -a 256 public/models/w600k_mbf.onnx
+```
