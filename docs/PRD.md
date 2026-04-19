@@ -856,7 +856,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 
 ---
 
-### Epic E4: Face Embedding — [ ]
+### Epic E4: Face Embedding — [x]
 
 **Goal:** Load the 512-d `w600k_mbf.onnx` embedder, crop the detected face, preprocess, infer, and L2-normalize.
 
@@ -882,15 +882,15 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - DRY: shared preprocess helpers (normalize, channel-first).
 - Module boundaries respected.
 
-#### User Story E4.S1: As the system, I want a face-crop in → 512-d embedding out pipeline so that matching has a stable representation. — [ ]
+#### User Story E4.S1: As the system, I want a face-crop in → 512-d embedding out pipeline so that matching has a stable representation. — [x]
 
 **Acceptance criteria:**
 
 - given a bbox from the detector, when I call `embedder.embed(frame, bbox)`, then I get a normalized `Float32Array(512)` in <150 ms.
 
-##### Feature E4.S1.F1: Embedder model asset — [ ]
+##### Feature E4.S1.F1: Embedder model asset — [x]
 
-###### Task E4.S1.F1.T1: Place `w600k_mbf.onnx` in `public/models/` — [ ]
+###### Task E4.S1.F1.T1: Place `w600k_mbf.onnx` in `public/models/` — [x]
 
 - Files: `public/models/w600k_mbf.onnx`, `public/models/README.md`
 - Preconditions: E1 complete
@@ -900,9 +900,9 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - Acceptance test: file exists; size matches.
 - SOLID/DRY note: provenance documented once.
 
-##### Feature E4.S1.F2: Crop + preprocess — [ ]
+##### Feature E4.S1.F2: Crop + preprocess — [x]
 
-###### Task E4.S1.F2.T1: Implement `squareCropWithMargin(imageData, bbox, marginPct=0.10)` — [ ]
+###### Task E4.S1.F2.T1: Implement `squareCropWithMargin(imageData, bbox, marginPct=0.10)` — [x]
 
 - Files: `src/app/crop.ts`
 - Preconditions: E3 complete
@@ -914,7 +914,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - Acceptance test: unit test fixture with known bbox returns expected size.
 - SOLID/DRY note: pure function (SRP + easy to test).
 
-###### Task E4.S1.F2.T2: Implement `resizeTo112(imageData)` — [ ]
+###### Task E4.S1.F2.T2: Implement `resizeTo112(imageData)` — [x]
 
 - Files: `src/app/crop.ts`
 - Preconditions: E4.S1.F2.T1 done
@@ -923,7 +923,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - Acceptance test: output `ImageData.width === 112`.
 - SOLID/DRY note: uses Canvas API (no third-party).
 
-###### Task E4.S1.F2.T3: Implement `toEmbedderTensor(imageData)` — [ ]
+###### Task E4.S1.F2.T3: Implement `toEmbedderTensor(imageData)` — [x]
 
 - Files: `src/infra/embedder-ort.ts`
 - Preconditions: E4.S1.F2.T2 done
@@ -933,9 +933,9 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - Acceptance test: typed array length 1*3*112*112; values roughly in [-1,1].
 - SOLID/DRY note: preprocess helpers isolated from inference.
 
-##### Feature E4.S1.F3: Inference + L2 normalization — [ ]
+##### Feature E4.S1.F3: Inference + L2 normalization — [x]
 
-###### Task E4.S1.F3.T1: Implement `embedder.load()` + `embedder.infer()` — [ ]
+###### Task E4.S1.F3.T1: Implement `embedder.load()` + `embedder.infer()` — [x]
 
 - Files: `src/infra/embedder-ort.ts`
 - Preconditions: E4.S1.F2.T3, E3.S1.F1.T1 done
@@ -946,7 +946,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - Acceptance test: on warmed session, p50 latency <150 ms.
 - SOLID/DRY note: reuses session factory (DRY).
 
-###### Task E4.S1.F3.T2: Implement `l2normalize(vec)` — [ ]
+###### Task E4.S1.F3.T2: Implement `l2normalize(vec)` — [x]
 
 - Files: `src/app/match.ts`
 - Preconditions: E4.S1.F3.T1 done
@@ -955,7 +955,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - Acceptance test: post-normalize dot(vec, vec) is 1.0 ± 1e-5.
 - SOLID/DRY note: pure function.
 
-###### Task E4.S1.F3.T3: Compose `embedFace(frame, bbox)` convenience — [ ]
+###### Task E4.S1.F3.T3: Compose `embedFace(frame, bbox)` convenience — [x]
 
 - Files: `src/app/pipeline.ts`
 - Preconditions: E4.S1.F3.T2 done
@@ -1996,7 +1996,7 @@ stateDiagram-v2
 - [x] E1 Foundation (16/16 tasks)
 - [x] E2 Camera & Frame Capture (7/7 tasks)
 - [x] E3 Face Detection (8/8 tasks)
-- [ ] E4 Face Embedding (0/7 tasks)
+- [x] E4 Face Embedding (7/7 tasks)
 - [ ] E5 Matching Engine (0/5 tasks)
 - [ ] E6 Minimal Enrollment — MVP gate (0/7 tasks)
 - [ ] E7 Decision UI & Entry Log (0/8 tasks)
@@ -2004,7 +2004,7 @@ stateDiagram-v2
 - [ ] E9 Stretch Features (0/3 tasks)
 - [ ] E10 Validation & Submission (0/15 tasks)
 
-**Total: 31/85 tasks complete.**
+**Total: 38/85 tasks complete.**
 
 **MVP hard-gate path (24 h):** E1 → E2 → E3 → E4 → E5 → E6. 49 tasks.
 
