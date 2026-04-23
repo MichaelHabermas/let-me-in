@@ -64,16 +64,16 @@ describe('mountGateIntoHost', () => {
     );
 
     expect(document.title).toBe('TestOrg — Entry');
-    expect(host.querySelector('.page--gate')).toBeTruthy();
+    expect(host.querySelectorAll('.page--gate')).toHaveLength(1);
     const h1 = host.querySelector('.page__title');
     const bubble = host.querySelector('#gate-product-tagline');
-    expect(host.querySelector('.gate-title-tooltip-host')).toBeTruthy();
+    expect(host.querySelectorAll('.gate-title-tooltip-host')).toHaveLength(1);
     expect(bubble?.textContent).toBe('Test tagline for browser-only facial recognition.');
     expect(bubble?.classList.contains('gate-title-tooltip__bubble')).toBe(true);
     expect(h1?.getAttribute('aria-describedby')).toBe('gate-product-tagline');
-    expect(host.querySelector('#gate-camera-toggle')).toBeTruthy();
-    expect(host.querySelector('#preview')).toBeTruthy();
-    expect(host.querySelector('#detector-overlay')).toBeTruthy();
+    expect(host.querySelectorAll('#gate-camera-toggle')).toHaveLength(1);
+    expect(host.querySelectorAll('#preview')).toHaveLength(1);
+    expect(host.querySelectorAll('#detector-overlay')).toHaveLength(1);
     expect(host.querySelector('#decision')?.textContent).toBe('—');
 
     expect(createCamera).toHaveBeenCalled();
@@ -213,7 +213,7 @@ describe('mountGateIntoHost', () => {
       await vi.waitFor(() => expect(frameCb).toBeTypeOf('function'));
       frameCb!(performance.now());
       await vi.waitFor(() => {
-        expect(host.querySelector('#decision .banner--granted')).toBeTruthy();
+        expect(host.querySelectorAll('#decision .banner--granted')).toHaveLength(1);
         expect(host.querySelector('#decision .banner__title')?.textContent).toContain('Enrolled');
       });
     } finally {

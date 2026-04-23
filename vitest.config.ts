@@ -20,5 +20,16 @@ export default defineConfig({
      * bootstrap-app, detector-worker-client, gate-session, mount-gate, org-static-pages.
      */
     setupFiles: ['./tests/setup.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      include: ['src/**/*.ts'],
+      exclude: [
+        '**/node_modules/**',
+        '**/dist/**',
+        'src/**/*.test.ts',
+        'tests/e2e/**',
+      ],
+    },
   },
 });

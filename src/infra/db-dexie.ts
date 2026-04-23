@@ -29,6 +29,8 @@ export interface DexiePersistence {
       similarity01: number;
       decision: Decision;
       capturedFrameBlob: Blob;
+      /** When set (e.g. tests), used as the first candidate key; still bumps on collision. */
+      timestamp?: number;
     }): Promise<void>;
   };
   settingsRepo: {
@@ -112,9 +114,10 @@ function makeAccessLogRepo(db: GatekeeperDB, ensureDbReady: EnsureDbReady) {
       similarity01: number;
       decision: Decision;
       capturedFrameBlob: Blob;
+      timestamp?: number;
     }): Promise<void> {
       await ensureDbReady();
-      let timestamp = Date.now();
+      let timestamp = payload.timestamp ?? Date.now();
       while (await db.accessLog.get(timestamp)) {
         timestamp += 1;
       }

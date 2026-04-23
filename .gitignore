@@ -44,6 +44,12 @@ playwright-report/
 blob-report/
 playwright/.cache/
 
+# Vitest (V8 coverage — HTML + .tmp JSON)
+coverage/
+
+# ESLint (--cache)
+.eslintcache
+
 # Editors (keep team-shared .cursor rules; ignore personal editor junk)
 *.swp
 *.swo

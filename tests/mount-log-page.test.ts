@@ -25,14 +25,15 @@ describe('mountLogPageIntoApp', () => {
     });
 
     const blob = new Blob(['x']);
+    const t0 = 1_700_000_000_000;
     for (let i = 0; i < 25; i += 1) {
       await persistence.accessLogRepo.appendDecision({
         userId: 'u1',
         similarity01: 0.5,
         decision: 'GRANTED',
         capturedFrameBlob: blob,
+        timestamp: t0 + i,
       });
-      await new Promise((r) => setTimeout(r, 2));
     }
 
     const app = document.createElement('div');

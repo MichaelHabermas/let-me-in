@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { YoloWorkerTransport } from '../src/infra/yolo-worker-transport';
 import { YOLO_WORKER_MSG } from '../src/infra/yolo-detector-worker-protocol';
@@ -25,6 +25,10 @@ function createMockWorker(
 }
 
 describe('YoloWorkerTransport', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('resolves postToWorker when init-ok id matches', async () => {
     const worker = createMockWorker((p, reply) => {
       const m = p.msg as { type: string; id: number };
@@ -57,6 +61,7 @@ describe('YoloWorkerTransport', () => {
   });
 
   it('does not resolve pending when reply id mismatches', async () => {
+    vi.useFakeTimers();
     const worker = createMockWorker((p, reply) => {
       const m = p.msg as { type: string; id: number };
       if (m.type === YOLO_WORKER_MSG.init) {
@@ -66,11 +71,12 @@ describe('YoloWorkerTransport', () => {
     const t = new YoloWorkerTransport(worker);
     const id = t.nextMessageId();
     const pending = t.postToWorker({ type: YOLO_WORKER_MSG.init, id, ortWasmBase: '/', modelUrl: 'x' });
-    const raced = await Promise.race([
+    const raced = Promise.race([
       pending,
       new Promise<string>((r) => setTimeout(() => r('still-pending'), 25)),
     ]);
-    expect(raced).toBe('still-pending');
+    await vi.advanceTimersByTimeAsync(25);
+    await expect(raced).resolves.toBe('still-pending');
   });
 
   it('rejects pending on worker onerror', async () => {

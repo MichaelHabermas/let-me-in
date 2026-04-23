@@ -15,6 +15,7 @@
     "format": "prettier --write src",
     "format:check": "prettier --check src",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "seed:users": "vitest run --config vitest.seed.config.ts",
     "sync:netlify": "node scripts/sync-netlify-redirects.mjs",
@@ -31,6 +32,7 @@
     "@types/node": "^25.6.0",
     "@typescript-eslint/eslint-plugin": "^8.58.2",
     "@typescript-eslint/parser": "^8.58.2",
+    "@vitest/coverage-v8": "4.1.5",
     "eslint": "^10.2.1",
     "eslint-config-prettier": "^10.1.8",
     "fake-indexeddb": "^6.2.5",
@@ -39,6 +41,6 @@
     "prettier": "^3.8.3",
     "typescript": "^6.0.3",
     "vite": "^8.0.8",
-    "vitest": "^4.1.4"
+    "vitest": "4.1.5"
   }
 }

@@ -169,8 +169,8 @@ describe('createYoloWorkerDetector', () => {
     const det = createYoloWorkerDetector({ modelUrl: 'm.onnx', ortWasmBase: '/' });
     const loadP = det.load();
     await Promise.resolve();
-    const w = instances[0];
-    expect(w).toBeDefined();
+    expect(instances).toHaveLength(1);
+    const w = instances[0]!;
     w.onerror?.({ message: 'worker crashed' } as ErrorEvent);
     await expect(loadP).rejects.toThrow('worker crashed');
     vi.unstubAllGlobals();
