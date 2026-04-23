@@ -1579,12 +1579,12 @@ stateDiagram-v2
 > 2. Import `tests/fixtures/bulk-10.json`. Expected: progress indicator then 10 new users in the list.
 > 3. On `/log`, filter to today only + decision=DENIED. Expected: only today's DENIED rows show.
 >
-> **Known limitations / follow-ups:** Stretch features (confidence meter, audio, CSV export) in E9.
-> **Next epic:** E9 — Stretch Features.
+> **Known limitations / follow-ups:** Final validation and submission artifacts in E10.
+> **Next epic:** E10 — Validation & Submission.
 
 ---
 
-### Epic E9: Stretch Features — [ ]
+### Epic E9: Stretch Features — [x]
 
 **Goal:** Ship the three committed stretch features: confidence meter, audio feedback, CSV audit export. Meets SPECS.txt ≥3-of-7 stretch requirement.
 
@@ -1610,11 +1610,11 @@ stateDiagram-v2
 - DRY: CSV escaping helper shared if needed elsewhere.
 - Module boundaries respected.
 
-#### User Story E9.S1: As a visitor, I want to see a confidence meter so I understand how certain the match is
+#### User Story E9.S1: As a visitor, I want to see a confidence meter so I understand how certain the match is — [x]
 
-##### Feature E9.S1.F1: Confidence meter — [ ]
+##### Feature E9.S1.F1: Confidence meter — [x]
 
-###### Task E9.S1.F1.T1: Build horizontal bar component — [ ]
+###### Task E9.S1.F1.T1: Build horizontal bar component — [x]
 
 - Files: `src/ui/components/confidence-meter.ts`
 - Preconditions: E7 complete
@@ -1624,11 +1624,11 @@ stateDiagram-v2
 - Acceptance test: component test renders expected width + color per score.
 - SOLID/DRY note: reads thresholds from `config` (DRY).
 
-#### User Story E9.S2: As a visitor, I want audible feedback so I don't have to watch the screen
+#### User Story E9.S2: As a visitor, I want audible feedback so I don't have to watch the screen — [x]
 
-##### Feature E9.S2.F1: Audio cues — [ ]
+##### Feature E9.S2.F1: Audio cues — [x]
 
-###### Task E9.S2.F1.T1: Implement `audio.ts` — [ ]
+###### Task E9.S2.F1.T1: Implement `audio.ts` — [x]
 
 - Files: `src/app/audio.ts`, `public/audio/granted.mp3`, `public/audio/denied.mp3`
 - Preconditions: E7 complete
@@ -1638,11 +1638,11 @@ stateDiagram-v2
 - Acceptance test: stubbed play counter fires on GRANTED; not on UNCERTAIN.
 - SOLID/DRY note: SRP.
 
-#### User Story E9.S3: As an admin, I want to export the log so I can review it offline
+#### User Story E9.S3: As an admin, I want to export the log so I can review it offline — [x]
 
-##### Feature E9.S3.F1: CSV audit export — [ ]
+##### Feature E9.S3.F1: CSV audit export — [x]
 
-###### Task E9.S3.F1.T1: Build CSV exporter — [ ]
+###### Task E9.S3.F1.T1: Build CSV exporter — [x]
 
 - Files: `src/app/csv-export.ts`, `src/ui/log-view.ts`
 - Preconditions: E8 complete
@@ -1990,10 +1990,10 @@ stateDiagram-v2
 - [x] E6 Minimal Enrollment — MVP gate (7/7 tasks)
 - [x] E7 Decision UI & Entry Log (8/8 tasks)
 - [x] E8 Admin CRUD, Bulk Import, Log Viewer (9/9 tasks)
-- [ ] E9 Stretch Features (0/3 tasks)
+- [x] E9 Stretch Features (3/3 tasks)
 - [ ] E10 Validation & Submission (0/15 tasks)
 
-**Total: 67/85 tasks complete.**
+**Total: 70/85 tasks complete.**
 
 **MVP hard-gate path (24 h):** E1 → E2 → E3 → E4 → E5 → E6. 49 tasks.
 

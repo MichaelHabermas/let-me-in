@@ -1,7 +1,7 @@
 /** @vitest-environment happy-dom */
 
 import Dexie from 'dexie';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { mountLogPageIntoApp } from '../src/app/mount-log-page';
 import { createDexiePersistence } from '../src/infra/persistence';
@@ -137,6 +137,51 @@ describe('mountLogPageIntoApp', () => {
     );
     const secondPct = app.querySelector('.log-table tbody tr td:nth-child(3)')?.textContent;
     expect(firstPct).not.toBe(secondPct);
+
+    await persistence.resetIndexedDbClientForTests();
+    await Dexie.delete(dbName);
+    document.body.removeChild(app);
+  });
+
+  it('export CSV button triggers a download', async () => {
+    const dbName = `log-page-csv-${crypto.randomUUID()}`;
+    const persistence = createDexiePersistence(dbName);
+    const rt = createTestGateRuntime();
+    await persistence.initDatabase(rt.getDatabaseSeedSettings());
+    await persistence.usersRepo.put({
+      id: 'u1',
+      name: 'One',
+      role: 'Staff',
+      referenceImageBlob: new Blob(),
+      embedding: new Float32Array(512),
+      createdAt: 1,
+    });
+    const blob = new Blob(['x']);
+    await persistence.accessLogRepo.appendDecision({
+      userId: 'u1',
+      similarity01: 0.5,
+      decision: 'GRANTED',
+      capturedFrameBlob: blob,
+      timestamp: 100,
+    });
+
+    const app = document.createElement('div');
+    document.body.appendChild(app);
+    await mountLogPageIntoApp(app, { persistence, rt });
+
+    const createUrl = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
+    const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+    app.querySelector<HTMLButtonElement>('[data-testid="log-export-csv"]')?.click();
+
+    expect(createUrl).toHaveBeenCalled();
+    expect(clickSpy).toHaveBeenCalled();
+    expect(revoke).toHaveBeenCalledWith('blob:mock');
+
+    createUrl.mockRestore();
+    revoke.mockRestore();
+    clickSpy.mockRestore();
 
     await persistence.resetIndexedDbClientForTests();
     await Dexie.delete(dbName);

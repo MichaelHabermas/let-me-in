@@ -1,5 +1,6 @@
 import { config } from '../config';
 import type { DexiePersistence } from '../infra/persistence';
+import { accessLogToCsv, downloadAccessLogCsv } from './csv-export';
 import type { GateRuntime } from './runtime-settings';
 import { filterAndSortLogRows, type LogFilterState, type LogSortKey } from './log-page-table';
 
@@ -18,6 +19,7 @@ function buildToolbar(unknown: string): {
   dateTo: HTMLInputElement;
   userSelect: HTMLSelectElement;
   decisionSelect: HTMLSelectElement;
+  exportBtn: HTMLButtonElement;
 } {
   const toolbar = document.createElement('div');
   toolbar.className = 'log-toolbar';
@@ -71,8 +73,14 @@ function buildToolbar(unknown: string): {
   }
   decWrap.appendChild(decisionSelect);
 
-  toolbar.append(dfWrap, dtWrap, userWrap, decWrap);
-  return { toolbar, dateFrom, dateTo, userSelect, decisionSelect };
+  const exportBtn = document.createElement('button');
+  exportBtn.type = 'button';
+  exportBtn.className = 'log-toolbar__export';
+  exportBtn.setAttribute('data-testid', 'log-export-csv');
+  exportBtn.textContent = config.ui.strings.logExportCsv;
+
+  toolbar.append(dfWrap, dtWrap, userWrap, decWrap, exportBtn);
+  return { toolbar, dateFrom, dateTo, userSelect, decisionSelect, exportBtn };
 }
 /* eslint-enable max-lines-per-function */
 
@@ -133,7 +141,8 @@ export async function mountLogPageIntoApp(
   let sortKey: LogSortKey = 'timestamp';
   let sortAsc = false;
 
-  const { toolbar, dateFrom, dateTo, userSelect, decisionSelect } = buildToolbar(unknown);
+  const { toolbar, dateFrom, dateTo, userSelect, decisionSelect, exportBtn } =
+    buildToolbar(unknown);
 
   for (const u of users.sort((a, b) => a.name.localeCompare(b.name))) {
     const o = document.createElement('option');
@@ -186,6 +195,15 @@ export async function mountLogPageIntoApp(
   dateTo.addEventListener('change', onFilter);
   userSelect.addEventListener('change', onFilter);
   decisionSelect.addEventListener('change', onFilter);
+
+  exportBtn.addEventListener('click', () => {
+    const csv = accessLogToCsv(rows, users, unknown);
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    downloadAccessLogCsv(csv, `gatekeeper-log-${y}${m}${day}`);
+  });
 
   main.append(h1, toolbar, tableWrap);
   app.appendChild(main);

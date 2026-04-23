@@ -1,4 +1,5 @@
 import type { GateAccessEvaluation } from './gate-access-evaluation';
+import { renderConfidenceMeter } from '../ui/components/confidence-meter';
 import { renderDecisionBanner, type DecisionBannerVariant } from '../ui/components/decision-banner';
 import { renderSideBySide } from '../ui/components/side-by-side';
 
@@ -58,6 +59,7 @@ export function createGateAccessUiController(
       title: titleFor(strings, ev),
     });
     host.appendChild(banner);
+    host.appendChild(renderConfidenceMeter({ similarity01: ev.policy.score }));
 
     const showCompare =
       (ev.policy.decision === 'GRANTED' || ev.policy.decision === 'UNCERTAIN') &&

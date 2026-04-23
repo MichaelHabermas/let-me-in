@@ -113,6 +113,7 @@ export interface Config {
       consentBulletRefuse: string;
       consentAccept: string;
       consentDecline: string;
+      logExportCsv: string;
     };
   };
 }
@@ -224,6 +225,7 @@ export const config: Config = {
         'You may refuse by closing this tab; the camera will not start without your consent.',
       consentAccept: 'I understand — continue',
       consentDecline: 'Decline',
+      logExportCsv: 'Export CSV',
     },
   },
 };

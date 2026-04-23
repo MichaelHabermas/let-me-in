@@ -70,6 +70,7 @@ const testGateUiConfig: Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingT
       consentBulletRefuse: 'Refuse',
       consentAccept: 'Accept',
       consentDecline: 'Decline',
+      logExportCsv: 'Export CSV',
     },
   },
   devLogEmbeddingTimings: false,

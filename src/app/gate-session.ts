@@ -4,6 +4,7 @@ import type { YoloDetector } from '../infra/detector-core';
 import type { FaceEmbedder } from '../infra/embedder-ort';
 import type { DexiePersistence } from '../infra/persistence';
 import type { Camera, CreateCameraOptions } from './camera';
+import { createAccessAudioCues } from './audio';
 import {
   createGateAccessUiController,
   FALLBACK_GATE_ACCESS_UI_STRINGS,
@@ -103,14 +104,16 @@ function wireCameraControls(
         const uiStrings = deps.accessUiStrings ?? FALLBACK_GATE_ACCESS_UI_STRINGS;
         const accessUi =
           elements.decisionEl && createGateAccessUiController(elements.decisionEl, uiStrings);
+        const audioCues = createAccessAudioCues();
         const evaluateDecision = await loadLiveAccessDecisionFn(
           deps.persistence,
           deps.databaseSeedFallback,
-          accessUi
-            ? {
-                onDecision: (ev) => accessUi.present(ev),
-              }
-            : undefined,
+          {
+            onDecision: (ev) => {
+              accessUi?.present(ev);
+              audioCues.play(ev.policy.decision);
+            },
+          },
         );
         const appendAccessLog: AppendAccessLogFn | undefined =
           deps.appendAccessLog ?? ((p) => deps.persistence!.accessLogRepo.appendDecision(p));
