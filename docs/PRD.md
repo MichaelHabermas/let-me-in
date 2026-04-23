@@ -41,7 +41,7 @@ Stop and produce the **End-of-Epic Human Report** (template inside each Epic) at
 All work should be done is branches, with frequent commits made.  
 Every commit must reference the Task ID and be atomic (one Task per commit where possible):
 
-```
+```text
 E{n}.S{n}.F{n}.T{n}: <imperative summary, <72 chars>
 
 <optional body: why, not what. cite source docs if applicable.>
@@ -83,7 +83,6 @@ Physical access control via badges/PINs is easily transferred, lost, or shared. 
 - Scaling beyond 50 enrolled users. 10K+ is an interview-topic architectural discussion (source: `docs/SPECS.txt` interview topics), not an implementation obligation.
 
 ### 1.5 Success metrics
-
 
 | Metric                   | Target                         | Source           |
 | ------------------------ | ------------------------------ | ---------------- |
@@ -162,12 +161,9 @@ flowchart TB
     DB --> CFG
 ```
 
-
-
 Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and other `app/*`. `infra/*` may import only from other `infra/*` and `config`. No circular imports. No UI logic inside `infra/*`. No direct `indexedDB` access outside `infra/db-dexie`.
 
 ### 2.3 Tech stack (locked — do not change without updating this PRD)
-
 
 | Layer      | Choice                                                                                   | Source                                     |
 | ---------- | ---------------------------------------------------------------------------------------- | ------------------------------------------ |
@@ -179,7 +175,6 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 | Storage    | IndexedDB via Dexie.js                                                                   | `docs/PRE-WORK.md` [LOCKED]                |
 | Matching   | Cosine on L2-normalized 512-d, brute-force 1:N                                           | `docs/PRE-WORK.md` [LOCKED]                |
 | Hosting    | Netlify — canonical origin `https://let-me-in-gatekeeper.netlify.app`                    | `docs/PRE-WORK.md` [LOCKED]                |
-
 
 ### 2.4 Scale & capacity envelope
 
@@ -206,7 +201,7 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 
 ### 2.7 Repository layout (agent MUST create this in E1)
 
-```
+```text
 /
   index.html
   admin.html
@@ -272,7 +267,6 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 
 ## 3. Glossary
 
-
 | Term                    | Definition                                                                                              |
 | ----------------------- | ------------------------------------------------------------------------------------------------------- |
 | **Embedding**           | 512-dimensional float vector produced by `w600k_mbf.onnx` representing a face.                          |
@@ -286,7 +280,6 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 | **Canonical benchmark** | Measurement taken on real MacBook Pro + desktop Chrome (not Cursor-embedded Chromium).                  |
 | **Probe**               | Pre-implementation measurement taken in Cursor-embedded Chromium (non-canonical).                       |
 | **Org**                 | A single organization deploying this app. One org = one Netlify origin = one IndexedDB.                 |
-
 
 ---
 
@@ -436,7 +429,7 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 **Description:** `src/infra/db-dexie.ts` defines three stores and exports narrow APIs per store.
 **Interfaces/contracts:**
 
-```
+```text
 users: { id (pk, string uuid), name, role, referenceImageBlob, embedding (Float32Array), createdAt }
 accessLog: { timestamp (pk, number), userId (nullable, indexed), similarity01, decision (GRANTED|UNCERTAIN|DENIED), capturedFrameBlob }
 settings: { key (pk, string), value }
@@ -586,7 +579,7 @@ settings: { key (pk, string), value }
 
 **Interfaces/contracts:**
 
-```
+```text
 camera.start({ facingMode }) -> Promise<MediaStream>
 camera.stop() -> void
 camera.getFrame() -> ImageData
@@ -730,7 +723,7 @@ camera.onError(cb) -> unsubscribe
 
 **Interfaces/contracts:**
 
-```
+```typescript
 createOrtSession(modelUrl, preferredEPs) -> Promise<{ session, executionProvider }>
 ```
 
@@ -760,7 +753,7 @@ createOrtSession(modelUrl, preferredEPs) -> Promise<{ session, executionProvider
 
 **Interfaces/contracts:**
 
-```
+```typescript
 detector.load() -> Promise<void>
 detector.infer(imageData) -> Promise<Detection[]>
 Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
@@ -1103,8 +1096,6 @@ stateDiagram-v2
     Uncertain --> Scanning: no mark
     Cooldown --> Scanning: 3s elapsed
 ```
-
-
 
 **End-of-Epic Human Report:**
 
@@ -1619,7 +1610,7 @@ stateDiagram-v2
 - DRY: CSV escaping helper shared if needed elsewhere.
 - Module boundaries respected.
 
-#### User Story E9.S1: As a visitor, I want to see a confidence meter so I understand how certain the match is.
+#### User Story E9.S1: As a visitor, I want to see a confidence meter so I understand how certain the match is
 
 ##### Feature E9.S1.F1: Confidence meter — [ ]
 
@@ -1633,7 +1624,7 @@ stateDiagram-v2
 - Acceptance test: component test renders expected width + color per score.
 - SOLID/DRY note: reads thresholds from `config` (DRY).
 
-#### User Story E9.S2: As a visitor, I want audible feedback so I don't have to watch the screen.
+#### User Story E9.S2: As a visitor, I want audible feedback so I don't have to watch the screen
 
 ##### Feature E9.S2.F1: Audio cues — [ ]
 
@@ -1647,7 +1638,7 @@ stateDiagram-v2
 - Acceptance test: stubbed play counter fires on GRANTED; not on UNCERTAIN.
 - SOLID/DRY note: SRP.
 
-#### User Story E9.S3: As an admin, I want to export the log so I can review it offline.
+#### User Story E9.S3: As an admin, I want to export the log so I can review it offline
 
 ##### Feature E9.S3.F1: CSV audit export — [ ]
 
@@ -1718,7 +1709,7 @@ stateDiagram-v2
 - DRY: common setup in a shared fixture.
 - Module boundaries respected.
 
-#### User Story E10.S1: As a grader, I want evidence that scenarios 1–8 pass.
+#### User Story E10.S1: As a grader, I want evidence that scenarios 1–8 pass
 
 ##### Feature E10.S1.F1: Scripted scenarios — [ ]
 
@@ -1795,7 +1786,7 @@ stateDiagram-v2
 - Acceptance test: table contains expected rows.
 - SOLID/DRY note: n/a.
 
-#### User Story E10.S2: As a grader, I want evidence of ≥85% TPR @ ≤5% FPR on ≥20 faces.
+#### User Story E10.S2: As a grader, I want evidence of ≥85% TPR @ ≤5% FPR on ≥20 faces
 
 ##### Feature E10.S2.F1: Accuracy trial — [ ]
 
@@ -1820,7 +1811,7 @@ stateDiagram-v2
 - Acceptance test: TPR ≥0.85 AND FPR ≤0.05 at chosen threshold.
 - SOLID/DRY note: results file is the audit record.
 
-#### User Story E10.S3: As a grader, I want canonical latency benchmarks on target hardware.
+#### User Story E10.S3: As a grader, I want canonical latency benchmarks on target hardware
 
 ##### Feature E10.S3.F1: Canonical benchmarks — [ ]
 
@@ -1852,7 +1843,7 @@ stateDiagram-v2
 - Acceptance test: <8000 ms.
 - SOLID/DRY note: n/a.
 
-#### User Story E10.S4: As a grader, I want a demo video, architecture PDF, cost log, and social post.
+#### User Story E10.S4: As a grader, I want a demo video, architecture PDF, cost log, and social post
 
 ##### Feature E10.S4.F1: Submission deliverables — [ ]
 
@@ -1948,7 +1939,6 @@ stateDiagram-v2
 
 ### 5.4 Performance budgets
 
-
 | Metric                    | Budget   | Enforcement         |
 | ------------------------- | -------- | ------------------- |
 | Detection latency p50     | <500 ms  | E10.S3.F1.T1        |
@@ -1958,7 +1948,6 @@ stateDiagram-v2
 | Preview FPS               | ≥15      | E2 DoD-2            |
 | Bundle size (exc. models) | <2 MiB   | E1 DoD-2            |
 | Tab memory                | <500 MB  | E10.S3 (spot-check) |
-
 
 ### 5.5 Accessibility
 
@@ -2032,8 +2021,6 @@ flowchart LR
     E9 --> E10
 ```
 
-
-
 ---
 
-*End of PRD. Update this document — not a side file — when requirements change.*
+**End of PRD. Update this document — not a side file — when requirements change**
