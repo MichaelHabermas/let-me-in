@@ -6,6 +6,7 @@ export type GateUiConfigSlice = Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEm
 
 export type GateUiRuntimeSlice = {
   orgName: string;
+  orgTagline: string;
   gatePageTitle: string;
   adminPageTitle: string;
   logPageTitle: string;
@@ -54,6 +55,7 @@ export function createGateUiRuntimeSlice(
   const orgName = cfg.org.name;
   return {
     orgName,
+    orgTagline: cfg.org.tagline,
     gatePageTitle: `${orgName} — Entry`,
     adminPageTitle: `${orgName} — Admin`,
     logPageTitle: `${orgName} — Entry log`,

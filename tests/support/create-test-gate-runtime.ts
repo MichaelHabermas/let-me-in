@@ -4,7 +4,11 @@ import { composeGateRuntime, type GateRuntime } from '../../src/app/runtime-sett
 import type { Config } from '../../src/config';
 
 const testGateUiConfig: Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'> = {
-  org: { name: 'TestOrg', logoUrl: '' },
+  org: {
+    name: 'TestOrg',
+    logoUrl: '',
+    tagline: 'Test tagline for browser-only facial recognition.',
+  },
   camera: {
     idealWidth: 320,
     idealHeight: 240,

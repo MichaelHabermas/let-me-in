@@ -115,14 +115,73 @@ body {
 }
 
 .gate-header__intro {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  flex: 1 1 0;
   min-width: 0;
 }
 
-.gate-header__lede {
-  max-width: 52ch;
+/* Product tagline: hover / keyboard-focus tooltip on the gate title */
+.gate-title-tooltip-host {
+  display: inline-block;
+  align-self: flex-start;
+  max-width: 100%;
+  cursor: help;
+  border-radius: var(--radius-sm);
+}
+
+.gate-title-tooltip-host:focus {
+  outline: none;
+}
+
+.gate-title-tooltip-host:focus-visible {
+  outline: 2px solid var(--color-uncertain);
+  outline-offset: 2px;
+}
+
+.gate-title-tooltip__bubble {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  z-index: 30;
+  margin-top: var(--space-2);
+  width: min(36rem, 100%, calc(100vw - 2rem));
+  padding: var(--space-3) var(--space-4);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--color-text);
+  background: rgb(15 23 42 / 0.98);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.4);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-0.25rem);
+  pointer-events: none;
+  text-wrap: balance;
+  transition:
+    opacity 160ms ease,
+    visibility 160ms ease,
+    transform 160ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gate-title-tooltip__bubble {
+    transition: none;
+    transform: none;
+  }
+}
+
+.gate-title-tooltip-host:hover + .gate-title-tooltip__bubble,
+.gate-title-tooltip-host:focus-within + .gate-title-tooltip__bubble,
+.gate-title-tooltip__bubble:hover {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .gate-toolbar {
@@ -301,8 +360,8 @@ body {
     padding: var(--space-3);
   }
 
-  .gate-header__lede {
-    max-width: 44ch;
+  .gate-title-tooltip__bubble {
+    width: min(32rem, 100%, calc(100vw - 1.5rem));
   }
 
   .gate-livebar {

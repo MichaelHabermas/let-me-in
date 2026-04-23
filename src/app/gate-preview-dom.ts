@@ -91,8 +91,25 @@ export function buildGateDom(rt: GateRuntime): BuiltGateDom {
   h1.className = 'page__title';
   h1.textContent = rt.orgName;
 
-  const lede = document.createElement('p');
-  lede.className = 'page__lede gate-header__lede';
+  const tagline = rt.orgTagline.trim();
+  if (tagline) {
+    const titleHost = document.createElement('div');
+    titleHost.className = 'gate-title-tooltip-host';
+    titleHost.tabIndex = 0;
+
+    const bubble = document.createElement('div');
+    bubble.id = 'gate-product-tagline';
+    bubble.className = 'gate-title-tooltip__bubble';
+    bubble.setAttribute('role', 'tooltip');
+    bubble.textContent = tagline;
+
+    h1.setAttribute('aria-describedby', bubble.id);
+    titleHost.appendChild(h1);
+    intro.appendChild(titleHost);
+    intro.appendChild(bubble);
+  } else {
+    intro.appendChild(h1);
+  }
 
   const { toolbar, startBtn, stopBtn } = createGateToolbar(rt);
   toolbar.classList.add('gate-header__actions');
@@ -100,9 +117,6 @@ export function buildGateDom(rt: GateRuntime): BuiltGateDom {
   const statusEl = document.createElement('p');
   statusEl.className = 'gate-status';
   statusEl.setAttribute('role', 'status');
-
-  intro.appendChild(h1);
-  intro.appendChild(lede);
   header.appendChild(intro);
   header.appendChild(toolbar);
 

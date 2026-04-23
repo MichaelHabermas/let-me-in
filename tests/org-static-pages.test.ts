@@ -8,6 +8,7 @@ import { mountOrgBrandedStaticPage } from '../src/ui/org-static-pages';
 function fakeRuntime(): GateRuntime {
   return {
     orgName: 'Acme',
+    orgTagline: '',
     gatePageTitle: 'Acme — Entry',
     adminPageTitle: 'Acme — Admin panel',
     logPageTitle: 'Acme — Log page',

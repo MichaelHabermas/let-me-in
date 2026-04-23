@@ -63,6 +63,12 @@ describe('mountGateIntoHost', () => {
 
     expect(document.title).toBe('TestOrg — Entry');
     expect(host.querySelector('.page--gate')).toBeTruthy();
+    const h1 = host.querySelector('.page__title');
+    const bubble = host.querySelector('#gate-product-tagline');
+    expect(host.querySelector('.gate-title-tooltip-host')).toBeTruthy();
+    expect(bubble?.textContent).toBe('Test tagline for browser-only facial recognition.');
+    expect(bubble?.classList.contains('gate-title-tooltip__bubble')).toBe(true);
+    expect(h1?.getAttribute('aria-describedby')).toBe('gate-product-tagline');
     expect(host.querySelector('#start')).toBeTruthy();
     expect(host.querySelector('#preview')).toBeTruthy();
     expect(host.querySelector('#detector-overlay')).toBeTruthy();

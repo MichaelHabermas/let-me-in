@@ -5,7 +5,7 @@ import { getDatabaseSeedSettingsFromConfig } from '../src/app/gate-seed-settings
 import type { Config } from '../src/config';
 
 const uiCfg: Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'> = {
-  org: { name: 'TestOrg', logoUrl: '' },
+  org: { name: 'TestOrg', logoUrl: '', tagline: 'Test org tagline.' },
   camera: {
     idealWidth: 640,
     idealHeight: 480,
@@ -37,6 +37,7 @@ describe('createGateUiRuntimeSlice', () => {
   it('builds titles and preview dimensions from config', () => {
     const rt = createGateUiRuntimeSlice(uiCfg, false);
     expect(rt.orgName).toBe('TestOrg');
+    expect(rt.orgTagline).toBe('Test org tagline.');
     expect(rt.gatePageTitle).toBe('TestOrg — Entry');
     expect(rt.previewCanvasWidth).toBe(640);
     expect(rt.getDefaultVideoConstraintsForCamera().facingMode).toBe('environment');

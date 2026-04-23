@@ -16,6 +16,8 @@ export interface Config {
   org: {
     name: string;
     logoUrl: string;
+    /** One-line product description shown under the gate title. */
+    tagline: string;
   };
   thresholds: {
     /** similarity01 >= strong AND margin >= margin → GRANTED */
@@ -94,6 +96,8 @@ export const config: Config = {
   org: {
     name: 'Gatekeeper',
     logoUrl: '',
+    tagline:
+      'A browser-only facial-recognition “door” that verifies who is at the camera and grants or denies entry without sending video to a server or requiring dedicated hardware.',
   },
   thresholds: {
     strong: 0.85,
