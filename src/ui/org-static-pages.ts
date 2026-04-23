@@ -16,7 +16,8 @@ const variantMeta: Record<
     documentTitle: (rt) => rt.adminPageTitle,
     headingText: (rt) => `${rt.orgName} — Admin`,
     pageClass: 'page page--admin',
-    ledeText: 'Enrollment and authentication will be wired in Epic E6.',
+    ledeText:
+      'This static shell is unused when the app boots /admin via bootstrap. Enrollment lives in the admin bundle.',
   },
   log: {
     documentTitle: (rt) => rt.logPageTitle,

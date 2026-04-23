@@ -1,0 +1,216 @@
+import type { GateRuntime } from './runtime-settings';
+
+export type AdminEnrollmentDom = {
+  shell: HTMLElement;
+  logoutBtn: HTMLButtonElement;
+  main: HTMLElement;
+  video: HTMLVideoElement;
+  frameCanvas: HTMLCanvasElement;
+  overlayCanvas: HTMLCanvasElement;
+  statusEl: HTMLElement;
+  nameInput: HTMLInputElement;
+  roleInput: HTMLInputElement;
+  startBtn: HTMLButtonElement;
+  stopBtn: HTMLButtonElement;
+  capBtn: HTMLButtonElement;
+  retakeBtn: HTMLButtonElement;
+  saveBtn: HTMLButtonElement;
+};
+
+function buildAdminHeader(rt: GateRuntime): { header: HTMLElement; logoutBtn: HTMLButtonElement } {
+  const header = document.createElement('header');
+  header.className = 'admin-header';
+  const h1 = document.createElement('h1');
+  h1.className = 'admin-header__title';
+  h1.textContent = `${rt.orgName} — Admin`;
+  const logoutBtn = document.createElement('button');
+  logoutBtn.type = 'button';
+  logoutBtn.className = 'admin-header__logout';
+  logoutBtn.textContent = rt.getAdminUiStrings().logout;
+  logoutBtn.setAttribute('data-testid', 'admin-logout');
+  header.append(h1, logoutBtn);
+  return { header, logoutBtn };
+}
+
+function buildPreviewColumn(rt: GateRuntime): {
+  column: HTMLElement;
+  video: HTMLVideoElement;
+  frameCanvas: HTMLCanvasElement;
+  overlayCanvas: HTMLCanvasElement;
+  statusEl: HTMLElement;
+} {
+  const column = document.createElement('div');
+  column.className = 'admin-enroll__preview';
+  const previewWrap = document.createElement('div');
+  previewWrap.className = 'admin-enroll__video-wrap';
+
+  const video = document.createElement('video');
+  video.className = 'admin-enroll__video';
+  video.playsInline = true;
+  video.muted = true;
+
+  const frameCanvas = document.createElement('canvas');
+  frameCanvas.className = 'admin-enroll__frame-canvas';
+  frameCanvas.width = rt.previewCanvasWidth;
+  frameCanvas.height = rt.previewCanvasHeight;
+
+  const overlayCanvas = document.createElement('canvas');
+  overlayCanvas.className = 'admin-enroll__overlay';
+  overlayCanvas.width = rt.previewCanvasWidth;
+  overlayCanvas.height = rt.previewCanvasHeight;
+
+  previewWrap.append(video, frameCanvas, overlayCanvas);
+  const statusEl = document.createElement('p');
+  statusEl.className = 'admin-enroll__status';
+  statusEl.setAttribute('data-testid', 'enroll-status');
+  column.append(previewWrap, statusEl);
+  return { column, video, frameCanvas, overlayCanvas, statusEl };
+}
+
+function buildNameFields(rt: GateRuntime): {
+  nameLabel: HTMLLabelElement;
+  nameInput: HTMLInputElement;
+  roleLabel: HTMLLabelElement;
+  roleInput: HTMLInputElement;
+} {
+  const nameLabel = document.createElement('label');
+  nameLabel.className = 'admin-enroll__label';
+  nameLabel.htmlFor = 'enroll-name';
+  nameLabel.textContent = rt.getAdminUiStrings().enrollNameLabel;
+  const nameInput = document.createElement('input');
+  nameInput.id = 'enroll-name';
+  nameInput.type = 'text';
+  nameInput.autocomplete = 'name';
+  nameInput.setAttribute('data-testid', 'enroll-name');
+
+  const roleLabel = document.createElement('label');
+  roleLabel.className = 'admin-enroll__label';
+  roleLabel.htmlFor = 'enroll-role';
+  roleLabel.textContent = rt.getAdminUiStrings().enrollRoleLabel;
+  const roleInput = document.createElement('input');
+  roleInput.id = 'enroll-role';
+  roleInput.type = 'text';
+  roleInput.autocomplete = 'off';
+  roleInput.setAttribute('data-testid', 'enroll-role');
+
+  return { nameLabel, nameInput, roleLabel, roleInput };
+}
+
+function buildActionButtons(rt: GateRuntime): {
+  btnRow: HTMLDivElement;
+  startBtn: HTMLButtonElement;
+  stopBtn: HTMLButtonElement;
+  capBtn: HTMLButtonElement;
+  retakeBtn: HTMLButtonElement;
+  saveBtn: HTMLButtonElement;
+} {
+  const btnRow = document.createElement('div');
+  btnRow.className = 'admin-enroll__actions';
+
+  const startBtn = document.createElement('button');
+  startBtn.type = 'button';
+  startBtn.className = 'btn btn--primary';
+  startBtn.textContent = rt.getAdminUiStrings().enrollStartCamera;
+  startBtn.setAttribute('data-testid', 'enroll-start');
+
+  const stopBtn = document.createElement('button');
+  stopBtn.type = 'button';
+  stopBtn.className = 'btn';
+  stopBtn.textContent = rt.getCameraStopLabel();
+  stopBtn.disabled = true;
+
+  const capBtn = document.createElement('button');
+  capBtn.type = 'button';
+  capBtn.className = 'btn';
+  capBtn.textContent = rt.getAdminUiStrings().enrollCapture;
+  capBtn.setAttribute('data-testid', 'enroll-capture');
+  capBtn.disabled = true;
+
+  const retakeBtn = document.createElement('button');
+  retakeBtn.type = 'button';
+  retakeBtn.className = 'btn';
+  retakeBtn.textContent = rt.getAdminUiStrings().enrollRetake;
+  retakeBtn.setAttribute('data-testid', 'enroll-retake');
+  retakeBtn.disabled = true;
+
+  const saveBtn = document.createElement('button');
+  saveBtn.type = 'button';
+  saveBtn.className = 'btn btn--primary';
+  saveBtn.textContent = rt.getAdminUiStrings().enrollSave;
+  saveBtn.setAttribute('data-testid', 'enroll-save');
+  saveBtn.disabled = true;
+
+  btnRow.append(startBtn, stopBtn, capBtn, retakeBtn, saveBtn);
+  return { btnRow, startBtn, stopBtn, capBtn, retakeBtn, saveBtn };
+}
+
+function buildFormColumn(rt: GateRuntime): {
+  column: HTMLElement;
+  nameInput: HTMLInputElement;
+  roleInput: HTMLInputElement;
+  startBtn: HTMLButtonElement;
+  stopBtn: HTMLButtonElement;
+  capBtn: HTMLButtonElement;
+  retakeBtn: HTMLButtonElement;
+  saveBtn: HTMLButtonElement;
+} {
+  const column = document.createElement('div');
+  column.className = 'admin-enroll__form-col';
+  const h2 = document.createElement('h2');
+  h2.className = 'admin-enroll__heading';
+  h2.textContent = rt.getAdminUiStrings().enrollTitle;
+
+  const names = buildNameFields(rt);
+  const actions = buildActionButtons(rt);
+  column.append(
+    h2,
+    names.nameLabel,
+    names.nameInput,
+    names.roleLabel,
+    names.roleInput,
+    actions.btnRow,
+  );
+
+  return {
+    column,
+    nameInput: names.nameInput,
+    roleInput: names.roleInput,
+    startBtn: actions.startBtn,
+    stopBtn: actions.stopBtn,
+    capBtn: actions.capBtn,
+    retakeBtn: actions.retakeBtn,
+    saveBtn: actions.saveBtn,
+  };
+}
+
+export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
+  const shell = document.createElement('div');
+  shell.className = 'admin-root admin-root--authed';
+  shell.setAttribute('data-testid', 'admin-enroll-root');
+
+  const { header, logoutBtn } = buildAdminHeader(rt);
+  const main = document.createElement('main');
+  main.className = 'admin-enroll';
+
+  const preview = buildPreviewColumn(rt);
+  const form = buildFormColumn(rt);
+  main.append(preview.column, form.column);
+  shell.append(header, main);
+
+  return {
+    shell,
+    logoutBtn,
+    main,
+    video: preview.video,
+    frameCanvas: preview.frameCanvas,
+    overlayCanvas: preview.overlayCanvas,
+    statusEl: preview.statusEl,
+    nameInput: form.nameInput,
+    roleInput: form.roleInput,
+    startBtn: form.startBtn,
+    stopBtn: form.stopBtn,
+    capBtn: form.capBtn,
+    retakeBtn: form.retakeBtn,
+    saveBtn: form.saveBtn,
+  };
+}

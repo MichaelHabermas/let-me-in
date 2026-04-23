@@ -38,7 +38,7 @@ Use this when mapping prose in older notes to the **current** tree (supersedes p
 | Pure threshold → decision helper | `src/domain/access-policy.ts` (`decideFromMatch`); app façade `src/app/policy.ts` (`decide`). |
 | Shared row / match types | `src/domain/types.ts`. |
 | Vite multi-page inputs, dev pretty URLs, Netlify redirect TOML canonical string | `multi-page.ts`; keep `netlify.toml` aligned with `pnpm sync:netlify` or `pnpm verify:netlify` (see `README.md`). |
-| Thin admin/log HTML shells | `src/ui/admin-view.ts`, `src/ui/log-view.ts`, `src/ui/page-shell.ts`. |
+| Thin admin/log HTML shells | `src/ui/admin-view.ts` re-exports `src/app/mount-admin-page.ts`; `src/ui/log-view.ts`, `src/ui/page-shell.ts`. |
 
 **Authoritative layout:** `docs/PRD.md` §2.7 repository tree + `README.md` **Source layout (current)**.
 

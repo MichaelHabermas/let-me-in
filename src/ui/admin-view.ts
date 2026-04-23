@@ -1,6 +1,1 @@
-import { resolveGateRuntime } from '../app/runtime-settings';
-import { mountOrgBrandedStaticPage } from './org-static-pages';
-
-export function mountAdminView(): void {
-  mountOrgBrandedStaticPage('admin', resolveGateRuntime());
-}
+export { mountAdminPage as mountAdminView } from '../app/mount-admin-page';

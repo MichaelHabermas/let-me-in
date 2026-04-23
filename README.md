@@ -33,7 +33,9 @@ Open:
 | `pnpm run lint`         | ESLint (`src/`)             |
 | `pnpm run format`       | Prettier write (`src/`)     |
 | `pnpm run format:check` | Prettier check              |
-| `pnpm test`             | Vitest                      |
+| `pnpm test`             | Vitest (unit; excludes `tests/e2e`) |
+| `pnpm test:e2e`         | Playwright (`tests/e2e`; installs Chromium on first run via `pnpm exec playwright install`) |
+| `pnpm seed:users`       | Seeds three sample users into IndexedDB (`gatekeeper`) — see `tests/scenarios/seed-3-users.js` |
 | `pnpm sync:netlify`     | Rewrite `netlify.toml` redirect blocks from `multi-page.ts` |
 | `pnpm verify:netlify`   | Fail if redirects drift from `multi-page.ts` (no writes)   |
 
@@ -41,6 +43,7 @@ Open:
 
 - **Entries:** [`src/main.ts`](src/main.ts), [`src/admin.ts`](src/admin.ts), [`src/log.ts`](src/log.ts) each call [`bootstrapApp({ mount })`](src/app/bootstrap-app.ts) (optional `persistence` for tests).
 - **Gate page:** [`src/app/mount-gate.ts`](src/app/mount-gate.ts) builds DOM and wires the camera preview via [`src/app/gate-session.ts`](src/app/gate-session.ts).
+- **Admin / enrollment:** [`src/app/mount-admin-page.ts`](src/app/mount-admin-page.ts) (mounted from [`src/ui/admin-view.ts`](src/ui/admin-view.ts)) — login modal, camera enrollment, IndexedDB save. E2E uses `VITE_E2E_STUB_ENROLL=true` (see Playwright `webServer` env in [`playwright.config.ts`](playwright.config.ts)).
 - **Runtime copy / seed:** [`src/app/runtime-settings.ts`](src/app/runtime-settings.ts) centralizes config- and env-derived values (page titles, camera strings, preview canvas size, dev FPS overlay).
 - **Deploy routes:** [`multi-page.ts`](multi-page.ts) feeds Vite and `netlify.toml` (keep in sync with `pnpm sync:netlify` or `pnpm verify:netlify`).
 
@@ -50,6 +53,8 @@ Open:
 - Admin credentials for production builds: set `VITE_ADMIN_USER` and `VITE_ADMIN_PASS` at build time (see `[.env.example](.env.example)`). If unset, the app warns and uses dev defaults (`admin` / `admin`).
 
 ## Deploy (Netlify)
+
+See **[docs/DEPLOY.md](docs/DEPLOY.md)** for admin credential env vars and rotation.
 
 - `[netlify.toml](netlify.toml)` — build command and publish directory.
 - `[public/_headers](public/_headers)` — long cache for `/models/*` and `*.onnx`.
@@ -63,6 +68,6 @@ The app uses database name `**gatekeeper**` with stores `users`, `accessLog`, an
 
 ## Validation checklist (Epic E1)
 
-1. `pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm test` — all exit 0.
+1. `pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm test` — all exit 0. Optionally `pnpm test:e2e` after `pnpm exec playwright install chromium`.
 2. `pnpm run build` — `dist/` contains `index.html`, `admin.html`, `log.html`.
 3. In Chrome DevTools → Application → IndexedDB → `gatekeeper` — three stores; `settings` has two keys (`thresholds`, `cooldownMs`) after load.

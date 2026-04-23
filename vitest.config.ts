@@ -8,6 +8,7 @@ export default defineConfig({
     },
   },
   test: {
+    exclude: ['**/node_modules/**', '**/dist/**', 'tests/e2e/**'],
     environment: 'node',
     /**
      * Vitest 4 removed `environmentMatchGlobs`. Suites that need `document` must use

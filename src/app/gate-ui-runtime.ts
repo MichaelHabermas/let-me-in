@@ -4,6 +4,24 @@ import type { CameraErrorCode } from '../infra/camera';
 /** Config fields needed for titles, preview layout, and camera UX strings. */
 export type GateUiConfigSlice = Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'>;
 
+export type AdminUiStrings = {
+  loginHeading: string;
+  loginUsername: string;
+  loginPassword: string;
+  loginSubmit: string;
+  loginError: string;
+  logout: string;
+  enrollTitle: string;
+  enrollStartCamera: string;
+  enrollCapture: string;
+  enrollRetake: string;
+  enrollSave: string;
+  enrollNameLabel: string;
+  enrollRoleLabel: string;
+  enrollSuccess: string;
+  enrollNameRequired: string;
+};
+
 export type GateUiRuntimeSlice = {
   orgName: string;
   orgTagline: string;
@@ -26,6 +44,7 @@ export type GateUiRuntimeSlice = {
   getDetectorLoadFailedMessage(): string;
   getNoFaceMessage(): string;
   getMultiFaceMessage(): string;
+  getAdminUiStrings(): AdminUiStrings;
 };
 
 /**
@@ -46,6 +65,27 @@ function cameraMessage(cfg: GateUiConfigSlice, code: CameraErrorCode): string {
       return _exhaustive;
     }
   }
+}
+
+function adminStringsFromConfig(cfg: GateUiConfigSlice): AdminUiStrings {
+  const s = cfg.ui.strings;
+  return {
+    loginHeading: s.adminLoginHeading,
+    loginUsername: s.adminLoginUsername,
+    loginPassword: s.adminLoginPassword,
+    loginSubmit: s.adminLoginSubmit,
+    loginError: s.adminLoginError,
+    logout: s.adminLogout,
+    enrollTitle: s.enrollTitle,
+    enrollStartCamera: s.enrollStartCamera,
+    enrollCapture: s.enrollCapture,
+    enrollRetake: s.enrollRetake,
+    enrollSave: s.enrollSave,
+    enrollNameLabel: s.enrollNameLabel,
+    enrollRoleLabel: s.enrollRoleLabel,
+    enrollSuccess: s.enrollSuccess,
+    enrollNameRequired: s.enrollNameRequired,
+  };
 }
 
 export function createGateUiRuntimeSlice(
@@ -90,6 +130,9 @@ export function createGateUiRuntimeSlice(
     },
     getMultiFaceMessage(): string {
       return cfg.ui.strings.multiFace;
+    },
+    getAdminUiStrings(): AdminUiStrings {
+      return adminStringsFromConfig(cfg);
     },
   };
 }

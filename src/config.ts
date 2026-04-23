@@ -1,3 +1,4 @@
+import { AdminAuthCredentials } from './app/auth';
 import { ORT_EP_ORDER_BROWSER } from './infra/ort-execution-defaults';
 
 /**
@@ -35,10 +36,7 @@ export interface Config {
     embedder: string;
   };
   adminCredentialSource: 'env' | 'dev-default';
-  admin: {
-    user: string;
-    pass: string;
-  };
+  admin: AdminAuthCredentials;
   /**
    * Base URL for onnxruntime-web WASM assets (default: jsDelivr).
    * For strict CSP / air-gapped deploys, vendor `dist/*.wasm` under `/ort/` and point here.
@@ -55,6 +53,8 @@ export interface Config {
    */
   devLogEmbeddingTimings: boolean;
   audioEnabled: boolean;
+  /** When true (Vite `VITE_E2E_STUB_ENROLL`), admin enrollment skips camera/ONNX for Playwright. */
+  e2eStubEnrollment: boolean;
   ui: {
     strings: {
       unknown: string;
@@ -67,6 +67,21 @@ export interface Config {
       cameraStop: string;
       detectorLoading: string;
       detectorLoadFailed: string;
+      adminLoginHeading: string;
+      adminLoginUsername: string;
+      adminLoginPassword: string;
+      adminLoginSubmit: string;
+      adminLoginError: string;
+      adminLogout: string;
+      enrollTitle: string;
+      enrollStartCamera: string;
+      enrollCapture: string;
+      enrollRetake: string;
+      enrollSave: string;
+      enrollNameLabel: string;
+      enrollRoleLabel: string;
+      enrollSuccess: string;
+      enrollNameRequired: string;
     };
   };
 }
@@ -116,6 +131,7 @@ export const config: Config = {
   detectorUseWorker: true,
   devLogEmbeddingTimings: import.meta.env.VITE_LOG_EMBEDDING_TIMINGS === 'true',
   audioEnabled: true,
+  e2eStubEnrollment: import.meta.env.VITE_E2E_STUB_ENROLL === 'true',
   ui: {
     strings: {
       unknown: 'Unknown',
@@ -129,6 +145,21 @@ export const config: Config = {
       cameraStop: 'Stop camera',
       detectorLoading: 'Loading face detector…',
       detectorLoadFailed: 'Face detector could not load. Check your connection and refresh.',
+      adminLoginHeading: 'Admin sign-in',
+      adminLoginUsername: 'Username',
+      adminLoginPassword: 'Password',
+      adminLoginSubmit: 'Sign in',
+      adminLoginError: 'Invalid username or password.',
+      adminLogout: 'Sign out',
+      enrollTitle: 'Enroll a user',
+      enrollStartCamera: 'Start camera',
+      enrollCapture: 'Capture',
+      enrollRetake: 'Retake',
+      enrollSave: 'Save',
+      enrollNameLabel: 'Name',
+      enrollRoleLabel: 'Role',
+      enrollSuccess: 'User saved.',
+      enrollNameRequired: 'Name is required.',
     },
   },
 };

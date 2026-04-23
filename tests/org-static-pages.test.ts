@@ -32,6 +32,23 @@ function fakeRuntime(): GateRuntime {
     getDetectorLoadFailedMessage: () => '',
     getNoFaceMessage: () => 'No face',
     getMultiFaceMessage: () => 'Multiple faces',
+    getAdminUiStrings: () => ({
+      loginHeading: '',
+      loginUsername: '',
+      loginPassword: '',
+      loginSubmit: '',
+      loginError: '',
+      logout: '',
+      enrollTitle: '',
+      enrollStartCamera: '',
+      enrollCapture: '',
+      enrollRetake: '',
+      enrollSave: '',
+      enrollNameLabel: '',
+      enrollRoleLabel: '',
+      enrollSuccess: '',
+      enrollNameRequired: '',
+    }),
   };
 }
 
@@ -42,7 +59,7 @@ describe('mountOrgBrandedStaticPage', () => {
     expect(document.title).toBe('Acme — Admin panel');
     const h1 = document.querySelector('.page--admin .page__title');
     expect(h1?.textContent).toBe('Acme — Admin');
-    expect(document.querySelector('.page--admin .page__lede')?.textContent).toContain('Epic E6');
+    expect(document.querySelector('.page--admin .page__lede')?.textContent).toMatch(/enrollment/i);
   });
 
   it('mounts log variant with titles and layout', () => {

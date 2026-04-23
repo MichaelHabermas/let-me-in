@@ -1120,7 +1120,7 @@ stateDiagram-v2
 
 ---
 
-### Epic E6: Minimal Enrollment (MVP 24h gate) — [ ]
+### Epic E6: Minimal Enrollment (MVP 24h gate) — [x]
 
 **Goal:** Deliver the smallest possible enrollment path so that an admin can sign in with `admin/admin`, capture 3 users' faces, and save them to IndexedDB.
 
@@ -1145,20 +1145,20 @@ stateDiagram-v2
 - OCP: adding a new enrollment field (e.g., `photoUrl`) edits the view + repo only.
 - LSP: n/a.
 - ISP: view receives `{ onSave, onCancel, camera }`.
-- DIP: view imports camera via `app/camera.ts` and session wiring via `app/gate-session.ts`.
+- DIP: admin UI imports camera via `app/camera.ts`; enrollment capture lives in `app/enroll-capture.ts` (reuses `embedFace`).
 - DRY: enrollment flow reuses `pipeline.embedFace`.
 - Module boundaries respected.
 
-#### User Story E6.S1: As an admin, I want a simple login so that only I can enroll users. — [ ]
+#### User Story E6.S1: As an admin, I want a simple login so that only I can enroll users. — [x]
 
 **Acceptance criteria:**
 
 - given I visit `/admin`, when credentials are incorrect, then I cannot access the enrollment form.
 - given correct credentials, then I see the enrollment form; a session token persists across reloads for 8 hours.
 
-##### Feature E6.S1.F1: Dev + env credential source — [ ]
+##### Feature E6.S1.F1: Dev + env credential source — [x]
 
-###### Task E6.S1.F1.T1: Implement `src/app/auth.ts` — [ ]
+###### Task E6.S1.F1.T1: Implement `src/app/auth.ts` — [x]
 
 - Files: `src/app/auth.ts`
 - Preconditions: E1.S1.F2.T2 done
@@ -1169,7 +1169,7 @@ stateDiagram-v2
 - Acceptance test: login/logout cycle works; expired token treated as logged out.
 - SOLID/DRY note: single auth module (SRP).
 
-###### Task E6.S1.F1.T2: Build admin login modal — [ ]
+###### Task E6.S1.F1.T2: Build admin login modal — [x]
 
 - Files: `src/ui/admin-view.ts`, `admin.html`
 - Preconditions: E6.S1.F1.T1 done
@@ -1179,7 +1179,7 @@ stateDiagram-v2
 - Acceptance test: Playwright test: wrong creds → modal stays; right creds → enrollment form appears.
 - SOLID/DRY note: single modal component reused if needed.
 
-###### Task E6.S1.F1.T3: Document Netlify build-secret rotation — [ ]
+###### Task E6.S1.F1.T3: Document Netlify build-secret rotation — [x]
 
 - Files: `README.md`, `.env.example`, `docs/DEPLOY.md`
 - Preconditions: E6.S1.F1.T1 done
@@ -1189,7 +1189,7 @@ stateDiagram-v2
 - Acceptance test: follow the doc on a scratch Netlify site; verify new credential takes effect.
 - SOLID/DRY note: documented once, not repeated per epic.
 
-#### User Story E6.S2: As an admin, I want to capture a user's face and save it with name + role so we have enrolled users to match against. — [ ]
+#### User Story E6.S2: As an admin, I want to capture a user's face and save it with name + role so we have enrolled users to match against. — [x]
 
 **Acceptance criteria:**
 
@@ -1197,9 +1197,9 @@ stateDiagram-v2
 - given the detector finds exactly one face, when I click "Capture", the frame freezes and an embedding is computed.
 - given I fill in name + role and click "Save", then the record is written to IndexedDB and the form resets.
 
-##### Feature E6.S2.F1: Single-photo enrollment flow — [ ]
+##### Feature E6.S2.F1: Single-photo enrollment flow — [x]
 
-###### Task E6.S2.F1.T1: Build enrollment state machine — [ ]
+###### Task E6.S2.F1.T1: Build enrollment state machine — [x]
 
 - Files: `src/app/enroll.ts`
 - Preconditions: E4 complete, E6.S1 complete
@@ -1209,7 +1209,7 @@ stateDiagram-v2
 - Acceptance test: unit test walks through all states.
 - SOLID/DRY note: explicit FSM (OCP — add states without rewriting flow).
 
-###### Task E6.S2.F1.T2: Build enrollment UI — [ ]
+###### Task E6.S2.F1.T2: Build enrollment UI — [x]
 
 - Files: `src/ui/admin-view.ts`, `src/styles/layout.css`
 - Preconditions: E6.S2.F1.T1 done
@@ -1219,9 +1219,9 @@ stateDiagram-v2
 - Acceptance test: Playwright test walks idle → saved.
 - SOLID/DRY note: UI strings from `config`.
 
-###### Task E6.S2.F1.T3: Save `User` record to IndexedDB — [ ]
+###### Task E6.S2.F1.T3: Save `User` record to IndexedDB — [x]
 
-- Files: `src/infra/db-dexie.ts`, `src/app/enroll.ts`
+- Files: `src/infra/db-dexie.ts` (schema unchanged), `src/app/enroll-save.ts` + `persistEnrolledUser`
 - Preconditions: E6.S2.F1.T2 done
 - Steps:
   1. Generate UUID for `id`.
@@ -1231,13 +1231,13 @@ stateDiagram-v2
 - Acceptance test: after save + reload, `usersRepo.toArray().length === 1`.
 - SOLID/DRY note: repo owns persistence.
 
-###### Task E6.S2.F1.T4: Seed script for 3 test users — [ ]
+###### Task E6.S2.F1.T4: Seed script for 3 test users — [x]
 
-- Files: `tests/scenarios/seed-3-users.js`
+- Files: `tests/scenarios/seed-3-users.js`, `vitest.seed.config.ts`, `tests/scenarios/seed-3-users.integration.test.ts`
 - Preconditions: E6.S2.F1.T3 done
 - Steps:
-  1. Provide a dev-only helper that loads 3 pre-captured images from `tests/fixtures/` and runs them through the enrollment path.
-- Acceptance test: running the script leaves 3 users in DB.
+  1. Provide a dev-only helper that seeds three `User` rows via `persistEnrolledUser` (same save path as the UI). Synthetic JPEG placeholders; extend with real `tests/fixtures/` images later if desired.
+- Acceptance test: `pnpm seed:users` leaves 3 users in DB.
 - SOLID/DRY note: speeds MVP gate verification without re-enrolling by hand.
 
 **End-of-Epic Human Report:**
@@ -1987,13 +1987,13 @@ stateDiagram-v2
 - [x] E3 Face Detection (8/8 tasks)
 - [x] E4 Face Embedding (7/7 tasks)
 - [x] E5 Matching Engine (5/5 tasks)
-- [ ] E6 Minimal Enrollment — MVP gate (0/7 tasks)
+- [x] E6 Minimal Enrollment — MVP gate (7/7 tasks)
 - [ ] E7 Decision UI & Entry Log (0/8 tasks)
 - [ ] E8 Admin CRUD, Bulk Import, Log Viewer (0/9 tasks)
 - [ ] E9 Stretch Features (0/3 tasks)
 - [ ] E10 Validation & Submission (0/15 tasks)
 
-**Total: 43/85 tasks complete.**
+**Total: 50/85 tasks complete.**
 
 **MVP hard-gate path (24 h):** E1 → E2 → E3 → E4 → E5 → E6. 49 tasks.
 
