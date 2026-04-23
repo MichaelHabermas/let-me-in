@@ -1,19 +1,26 @@
 import { vi } from 'vitest';
 
 /** happy-dom often lacks a real 2D context; enough for enrollment / overlay paths in unit tests. */
-export function stubCanvas2dContext(): void {
+export function stubCanvas2dContext(): () => void {
   const noop = (): void => {};
-  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(function (
+  const toBlobSpy = vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(function (
+    this: HTMLCanvasElement,
+    callback: BlobCallback | null,
+    type?: string,
+  ) {
+    if (callback) {
+      callback(new Blob(['stub'], { type: type ?? 'image/png' }));
+    }
+  });
+  const getContextSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(function (
     this: HTMLCanvasElement,
     type: string,
   ) {
     if (type !== '2d') return null;
-    const w = this.width || 640;
-    const h = this.height || 480;
     return {
       drawImage: noop,
       clearRect: noop,
-      putImageData: noop,
+      putImageData: vi.fn(),
       save: noop,
       restore: noop,
       strokeRect: noop,
@@ -28,4 +35,8 @@ export function stubCanvas2dContext(): void {
         new ImageData(new Uint8ClampedArray(sw * sh * 4).fill(128), sw, sh),
     } as unknown as CanvasRenderingContext2D;
   });
+  return () => {
+    toBlobSpy.mockRestore();
+    getContextSpy.mockRestore();
+  };
 }

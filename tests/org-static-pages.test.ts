@@ -65,6 +65,18 @@ function fakeRuntime(): GateRuntime {
       enrollSuccess: '',
       enrollNameRequired: '',
     }),
+    getGateAccessUiStrings: () => ({
+      formatGranted: (n, p) => `${n} ${p}`,
+      formatDenied: (p) => `x ${p}`,
+      tryAgain: 'try',
+    }),
+    getConsentModalStrings: () => ({
+      title: 't',
+      intro: 'i',
+      bullets: ['a', 'b'],
+      accept: 'ok',
+      decline: 'no',
+    }),
   };
 }
 
@@ -84,6 +96,6 @@ describe('mountOrgBrandedStaticPage', () => {
     expect(document.title).toBe('Acme — Log page');
     const h1 = document.querySelector('.page--log .page__title');
     expect(h1?.textContent).toBe('Acme — Entry log');
-    expect(document.querySelector('.page--log .page__lede')?.textContent).toContain('Epic E7');
+    expect(document.querySelector('.page--log .page__lede')?.textContent).toContain('mountLogView');
   });
 });

@@ -8,6 +8,35 @@ import type { Camera } from '../src/app/camera';
 import type { YoloDetector } from '../src/infra/detector-core';
 import type { FaceEmbedder } from '../src/infra/embedder-ort';
 
+const sampleBlob = new Blob(['x'], { type: 'image/png' });
+
+function evalGranted() {
+  return {
+    policy: { decision: 'GRANTED' as const, userId: 'u1', score: 0.9 },
+    displayName: 'Alex',
+    referenceImageBlob: null,
+    capturedFrameBlob: sampleBlob,
+  };
+}
+
+function evalDenied() {
+  return {
+    policy: { decision: 'DENIED' as const, userId: null, score: 0.2, label: 'Unknown' as const },
+    displayName: null,
+    referenceImageBlob: null,
+    capturedFrameBlob: sampleBlob,
+  };
+}
+
+function evalUncertain() {
+  return {
+    policy: { decision: 'UNCERTAIN' as const, userId: 'u1', score: 0.72 },
+    displayName: null,
+    referenceImageBlob: null,
+    capturedFrameBlob: sampleBlob,
+  };
+}
+
 describe('createDetectionPipeline', () => {
   it('subscribes onFrame and draws after infer', async () => {
     const clearRect = vi.fn();
@@ -118,6 +147,7 @@ describe('createDetectionPipeline', () => {
   it('shows no-face status without emitting a decision', async () => {
     const frame = new ImageData(64, 64);
     const statusEl = document.createElement('p');
+    let now = 0;
     let frameCb: ((t: number) => void) | undefined;
     const camera = {
       isRunning: vi.fn(() => true),
@@ -156,10 +186,17 @@ describe('createDetectionPipeline', () => {
       statusEl,
       noFaceMessage: 'No face detected',
       multiFaceMessage: 'Multiple faces',
+      getNowMs: () => now,
       evaluateDecision,
     });
     frameCb!(1);
     await vi.waitFor(() => expect(detector.infer).toHaveBeenCalled());
+    expect(statusEl.textContent).toBe('');
+    now = 1001;
+    await Promise.resolve();
+    await Promise.resolve();
+    frameCb!(2);
+    await vi.waitFor(() => expect(detector.infer).toHaveBeenCalledTimes(2));
     expect(statusEl.textContent).toBe('No face detected');
     expect(evaluateDecision).not.toHaveBeenCalled();
   });
@@ -246,7 +283,7 @@ describe('createDetectionPipeline', () => {
       infer: vi.fn().mockResolvedValue(new Float32Array(512).fill(3)),
       dispose: vi.fn(),
     };
-    const evaluateDecision = vi.fn(() => 'GRANTED' as const);
+    const evaluateDecision = vi.fn(() => evalGranted());
     const overlayCtx = {
       clearRect: vi.fn(),
       save: vi.fn(),
@@ -313,7 +350,7 @@ describe('createDetectionPipeline', () => {
       infer: vi.fn().mockResolvedValue(new Float32Array(512).fill(3)),
       dispose: vi.fn(),
     };
-    const evaluateDecision = vi.fn(() => 'DENIED' as const);
+    const evaluateDecision = vi.fn(() => evalDenied());
     const overlayCtx = {
       clearRect: vi.fn(),
       save: vi.fn(),
@@ -380,7 +417,7 @@ describe('createDetectionPipeline', () => {
       infer: vi.fn().mockResolvedValue(new Float32Array(512).fill(3)),
       dispose: vi.fn(),
     };
-    const evaluateDecision = vi.fn(() => 'UNCERTAIN' as const);
+    const evaluateDecision = vi.fn(() => evalUncertain());
     const overlayCtx = {
       clearRect: vi.fn(),
       save: vi.fn(),
@@ -417,5 +454,110 @@ describe('createDetectionPipeline', () => {
     await vi.waitFor(() => expect(faceEmbedder.infer).toHaveBeenCalledTimes(2));
     expect(statusEl.textContent).toBe('');
     expect(evaluateDecision).toHaveBeenCalledTimes(2);
+  });
+
+  it('calls appendAccessLog for DENIED', async () => {
+    const appendAccessLog = vi.fn().mockResolvedValue(undefined);
+    const frame = new ImageData(128, 128);
+    let frameCb: ((t: number) => void) | undefined;
+    const camera = {
+      isRunning: vi.fn(() => true),
+      getFrame: vi.fn(() => frame),
+      onFrame: vi.fn((cb: (t: number) => void) => {
+        frameCb = cb;
+        return () => {
+          frameCb = undefined;
+        };
+      }),
+    } as unknown as Camera;
+    const detector = {
+      infer: vi.fn().mockResolvedValue([{ bbox: [32, 32, 96, 96] as const, confidence: 0.9, classId: 0 }]),
+    } as unknown as YoloDetector;
+    const faceEmbedder: FaceEmbedder = {
+      load: vi.fn(),
+      infer: vi.fn().mockResolvedValue(new Float32Array(512).fill(3)),
+      dispose: vi.fn(),
+    };
+    const overlayCtx = {
+      clearRect: vi.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
+      strokeStyle: '',
+      lineWidth: 0,
+      strokeRect: vi.fn(),
+      font: '',
+      fillStyle: '',
+      fillRect: vi.fn(),
+      measureText: vi.fn(() => ({ width: 20 })),
+      fillText: vi.fn(),
+    } as unknown as CanvasRenderingContext2D;
+
+    createDetectionPipeline({
+      camera,
+      detector,
+      overlayCtx,
+      overlayWidth: 128,
+      overlayHeight: 128,
+      faceEmbedder,
+      appendAccessLog,
+      evaluateDecision: vi.fn(() => evalDenied()),
+    });
+
+    frameCb!(1);
+    await vi.waitFor(() => expect(appendAccessLog).toHaveBeenCalledTimes(1));
+    expect(appendAccessLog.mock.calls[0][0].decision).toBe('DENIED');
+    expect(appendAccessLog.mock.calls[0][0].userId).toBeNull();
+  });
+
+  it('does not call appendAccessLog for UNCERTAIN', async () => {
+    const appendAccessLog = vi.fn().mockResolvedValue(undefined);
+    const frame = new ImageData(128, 128);
+    let frameCb: ((t: number) => void) | undefined;
+    const camera = {
+      isRunning: vi.fn(() => true),
+      getFrame: vi.fn(() => frame),
+      onFrame: vi.fn((cb: (t: number) => void) => {
+        frameCb = cb;
+        return () => {
+          frameCb = undefined;
+        };
+      }),
+    } as unknown as Camera;
+    const detector = {
+      infer: vi.fn().mockResolvedValue([{ bbox: [32, 32, 96, 96] as const, confidence: 0.9, classId: 0 }]),
+    } as unknown as YoloDetector;
+    const faceEmbedder: FaceEmbedder = {
+      load: vi.fn(),
+      infer: vi.fn().mockResolvedValue(new Float32Array(512).fill(3)),
+      dispose: vi.fn(),
+    };
+    const overlayCtx = {
+      clearRect: vi.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
+      strokeStyle: '',
+      lineWidth: 0,
+      strokeRect: vi.fn(),
+      font: '',
+      fillStyle: '',
+      fillRect: vi.fn(),
+      measureText: vi.fn(() => ({ width: 20 })),
+      fillText: vi.fn(),
+    } as unknown as CanvasRenderingContext2D;
+
+    createDetectionPipeline({
+      camera,
+      detector,
+      overlayCtx,
+      overlayWidth: 128,
+      overlayHeight: 128,
+      faceEmbedder,
+      appendAccessLog,
+      evaluateDecision: vi.fn(() => evalUncertain()),
+    });
+
+    frameCb!(1);
+    frameCb!(2);
+    await vi.waitFor(() => expect(appendAccessLog).not.toHaveBeenCalled());
   });
 });

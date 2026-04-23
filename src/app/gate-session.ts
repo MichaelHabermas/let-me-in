@@ -9,9 +9,10 @@ import {
   FALLBACK_GATE_ACCESS_UI_STRINGS,
   type GateAccessUiStrings,
 } from './gate-access-ui-controller';
+import type { EvaluateGateAccessFn } from './gate-access-evaluation';
 import { createDetectorPipelineCoordinator } from './gate-detector-coordinator';
-import type { AppendAccessLogFn } from './pipeline';
 import { loadLiveAccessDecisionFn } from './gate-live-access';
+import type { AppendAccessLogFn } from './pipeline';
 
 export type GatePreviewSessionDeps = {
   createCamera: (
@@ -30,7 +31,7 @@ export type GatePreviewSessionDeps = {
   noFaceMessage: string;
   multiFaceMessage: string;
   cooldownMs: number;
-  evaluateDecision?: import('./gate-access-evaluation').EvaluateGateAccessFn;
+  evaluateDecision?: EvaluateGateAccessFn;
   appendAccessLog?: AppendAccessLogFn;
   accessUiStrings?: GateAccessUiStrings;
   /** When set with `databaseSeedFallback`, live access loads users/thresholds before the pipeline starts. */

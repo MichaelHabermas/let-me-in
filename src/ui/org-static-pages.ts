@@ -23,7 +23,7 @@ const variantMeta: Record<
     documentTitle: (rt) => rt.logPageTitle,
     headingText: (rt) => `${rt.orgName} — Entry log`,
     pageClass: 'page page--log',
-    ledeText: 'Access history UI will appear in Epic E7. Data store is ready.',
+    ledeText: 'The live table is mounted by the log bundle (`mountLogView`). This shell is for static previews only.',
   },
 };
 

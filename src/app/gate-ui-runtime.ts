@@ -1,6 +1,7 @@
 import type { Config } from '../config';
 import type { CameraErrorCode } from '../infra/camera';
 import type { GateAccessUiStrings } from './gate-access-ui-controller';
+import type { ConsentModalStrings } from '../ui/components/consent';
 
 /** Config fields needed for titles, preview layout, and camera UX strings. */
 export type GateUiConfigSlice = Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'>;
@@ -47,6 +48,7 @@ export type GateUiRuntimeSlice = {
   getMultiFaceMessage(): string;
   getAdminUiStrings(): AdminUiStrings;
   getGateAccessUiStrings(): GateAccessUiStrings;
+  getConsentModalStrings(): ConsentModalStrings;
 };
 
 /**
@@ -150,6 +152,21 @@ export function createGateUiRuntimeSlice(
             .replaceAll('{similarity}', String(similarityPct));
         },
         tryAgain: s.accessTryAgain,
+      };
+    },
+    getConsentModalStrings(): ConsentModalStrings {
+      const s = cfg.ui.strings;
+      return {
+        title: s.consentTitle,
+        intro: s.consentIntro,
+        bullets: [
+          s.consentBulletPurpose,
+          s.consentBulletStored,
+          s.consentBulletRetention,
+          s.consentBulletRefuse,
+        ],
+        accept: s.consentAccept,
+        decline: s.consentDecline,
       };
     },
   };

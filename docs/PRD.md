@@ -1267,7 +1267,7 @@ stateDiagram-v2
 
 ---
 
-### Epic E7: Decision UI & Entry Log — [ ]
+### Epic E7: Decision UI & Entry Log — [x]
 
 **Goal:** Polish the visitor experience (decision banner, side-by-side reference vs live crop, multi-face guard, consent notice) and append every decision to `accessLog`.
 
@@ -1296,7 +1296,7 @@ stateDiagram-v2
 - DRY: banner colors from `tokens.css`; strings from `config`.
 - Module boundaries respected.
 
-#### User Story E7.S1: As a visitor, I want to see a clear decision screen so I know whether I was let in. — [ ]
+#### User Story E7.S1: As a visitor, I want to see a clear decision screen so I know whether I was let in. — [x]
 
 **Acceptance criteria:**
 
@@ -1304,9 +1304,9 @@ stateDiagram-v2
 - UNCERTAIN banner: yellow, "Please try again", no name.
 - DENIED banner: red, "Unknown", similarity percentage.
 
-##### Feature E7.S1.F1: Decision banner component — [ ]
+##### Feature E7.S1.F1: Decision banner component — [x]
 
-###### Task E7.S1.F1.T1: Build `decision-banner` component — [ ]
+###### Task E7.S1.F1.T1: Build `decision-banner` component — [x]
 
 - Files: `src/ui/components/decision-banner.ts`, `src/styles/tokens.css`
 - Preconditions: E5 complete
@@ -1316,7 +1316,7 @@ stateDiagram-v2
 - Acceptance test: component test covers 3 decision states.
 - SOLID/DRY note: single banner component reused in gate view (DRY).
 
-###### Task E7.S1.F1.T2: Side-by-side reference vs live crop — [ ]
+###### Task E7.S1.F1.T2: Side-by-side reference vs live crop — [x]
 
 - Files: `src/ui/components/side-by-side.ts`
 - Preconditions: E7.S1.F1.T1 done
@@ -1326,16 +1326,16 @@ stateDiagram-v2
 - Acceptance test: GRANTED decision renders side-by-side; DENIED does not.
 - SOLID/DRY note: one component, decision state drives mount/unmount.
 
-#### User Story E7.S2: As the system, I want to log every entry attempt so an admin can audit. — [ ]
+#### User Story E7.S2: As the system, I want to log every entry attempt so an admin can audit. — [x]
 
 **Acceptance criteria:**
 
 - given any GRANTED/UNCERTAIN/DENIED decision, when the cooldown is marked, then a row is appended to `accessLog`.
 - given the log page, then the latest 20 entries show in a table.
 
-##### Feature E7.S2.F1: accessLog append — [ ]
+##### Feature E7.S2.F1: accessLog append — [x]
 
-###### Task E7.S2.F1.T1: Implement `accessLogRepo.appendDecision(decision, live)` — [ ]
+###### Task E7.S2.F1.T1: Implement `accessLogRepo.appendDecision(decision, live)` — [x]
 
 - Files: `src/infra/db-dexie.ts`
 - Preconditions: E1.S2 complete
@@ -1344,7 +1344,7 @@ stateDiagram-v2
 - Acceptance test: a decision followed by a reload shows the row in the table.
 - SOLID/DRY note: SRP.
 
-###### Task E7.S2.F1.T2: Wire append into pipeline — [ ]
+###### Task E7.S2.F1.T2: Wire append into pipeline — [x]
 
 - Files: `src/app/pipeline.ts`
 - Preconditions: E7.S2.F1.T1 done
@@ -1353,9 +1353,9 @@ stateDiagram-v2
 - Acceptance test: UNCERTAIN does not write (matches cooldown rule).
 - SOLID/DRY note: single logging rule.
 
-##### Feature E7.S2.F2: Basic log view — [ ]
+##### Feature E7.S2.F2: Basic log view — [x]
 
-###### Task E7.S2.F2.T1: Build `/log` page with latest-20 table — [ ]
+###### Task E7.S2.F2.T1: Build `/log` page with latest-20 table — [x]
 
 - Files: `src/ui/log-view.ts`, `log.html`
 - Preconditions: E7.S2.F1.T2 done
@@ -1365,11 +1365,11 @@ stateDiagram-v2
 - Acceptance test: generate 25 synthetic rows; table shows 20, newest first.
 - SOLID/DRY note: full filtering/sorting deferred to E8 (YAGNI).
 
-#### User Story E7.S3: As the system, I want to handle multi-face and no-face states gracefully. — [ ]
+#### User Story E7.S3: As the system, I want to handle multi-face and no-face states gracefully. — [x]
 
-##### Feature E7.S3.F1: Multi-face + no-face prompts — [ ]
+##### Feature E7.S3.F1: Multi-face + no-face prompts — [x]
 
-###### Task E7.S3.F1.T1: Multi-face guard — [ ]
+###### Task E7.S3.F1.T1: Multi-face guard — [x]
 
 - Files: `src/app/pipeline.ts`, `src/app/mount-gate.ts`
 - Preconditions: E3 complete
@@ -1379,7 +1379,7 @@ stateDiagram-v2
 - Acceptance test: two people in frame → banner shown, no decision logged.
 - SOLID/DRY note: single guard check.
 
-###### Task E7.S3.F1.T2: No-face prompt — [ ]
+###### Task E7.S3.F1.T2: No-face prompt — [x]
 
 - Files: `src/app/pipeline.ts`, `src/app/mount-gate.ts`
 - Preconditions: E7.S3.F1.T1 done
@@ -1388,11 +1388,11 @@ stateDiagram-v2
 - Acceptance test: cover camera → prompt appears after 1 s.
 - SOLID/DRY note: debounce lives in pipeline, not view.
 
-#### User Story E7.S4: As an operator, I want visitors to give consent before their face is processed. — [ ]
+#### User Story E7.S4: As an operator, I want visitors to give consent before their face is processed. — [x]
 
-##### Feature E7.S4.F1: Consent overlay — [ ]
+##### Feature E7.S4.F1: Consent overlay — [x]
 
-###### Task E7.S4.F1.T1: First-run consent gate — [ ]
+###### Task E7.S4.F1.T1: First-run consent gate — [x]
 
 - Files: `src/ui/components/consent.ts`, `src/app/consent.ts`
 - Preconditions: E1 complete
@@ -1988,12 +1988,12 @@ stateDiagram-v2
 - [x] E4 Face Embedding (7/7 tasks)
 - [x] E5 Matching Engine (5/5 tasks)
 - [x] E6 Minimal Enrollment — MVP gate (7/7 tasks)
-- [ ] E7 Decision UI & Entry Log (0/8 tasks)
+- [x] E7 Decision UI & Entry Log (8/8 tasks)
 - [ ] E8 Admin CRUD, Bulk Import, Log Viewer (0/9 tasks)
 - [ ] E9 Stretch Features (0/3 tasks)
 - [ ] E10 Validation & Submission (0/15 tasks)
 
-**Total: 50/85 tasks complete.**
+**Total: 58/85 tasks complete.**
 
 **MVP hard-gate path (24 h):** E1 → E2 → E3 → E4 → E5 → E6. 49 tasks.
 

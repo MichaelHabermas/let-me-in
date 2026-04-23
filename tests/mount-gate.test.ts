@@ -4,6 +4,7 @@ import Dexie from 'dexie';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { Camera } from '../src/app/camera';
+import { CONSENT_SETTINGS_KEY } from '../src/app/consent';
 import { l2normalize } from '../src/app/match';
 import { createMountGateHostDeps, mountGateIntoHost } from '../src/app/mount-gate';
 import type { YoloDetector } from '../src/infra/detector-core';
@@ -11,6 +12,7 @@ import type { FaceEmbedder } from '../src/infra/embedder-ort';
 import { createDexiePersistence } from '../src/infra/persistence';
 
 import { createTestGateRuntime } from './support/create-test-gate-runtime';
+import { stubCanvas2dContext } from './support/stub-canvas-2d-context';
 
 function fakeYoloDetector(): YoloDetector {
   return {
@@ -122,6 +124,10 @@ describe('mountGateIntoHost', () => {
       embedding: emb,
       createdAt: 1,
     });
+    await persistence.settingsRepo.put({
+      key: CONSENT_SETTINGS_KEY,
+      value: { timestamp: Date.now() },
+    });
 
     const frame = new ImageData(rt.previewCanvasWidth, rt.previewCanvasHeight);
     let frameCb: ((t: number) => void) | undefined;
@@ -176,11 +182,13 @@ describe('mountGateIntoHost', () => {
       }),
     );
 
+    const restoreCanvasStub = stubCanvas2dContext();
     const overlay = host.querySelector<HTMLCanvasElement>('#detector-overlay')!;
     const overlayCtx = {
       clearRect: vi.fn(),
       save: vi.fn(),
       restore: vi.fn(),
+      putImageData: vi.fn(),
       strokeStyle: '',
       lineWidth: 0,
       strokeRect: vi.fn(),
@@ -195,13 +203,20 @@ describe('mountGateIntoHost', () => {
     );
 
     try {
+      await vi.waitFor(() => {
+        expect(host.querySelector<HTMLButtonElement>('#start')!.disabled).toBe(false);
+      });
       host.querySelector<HTMLButtonElement>('#start')!.click();
       await vi.waitFor(() => expect(fakeCamera.start).toHaveBeenCalled());
       await vi.waitFor(() => expect(frameCb).toBeTypeOf('function'));
       frameCb!(performance.now());
-      await vi.waitFor(() => expect(host.querySelector('#decision')?.textContent).toBe('GRANTED'));
+      await vi.waitFor(() => {
+        expect(host.querySelector('#decision .banner--granted')).toBeTruthy();
+        expect(host.querySelector('#decision .banner__title')?.textContent).toContain('Enrolled');
+      });
     } finally {
       getContextSpy.mockRestore();
+      restoreCanvasStub();
       document.body.removeChild(host);
       await persistence.resetIndexedDbClientForTests();
       await Dexie.delete(dbName);

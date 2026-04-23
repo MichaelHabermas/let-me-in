@@ -30,7 +30,7 @@ Use this when mapping prose in older notes to the **current** tree (supersedes p
 | --- | --- |
 | HTML entrypoints calling bootstrap | `src/main.ts`, `src/admin.ts`, `src/log.ts` — each uses `void bootstrapApp({ mount, persistence? })` from `src/app/bootstrap-app.ts`. |
 | HTTPS check + IndexedDB init + mount | `src/app/bootstrap-app.ts` (inject `persistence` in tests via `createDexiePersistence` from `src/infra/persistence.ts`). |
-| Gate page DOM + camera preview + YOLO overlay | `src/app/mount-gate.ts` + `src/app/gate-session.ts` (`wireGatePreviewSession`, optional `yoloDetector` + `#detector-overlay`) + `src/app/pipeline.ts` + `src/app/bbox-overlay.ts`. |
+| Gate page DOM + camera preview + YOLO overlay | `src/app/mount-gate.ts` + `src/app/gate-session.ts` (`wireGatePreviewSession`, optional `yoloDetector` + `#detector-overlay`) + `src/app/pipeline.ts` + `src/app/bbox-overlay.ts` + `src/app/gate-access-ui-controller.ts` + `src/app/gate-consent-bootstrap.ts` + `src/app/consent.ts` + `src/ui/components/decision-banner.ts` + `src/ui/components/side-by-side.ts` + `src/ui/components/consent.ts`. |
 | Face crop + InsightFace embedder ONNX | `src/app/crop.ts` (square margin crop, 112² resize) + `src/infra/embedder-ort.ts` (`createFaceEmbedder`, `toEmbedderTensor`) + `src/app/match.ts` (`l2normalize`) composed by `embedFace` in `src/app/pipeline.ts`. |
 | Org titles, camera copy, preview canvas size, DB seed snapshot, dev FPS flag | `src/app/runtime-settings.ts` (`resolveGateRuntime()`). |
 | Default IndexedDB port | `src/infra/persistence.ts` (`getDefaultPersistence`, repo facades, `createDexiePersistence` for isolation). |
@@ -38,7 +38,7 @@ Use this when mapping prose in older notes to the **current** tree (supersedes p
 | Pure threshold → decision helper | `src/domain/access-policy.ts` (`decideFromMatch`); app façade `src/app/policy.ts` (`decide`). |
 | Shared row / match types | `src/domain/types.ts`. |
 | Vite multi-page inputs, dev pretty URLs, Netlify redirect TOML canonical string | `multi-page.ts`; keep `netlify.toml` aligned with `pnpm sync:netlify` or `pnpm verify:netlify` (see `README.md`). |
-| Thin admin/log HTML shells | `src/ui/admin-view.ts` re-exports `src/app/mount-admin-page.ts`; `src/ui/log-view.ts`, `src/ui/page-shell.ts`. |
+| Thin admin/log HTML shells | `src/ui/admin-view.ts` re-exports `src/app/mount-admin-page.ts`; `src/ui/log-view.ts` → `src/app/mount-log-page.ts`; `src/ui/page-shell.ts`. |
 
 **Authoritative layout:** `docs/PRD.md` §2.7 repository tree + `README.md` **Source layout (current)**.
 

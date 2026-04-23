@@ -6,6 +6,7 @@ import { getDefaultPersistence } from '../infra/persistence';
 import type { Camera, CreateCameraOptions } from './camera';
 import { createCamera } from './camera';
 import { buildGateDom } from './gate-preview-dom';
+import { bootstrapGateConsentIfNeeded } from './gate-consent-bootstrap';
 import { buildGatePreviewSessionDeps } from './gate-preview-session-deps';
 import { wireGatePreviewSession, type GatePreviewSessionDeps } from './gate-session';
 import type { GateRuntime } from './runtime-settings';
@@ -75,6 +76,17 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
     decisionEl,
   } = buildGateDom(rt);
   host.appendChild(main);
+
+  const persistence = sessionDepsExtras?.persistence;
+  if (persistence) {
+    startBtn.disabled = true;
+    void bootstrapGateConsentIfNeeded({
+      persistence,
+      startBtn,
+      shell: main,
+      strings: rt.getConsentModalStrings(),
+    });
+  }
 
   const yoloDetector = createDet();
   const faceEmbedder = createEmb();
