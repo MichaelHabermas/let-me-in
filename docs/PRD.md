@@ -986,7 +986,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 
 ---
 
-### Epic E5: Matching Engine — [ ]
+### Epic E5: Matching Engine — [x]
 
 **Goal:** Compare a live embedding against all enrolled users, apply threshold bands + margin logic, enforce cooldown, and produce a `Decision`.
 
@@ -1012,7 +1012,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - DRY: thresholds from `settings` store with `config.thresholds` as seed.
 - Module boundaries respected.
 
-#### User Story E5.S1: As the system, I want a deterministic decision given a live embedding and enrolled users. — [ ]
+#### User Story E5.S1: As the system, I want a deterministic decision given a live embedding and enrolled users. — [x]
 
 **Acceptance criteria:**
 
@@ -1021,9 +1021,9 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - given all matches <0.65, then the decision is `DENIED` with `userId=null` and `label="Unknown"`.
 - given no face detected, then the system remains in scanning state and renders "No face detected" status (no decision emitted).
 
-##### Feature E5.S1.F1: Cosine similarity — [ ]
+##### Feature E5.S1.F1: Cosine similarity — [x]
 
-###### Task E5.S1.F1.T1: Implement `cosine(a,b)` and `similarity01(a,b)` — [ ]
+###### Task E5.S1.F1.T1: Implement `cosine(a,b)` and `similarity01(a,b)` — [x]
 
 - Files: `src/app/match.ts`
 - Preconditions: E4 complete
@@ -1033,7 +1033,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - Acceptance test: identical vectors → 1.0 ± 1e-5; orthogonal → 0.5.
 - SOLID/DRY note: pure.
 
-###### Task E5.S1.F1.T2: Implement `matchOne(live, enrolled[])` — [ ]
+###### Task E5.S1.F1.T2: Implement `matchOne(live, enrolled[])` — [x]
 
 - Files: `src/app/match.ts`
 - Preconditions: E5.S1.F1.T1, E1.S2 complete
@@ -1043,9 +1043,9 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - Acceptance test: fixture with 3 embeddings returns correct ranking.
 - SOLID/DRY note: no I/O.
 
-##### Feature E5.S1.F2: Decision policy — [ ]
+##### Feature E5.S1.F2: Decision policy — [x]
 
-###### Task E5.S1.F2.T1: Implement `policy.decide({best, runnerUp, thresholds})` — [ ]
+###### Task E5.S1.F2.T1: Implement `policy.decide({best, runnerUp, thresholds})` — [x]
 
 - Files: `src/app/policy.ts`
 - Preconditions: E5.S1.F1.T2 done
@@ -1056,9 +1056,9 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - Acceptance test: table-driven tests cover all 5 paths.
 - SOLID/DRY note: single pure function maps inputs → decision.
 
-##### Feature E5.S1.F3: Cooldown — [ ]
+##### Feature E5.S1.F3: Cooldown — [x]
 
-###### Task E5.S1.F3.T1: Implement `createCooldown(ms)` — [ ]
+###### Task E5.S1.F3.T1: Implement `createCooldown(ms)` — [x]
 
 - Files: `src/app/cooldown.ts`
 - Preconditions: E1 complete
@@ -1068,7 +1068,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - Acceptance test: unit test with fake clock.
 - SOLID/DRY note: time source is injected (testable).
 
-###### Task E5.S1.F3.T2: Wire cooldown into pipeline — [ ]
+###### Task E5.S1.F3.T2: Wire cooldown into pipeline — [x]
 
 - Files: `src/app/pipeline.ts`
 - Preconditions: E5.S1.F3.T1 done
@@ -1099,7 +1099,7 @@ stateDiagram-v2
 
 **End-of-Epic Human Report:**
 
-> ## Epic E5 complete — report for human
+> #### Epic E5 complete — report for human
 >
 > **What was done:**
 >
@@ -1986,14 +1986,14 @@ stateDiagram-v2
 - [x] E2 Camera & Frame Capture (7/7 tasks)
 - [x] E3 Face Detection (8/8 tasks)
 - [x] E4 Face Embedding (7/7 tasks)
-- [ ] E5 Matching Engine (0/5 tasks)
+- [x] E5 Matching Engine (5/5 tasks)
 - [ ] E6 Minimal Enrollment — MVP gate (0/7 tasks)
 - [ ] E7 Decision UI & Entry Log (0/8 tasks)
 - [ ] E8 Admin CRUD, Bulk Import, Log Viewer (0/9 tasks)
 - [ ] E9 Stretch Features (0/3 tasks)
 - [ ] E10 Validation & Submission (0/15 tasks)
 
-**Total: 38/85 tasks complete.**
+**Total: 43/85 tasks complete.**
 
 **MVP hard-gate path (24 h):** E1 → E2 → E3 → E4 → E5 → E6. 49 tasks.
 

@@ -35,7 +35,7 @@ Use this when mapping prose in older notes to the **current** tree (supersedes p
 | Org titles, camera copy, preview canvas size, DB seed snapshot, dev FPS flag | `src/app/runtime-settings.ts` (`resolveGateRuntime()`). |
 | Default IndexedDB port | `src/infra/persistence.ts` (`getDefaultPersistence`, repo facades, `createDexiePersistence` for isolation). |
 | `onnxruntime-web` import boundary | `src/infra/ort-session-factory.ts` (+ re-exports in `onnx-runtime.ts`); ESLint `no-restricted-imports` for `app/*` and `ui/*` only (`eslint.config.ts`). |
-| Pure threshold → decision helper | `src/domain/access-policy.ts` (`decideFromMatch`). |
+| Pure threshold → decision helper | `src/domain/access-policy.ts` (`decideFromMatch`); app façade `src/app/policy.ts` (`decide`). |
 | Shared row / match types | `src/domain/types.ts`. |
 | Vite multi-page inputs, dev pretty URLs, Netlify redirect TOML canonical string | `multi-page.ts`; keep `netlify.toml` aligned with `pnpm sync:netlify` or `pnpm verify:netlify` (see `README.md`). |
 | Thin admin/log HTML shells | `src/ui/admin-view.ts`, `src/ui/log-view.ts`, `src/ui/page-shell.ts`. |

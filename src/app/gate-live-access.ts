@@ -1,9 +1,9 @@
 import type { AccessThresholds } from '../domain/access-policy';
 import type { DatabaseSeedSettings } from '../domain/database-seed';
-import { evaluateGateAccessMatch } from '../domain/gate-decision';
-import type { Decision, MatchResult } from '../domain/types';
+import type { Decision } from '../domain/types';
 import type { DexiePersistence } from '../infra/persistence';
 import { matchOne, type EnrolledEmbedding } from './match';
+import { decide } from './policy';
 
 export type LiveAccessDecisionUi = {
   onDecision(decision: Decision): void;
@@ -36,8 +36,11 @@ export async function loadLiveAccessDecisionFn(
   return (input) => {
     if (enrolled.length === 0) return null;
     const ranked = matchOne(input.embedding, enrolled);
-    const match: MatchResult = { best: ranked.best, runnerUp: ranked.runnerUp };
-    const verdict = evaluateGateAccessMatch({ match, thresholds });
+    const verdict = decide({
+      best: ranked.best,
+      runnerUp: ranked.runnerUp,
+      thresholds,
+    });
     ui?.onDecision(verdict.decision);
     return verdict.decision;
   };

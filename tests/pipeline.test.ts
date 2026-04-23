@@ -286,4 +286,136 @@ describe('createDetectionPipeline', () => {
     expect(faceEmbedder.infer).toHaveBeenCalledTimes(1);
     expect(statusEl.textContent).toBe('Please wait 3 s');
   });
+
+  it('enforces cooldown after DENIED decisions', async () => {
+    let now = 1_000;
+    const cooldown = createCooldown(3_000, () => now);
+    const frame = new ImageData(128, 128);
+    const statusEl = document.createElement('p');
+    let frameCb: ((t: number) => void) | undefined;
+    const camera = {
+      isRunning: vi.fn(() => true),
+      getFrame: vi.fn(() => frame),
+      onFrame: vi.fn((cb: (t: number) => void) => {
+        frameCb = cb;
+        return () => {
+          frameCb = undefined;
+        };
+      }),
+    } as unknown as Camera;
+
+    const detector = {
+      infer: vi.fn().mockResolvedValue([{ bbox: [32, 32, 96, 96] as const, confidence: 0.9, classId: 0 }]),
+    } as unknown as YoloDetector;
+
+    const faceEmbedder: FaceEmbedder = {
+      load: vi.fn(),
+      infer: vi.fn().mockResolvedValue(new Float32Array(512).fill(3)),
+      dispose: vi.fn(),
+    };
+    const evaluateDecision = vi.fn(() => 'DENIED' as const);
+    const overlayCtx = {
+      clearRect: vi.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
+      strokeStyle: '',
+      lineWidth: 0,
+      strokeRect: vi.fn(),
+      font: '',
+      fillStyle: '',
+      fillRect: vi.fn(),
+      measureText: vi.fn(() => ({ width: 20 })),
+      fillText: vi.fn(),
+    } as unknown as CanvasRenderingContext2D;
+
+    createDetectionPipeline({
+      camera,
+      detector,
+      overlayCtx,
+      overlayWidth: 128,
+      overlayHeight: 128,
+      faceEmbedder,
+      statusEl,
+      noFaceMessage: 'No face detected',
+      multiFaceMessage: 'Multiple faces',
+      cooldown,
+      getNowMs: () => now,
+      evaluateDecision,
+    });
+
+    frameCb!(1);
+    await vi.waitFor(() => expect(faceEmbedder.infer).toHaveBeenCalledTimes(1));
+    expect(evaluateDecision).toHaveBeenCalledTimes(1);
+
+    now += 100;
+    frameCb!(2);
+    await vi.waitFor(() => expect(detector.infer).toHaveBeenCalledTimes(2));
+    expect(faceEmbedder.infer).toHaveBeenCalledTimes(1);
+    expect(statusEl.textContent).toBe('Please wait 3 s');
+  });
+
+  it('does not start cooldown after UNCERTAIN (embedder runs each frame)', async () => {
+    let now = 1_000;
+    const cooldown = createCooldown(3_000, () => now);
+    const frame = new ImageData(128, 128);
+    const statusEl = document.createElement('p');
+    let frameCb: ((t: number) => void) | undefined;
+    const camera = {
+      isRunning: vi.fn(() => true),
+      getFrame: vi.fn(() => frame),
+      onFrame: vi.fn((cb: (t: number) => void) => {
+        frameCb = cb;
+        return () => {
+          frameCb = undefined;
+        };
+      }),
+    } as unknown as Camera;
+
+    const detector = {
+      infer: vi.fn().mockResolvedValue([{ bbox: [32, 32, 96, 96] as const, confidence: 0.9, classId: 0 }]),
+    } as unknown as YoloDetector;
+
+    const faceEmbedder: FaceEmbedder = {
+      load: vi.fn(),
+      infer: vi.fn().mockResolvedValue(new Float32Array(512).fill(3)),
+      dispose: vi.fn(),
+    };
+    const evaluateDecision = vi.fn(() => 'UNCERTAIN' as const);
+    const overlayCtx = {
+      clearRect: vi.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
+      strokeStyle: '',
+      lineWidth: 0,
+      strokeRect: vi.fn(),
+      font: '',
+      fillStyle: '',
+      fillRect: vi.fn(),
+      measureText: vi.fn(() => ({ width: 20 })),
+      fillText: vi.fn(),
+    } as unknown as CanvasRenderingContext2D;
+
+    createDetectionPipeline({
+      camera,
+      detector,
+      overlayCtx,
+      overlayWidth: 128,
+      overlayHeight: 128,
+      faceEmbedder,
+      statusEl,
+      noFaceMessage: 'No face detected',
+      multiFaceMessage: 'Multiple faces',
+      cooldown,
+      getNowMs: () => now,
+      evaluateDecision,
+    });
+
+    frameCb!(1);
+    await vi.waitFor(() => expect(faceEmbedder.infer).toHaveBeenCalledTimes(1));
+    now += 100;
+    frameCb!(2);
+    await vi.waitFor(() => expect(faceEmbedder.infer).toHaveBeenCalledTimes(2));
+    expect(statusEl.textContent).toBe('');
+    expect(evaluateDecision).toHaveBeenCalledTimes(2);
+  });
 });
