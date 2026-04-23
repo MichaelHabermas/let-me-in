@@ -2,6 +2,24 @@
 
 Browser-based facial-recognition door entry — client-side ML only. This repo follows [docs/PRD.md](docs/PRD.md); assignment context is in [docs/SPECS.txt](docs/SPECS.txt).
 
+## Overview
+
+> **A browser-only facial-recognition “door”** that checks who is at the camera and **grants or denies entry** without sending video to a server or requiring dedicated hardware.
+
+**Why browser-only?**  
+So it ships as a normal web app: static hosting, no install, and the full pipeline (camera → models → policy) runs on the device using `getUserMedia`, WASM/ONNX in-page, and IndexedDB for enrollments and logs.
+
+**Why keep video off the server and skip extra hardware?**  
+Frames and embeddings stay on the device—better privacy and simpler hosting (mostly static assets). It uses the camera and CPU/GPU you already have instead of a dedicated controller or a video-ingest backend.
+
+**How does it grant or deny entry?**
+
+1. Detect a face and compute an embedding for the current frame.
+2. Compare it (cosine similarity) to enrolled vectors in IndexedDB.
+3. [`decideFromMatch`](src/domain/access-policy.ts) maps the best score and margin vs. the runner-up to **GRANTED**, **UNCERTAIN**, or **DENIED** using configurable thresholds.
+
+The gate UI reflects that verdict. **GRANTED** and **DENIED** outcomes are written to the local access log ([`pipeline-frame.ts`](src/app/pipeline-frame.ts), [`gate-live-access.ts`](src/app/gate-live-access.ts)).
+
 ## Prerequisites
 
 - Node.js **20.19+** (required by Vite 8; the app targets modern Chromium)
@@ -49,25 +67,26 @@ Open:
 
 ## Configuration
 
-- All org-tunable values live in `[src/config.ts](src/config.ts)`.
-- Admin credentials for production builds: set `VITE_ADMIN_USER` and `VITE_ADMIN_PASS` at build time (see `[.env.example](.env.example)`). If unset, the app warns and uses dev defaults (`admin` / `admin`).
+- All org-tunable values live in [`src/config.ts`](src/config.ts).
+- Admin credentials for production builds: set `VITE_ADMIN_USER` and `VITE_ADMIN_PASS` at build time (see [`.env.example`](.env.example)). If unset, the app warns and uses dev defaults (`admin` / `admin`).
 
 ## Deploy (Netlify)
 
 See **[docs/DEPLOY.md](docs/DEPLOY.md)** for admin credential env vars and rotation.
 
-- `[netlify.toml](netlify.toml)` — build command and publish directory.
-- `[public/_headers](public/_headers)` — long cache for `/models/*` and `*.onnx`.
+- [`netlify.toml`](netlify.toml) — build command and publish directory.
+- [`public/_headers`](public/_headers) — long cache for `/models/*` and `*.onnx`.
 - Canonical site (from PRD): `https://let-me-in-gatekeeper.netlify.app` — after deploy, verify headers with  
 `curl -I https://let-me-in-gatekeeper.netlify.app/models/yolov9t.onnx`  
 (expect `Cache-Control: public, max-age=3600`).
 
 ## IndexedDB
 
-The app uses database name `**gatekeeper**` with stores `users`, `accessLog`, and `settings` (Dexie). After first load, `settings` is seeded with default threshold and cooldown snapshots supplied at bootstrap from [`resolveGateRuntime().getDatabaseSeedSettings()`](src/app/runtime-settings.ts) (same numbers as [`src/config.ts`](src/config.ts); [`src/infra/persistence.ts`](src/infra/persistence.ts) does not import `config` directly).
+The app uses database name `**gatekeeper`** with stores `users`, `accessLog`, and `settings` (Dexie). After first load, `settings` is seeded with default threshold and cooldown snapshots supplied at bootstrap from [`resolveGateRuntime().getDatabaseSeedSettings()`](src/app/runtime-settings.ts) (same numbers as [`src/config.ts`](src/config.ts); [`src/infra/persistence.ts`](src/infra/persistence.ts) does not import `config` directly).
 
 ## Validation checklist (Epic E1)
 
 1. `pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm test` — all exit 0. Optionally `pnpm test:e2e` after `pnpm exec playwright install chromium`.
 2. `pnpm run build` — `dist/` contains `index.html`, `admin.html`, `log.html`.
 3. In Chrome DevTools → Application → IndexedDB → `gatekeeper` — three stores; `settings` has two keys (`thresholds`, `cooldownMs`) after load.
+
