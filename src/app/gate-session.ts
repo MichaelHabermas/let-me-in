@@ -1,11 +1,16 @@
 import type { DatabaseSeedSettings } from '../domain/database-seed';
-import type { Decision } from '../domain/types';
 import type { CameraErrorCode } from '../infra/camera';
 import type { YoloDetector } from '../infra/detector-core';
 import type { FaceEmbedder } from '../infra/embedder-ort';
 import type { DexiePersistence } from '../infra/persistence';
 import type { Camera, CreateCameraOptions } from './camera';
+import {
+  createGateAccessUiController,
+  FALLBACK_GATE_ACCESS_UI_STRINGS,
+  type GateAccessUiStrings,
+} from './gate-access-ui-controller';
 import { createDetectorPipelineCoordinator } from './gate-detector-coordinator';
+import type { AppendAccessLogFn } from './pipeline';
 import { loadLiveAccessDecisionFn } from './gate-live-access';
 
 export type GatePreviewSessionDeps = {
@@ -25,7 +30,9 @@ export type GatePreviewSessionDeps = {
   noFaceMessage: string;
   multiFaceMessage: string;
   cooldownMs: number;
-  evaluateDecision?: (input: { embedding: Float32Array; frame: ImageData }) => Decision | null;
+  evaluateDecision?: import('./gate-access-evaluation').EvaluateGateAccessFn;
+  appendAccessLog?: AppendAccessLogFn;
+  accessUiStrings?: GateAccessUiStrings;
   /** When set with `databaseSeedFallback`, live access loads users/thresholds before the pipeline starts. */
   persistence?: DexiePersistence;
   /** Defaults for settings rows when DB was only seeded minimally. */
@@ -66,18 +73,22 @@ function wireCameraControls(
 
       let attachDeps = deps;
       if (!deps.evaluateDecision && deps.persistence && deps.databaseSeedFallback) {
+        const uiStrings = deps.accessUiStrings ?? FALLBACK_GATE_ACCESS_UI_STRINGS;
+        const accessUi =
+          elements.decisionEl && createGateAccessUiController(elements.decisionEl, uiStrings);
         const evaluateDecision = await loadLiveAccessDecisionFn(
           deps.persistence,
           deps.databaseSeedFallback,
-          elements.decisionEl
+          accessUi
             ? {
-                onDecision: (d) => {
-                  elements.decisionEl!.textContent = d;
-                },
+                onDecision: (ev) => accessUi.present(ev),
               }
             : undefined,
         );
-        attachDeps = { ...deps, evaluateDecision };
+        const appendAccessLog: AppendAccessLogFn | undefined =
+          deps.appendAccessLog ??
+          ((p) => deps.persistence!.accessLogRepo.appendDecision(p));
+        attachDeps = { ...deps, evaluateDecision, appendAccessLog };
       }
 
       await camera.start();

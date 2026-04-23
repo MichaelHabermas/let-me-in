@@ -96,6 +96,7 @@ function attachPipeline(ctx: {
     multiFaceMessage: deps.multiFaceMessage,
     cooldown,
     evaluateDecision: deps.evaluateDecision,
+    appendAccessLog: deps.appendAccessLog,
   });
 }
 

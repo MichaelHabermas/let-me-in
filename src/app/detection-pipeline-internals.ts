@@ -20,6 +20,8 @@ export async function embedFace(
   return l2normalize(raw);
 }
 
+const MULTI_FACE_BBOX_COLORS = ['#22c55e', '#3b82f6', '#a855f7', '#f97316', '#ec4899'];
+
 export function drawDetections(
   ctx: CanvasRenderingContext2D,
   detections: ReadonlyArray<{
@@ -27,9 +29,11 @@ export function drawDetections(
     confidence: number;
   }>,
 ): void {
-  for (const d of detections) {
-    drawBbox(ctx, d.bbox, '#22c55e', `${Math.round(d.confidence * 100)}%`);
-  }
+  const multi = detections.length > 1;
+  detections.forEach((d, i) => {
+    const color = multi ? MULTI_FACE_BBOX_COLORS[i % MULTI_FACE_BBOX_COLORS.length]! : '#22c55e';
+    drawBbox(ctx, d.bbox, color, `${Math.round(d.confidence * 100)}%`);
+  });
 }
 
 export function setStatus(el: HTMLElement | undefined, text: string): void {
@@ -43,14 +47,35 @@ export type CardinalityAndCooldownOpts = {
   cooldown?: CooldownGate;
 };
 
+/** Mutable debounce anchor for consecutive zero-detection frames (PRD E7 no-face prompt). */
+export type NoFaceDebouncer = { sinceMs: number | null };
+
+export function tickNoFaceDebounced(
+  state: NoFaceDebouncer,
+  opts: {
+    statusEl?: HTMLElement;
+    noFaceMessage?: string;
+    getNowMs: () => number;
+    debounceMs: number;
+  },
+): void {
+  const now = opts.getNowMs();
+  if (state.sinceMs === null) state.sinceMs = now;
+  if (opts.noFaceMessage && now - state.sinceMs >= opts.debounceMs) {
+    setStatus(opts.statusEl, opts.noFaceMessage);
+  }
+}
+
+export function resetNoFaceDebouncer(state: NoFaceDebouncer): void {
+  state.sinceMs = null;
+}
+
+/** Zero → skip (no-face debounce in pipeline); multi-face → status + skip. */
 export function handleDetectionCardinality(
   opts: CardinalityAndCooldownOpts,
   detCount: number,
 ): 'continue' | 'skip' {
-  if (detCount === 0) {
-    if (opts.noFaceMessage) setStatus(opts.statusEl, opts.noFaceMessage);
-    return 'skip';
-  }
+  if (detCount === 0) return 'skip';
   if (detCount > 1) {
     if (opts.multiFaceMessage) setStatus(opts.statusEl, opts.multiFaceMessage);
     return 'skip';

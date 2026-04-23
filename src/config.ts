@@ -82,6 +82,19 @@ export interface Config {
       enrollRoleLabel: string;
       enrollSuccess: string;
       enrollNameRequired: string;
+      /** `{name}` and `{similarity}` placeholders (similarity as integer percent). */
+      accessGrantedBanner: string;
+      /** `{unknown}` and `{similarity}` placeholders. */
+      accessDeniedBanner: string;
+      accessTryAgain: string;
+      consentTitle: string;
+      consentIntro: string;
+      consentBulletPurpose: string;
+      consentBulletStored: string;
+      consentBulletRetention: string;
+      consentBulletRefuse: string;
+      consentAccept: string;
+      consentDecline: string;
     };
   };
 }
@@ -160,6 +173,19 @@ export const config: Config = {
       enrollRoleLabel: 'Role',
       enrollSuccess: 'User saved.',
       enrollNameRequired: 'Name is required.',
+      accessGrantedBanner: '{name} — {similarity}%',
+      accessDeniedBanner: '{unknown} — {similarity}%',
+      accessTryAgain: 'Please try again',
+      consentTitle: 'Face verification',
+      consentIntro: 'Before we use your camera, please confirm you understand the following:',
+      consentBulletPurpose:
+        'Live video is processed in your browser to verify identity for access control. Nothing is sent to our servers for recognition.',
+      consentBulletStored:
+        'Embeddings and a reference face image are stored only in this browser (IndexedDB). They can be inspected with developer tools on this device.',
+      consentBulletRetention: 'Data remains until an administrator deletes your enrollment from this deployment.',
+      consentBulletRefuse: 'You may refuse by closing this tab; the camera will not start without your consent.',
+      consentAccept: 'I understand — continue',
+      consentDecline: 'Decline',
     },
   },
 };

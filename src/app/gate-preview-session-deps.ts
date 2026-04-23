@@ -15,6 +15,7 @@ export function buildGatePreviewSessionDeps(
   return {
     ...factories,
     ...rt.getGatePreviewSessionCoreDeps(),
+    accessUiStrings: rt.getGateAccessUiStrings(),
     ...extras,
   };
 }

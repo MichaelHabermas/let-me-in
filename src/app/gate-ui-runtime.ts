@@ -1,5 +1,6 @@
 import type { Config } from '../config';
 import type { CameraErrorCode } from '../infra/camera';
+import type { GateAccessUiStrings } from './gate-access-ui-controller';
 
 /** Config fields needed for titles, preview layout, and camera UX strings. */
 export type GateUiConfigSlice = Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'>;
@@ -45,6 +46,7 @@ export type GateUiRuntimeSlice = {
   getNoFaceMessage(): string;
   getMultiFaceMessage(): string;
   getAdminUiStrings(): AdminUiStrings;
+  getGateAccessUiStrings(): GateAccessUiStrings;
 };
 
 /**
@@ -133,6 +135,22 @@ export function createGateUiRuntimeSlice(
     },
     getAdminUiStrings(): AdminUiStrings {
       return adminStringsFromConfig(cfg);
+    },
+    getGateAccessUiStrings(): GateAccessUiStrings {
+      const s = cfg.ui.strings;
+      return {
+        formatGranted(name, similarityPct) {
+          return s.accessGrantedBanner
+            .replaceAll('{name}', name)
+            .replaceAll('{similarity}', String(similarityPct));
+        },
+        formatDenied(similarityPct) {
+          return s.accessDeniedBanner
+            .replaceAll('{unknown}', s.unknown)
+            .replaceAll('{similarity}', String(similarityPct));
+        },
+        tryAgain: s.accessTryAgain,
+      };
     },
   };
 }
