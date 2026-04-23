@@ -35,6 +35,30 @@ describe('bootstrapApp', () => {
     expect(settings.some((r) => r.key === 'cooldownMs')).toBe(true);
   });
 
+  it('uses injected getDatabaseSeedSettings for initDatabase', async () => {
+    const persistence = createDexiePersistence(testDbName);
+    const mount = vi.fn();
+    const seedCooldown = 424_242;
+    const seedThresholds = { strong: 0.9, weak: 0.7, unknown: 0.7, margin: 0.06 };
+
+    const result = await bootstrapApp({
+      mount,
+      persistence,
+      getHttpsStartupState: () => ({ ok: true }),
+      getDatabaseSeedSettings: () => ({
+        thresholds: seedThresholds,
+        cooldownMs: seedCooldown,
+      }),
+    });
+
+    expect(result).toEqual({ ok: true });
+    const settings = await persistence.settingsRepo.toArray();
+    const cooldownRow = settings.find((r) => r.key === 'cooldownMs');
+    expect(cooldownRow?.value).toBe(seedCooldown);
+    const thresholdsRow = settings.find((r) => r.key === 'thresholds');
+    expect(thresholdsRow?.value).toEqual(seedThresholds);
+  });
+
   it('returns https result without mounting when HTTPS check fails', async () => {
     const mount = vi.fn();
     const renderHttpsBanner = vi.fn();

@@ -1,6 +1,10 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  define: {
+    /** Lets admin enrollment tests mount without canvas/WebGL (`mount-admin-page`, E2E-style stub). */
+    'import.meta.env.VITE_E2E_STUB_ENROLL': JSON.stringify('true'),
+  },
   resolve: {
     alias: {
       // Browser build uses `/all` so WebGL registers; Node tests use the slim entry (WASM + file wasmPaths).

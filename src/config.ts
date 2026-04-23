@@ -1,4 +1,4 @@
-import { AdminAuthCredentials } from './app/auth';
+import type { AdminAuthCredentials } from './app/admin-auth-types';
 import { ORT_EP_ORDER_BROWSER } from './infra/ort-execution-defaults';
 
 /**

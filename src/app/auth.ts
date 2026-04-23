@@ -1,14 +1,11 @@
-import { config } from '../config';
+import type { AdminAuthCredentials } from './admin-auth-types';
+
+export type { AdminAuthCredentials } from './admin-auth-types';
 
 /** PRD E6.S1.F1.T1 — persisted login instant (ms since epoch). */
 export const ADMIN_TOKEN_STORAGE_KEY = 'gatekeeper_admin_token';
 
 const SESSION_MS = 8 * 60 * 60 * 1000;
-
-export type AdminAuthCredentials = {
-  user: string;
-  pass: string;
-};
 
 export type AdminAuthDeps = {
   storage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
@@ -40,22 +37,4 @@ export function createAdminAuth(deps: AdminAuthDeps): AdminAuth {
       return deps.nowMs() - t < SESSION_MS;
     },
   };
-}
-
-const defaultAuth = createAdminAuth({
-  storage: localStorage,
-  nowMs: () => Date.now(),
-  admin: config.admin,
-});
-
-export function login(user: string, pass: string): boolean {
-  return defaultAuth.login(user, pass);
-}
-
-export function logout(): void {
-  defaultAuth.logout();
-}
-
-export function isAdmin(): boolean {
-  return defaultAuth.isAdmin();
 }

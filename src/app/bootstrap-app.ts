@@ -1,3 +1,4 @@
+import type { DatabaseSeedSettings } from '../domain/database-seed';
 import type { DexiePersistence } from '../infra/persistence';
 import { getDefaultPersistence } from '../infra/persistence';
 import { getHttpsStartupState as defaultGetHttpsStartupState } from './https-gate';
@@ -24,6 +25,8 @@ function defaultRenderHttpsBanner(message: string): void {
 export type BootstrapAppOptions = {
   mount: () => void | Promise<void>;
   persistence?: DexiePersistence;
+  /** When omitted, uses `resolveGateRuntime().getDatabaseSeedSettings()`. */
+  getDatabaseSeedSettings?: () => DatabaseSeedSettings;
   getHttpsStartupState?: () => HttpsStartupState;
   renderHttpsBanner?: (message: string) => void;
 };
@@ -43,6 +46,8 @@ export async function bootstrapApp(options: BootstrapAppOptions): Promise<Bootst
   const persistence = persistenceOverride ?? getDefaultPersistence();
   const getHttps = options.getHttpsStartupState ?? defaultGetHttpsStartupState;
   const renderHttpsBanner = options.renderHttpsBanner ?? defaultRenderHttpsBanner;
+  const getDatabaseSeedSettings =
+    options.getDatabaseSeedSettings ?? (() => resolveGateRuntime().getDatabaseSeedSettings());
 
   const https = getHttps();
   if (!https.ok) {
@@ -51,7 +56,7 @@ export async function bootstrapApp(options: BootstrapAppOptions): Promise<Bootst
   }
 
   try {
-    await persistence.initDatabase(resolveGateRuntime().getDatabaseSeedSettings());
+    await persistence.initDatabase(getDatabaseSeedSettings());
   } catch (cause) {
     return { ok: false, reason: 'database', cause };
   }

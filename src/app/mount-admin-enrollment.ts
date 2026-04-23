@@ -1,8 +1,12 @@
-import { logout } from './auth';
+import type { AdminAuth } from './auth';
 import { createAdminEnrollmentDom, type AdminEnrollmentDom } from './admin-enrollment-dom';
 import { createCamera } from './camera';
 import { createEnrollmentController, type EnrollmentController } from './enroll';
-import { createStubEnrollmentController } from './enroll-capture-stub';
+import {
+  createE2eEnrollmentCamera,
+  createE2eEnrollmentDetector,
+  createE2eEnrollmentEmbedder,
+} from './enroll-e2e-doubles';
 import { config, getDetectorRuntimeSettings, getEmbedderRuntimeSettings } from '../config';
 import { createFaceEmbedder } from '../infra/embedder-ort';
 import { createYoloDetector } from '../infra/detector-ort';
@@ -13,6 +17,7 @@ export type MountAdminEnrollmentOptions = {
   root: HTMLElement;
   rt: GateRuntime;
   persistence: DexiePersistence;
+  auth: AdminAuth;
   rerender: () => void;
 };
 
@@ -69,7 +74,19 @@ function wireEnrollmentController(
   };
 
   if (config.e2eStubEnrollment) {
-    ctrl = createStubEnrollmentController({ persistence, onStateChange: syncButtons });
+    ctrl = createEnrollmentController({
+      camera: createE2eEnrollmentCamera(dom.frameCanvas.width, dom.frameCanvas.height),
+      detector: createE2eEnrollmentDetector(),
+      embedder: createE2eEnrollmentEmbedder(),
+      video: dom.video,
+      frameCanvas: dom.frameCanvas,
+      overlayCanvas: dom.overlayCanvas,
+      statusEl: dom.statusEl,
+      getNoFaceMessage: () => rt.getNoFaceMessage(),
+      getMultiFaceMessage: () => rt.getMultiFaceMessage(),
+      persistence,
+      onStateChange: syncButtons,
+    });
   } else {
     const camera = createCamera(dom.video, dom.frameCanvas, {
       defaultConstraints: rt.getDefaultVideoConstraintsForCamera(),
@@ -97,13 +114,13 @@ function wireEnrollmentController(
 
 /** Authenticated admin shell: header + enrollment panel. */
 export function mountAuthenticatedAdminEnrollment(opts: MountAdminEnrollmentOptions): () => void {
-  const { root, rt, persistence, rerender } = opts;
+  const { root, rt, persistence, auth, rerender } = opts;
   root.innerHTML = '';
   const dom = createAdminEnrollmentDom(rt);
   root.appendChild(dom.shell);
 
   dom.logoutBtn.addEventListener('click', () => {
-    logout();
+    auth.logout();
     rerender();
   });
 

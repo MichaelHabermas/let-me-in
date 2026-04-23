@@ -1,4 +1,4 @@
-import { login } from './auth';
+import type { AdminAuth } from './auth';
 import type { AdminUiStrings } from './gate-ui-runtime';
 import type { GateRuntime } from './runtime-settings';
 
@@ -55,6 +55,7 @@ function buildAdminLoginForm(copy: AdminUiStrings): {
 export function mountAdminLoginModal(
   host: HTMLElement,
   rt: GateRuntime,
+  auth: AdminAuth,
   onSuccess: () => void,
 ): () => void {
   const copy = rt.getAdminUiStrings();
@@ -80,7 +81,7 @@ export function mountAdminLoginModal(
   const onSubmit = (ev: Event) => {
     ev.preventDefault();
     err.hidden = true;
-    if (login(userInput.value, passInput.value)) {
+    if (auth.login(userInput.value, passInput.value)) {
       onSuccess();
       return;
     }
