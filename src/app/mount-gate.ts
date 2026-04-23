@@ -2,10 +2,12 @@ import { getDetectorRuntimeSettings, getEmbedderRuntimeSettings } from '../confi
 import type { YoloDetector } from '../infra/detector-core';
 import { createYoloDetector } from '../infra/detector-ort';
 import { createFaceEmbedder, type FaceEmbedder } from '../infra/embedder-ort';
+import { getDefaultPersistence } from '../infra/persistence';
 import type { Camera, CreateCameraOptions } from './camera';
 import { createCamera } from './camera';
 import { buildGateDom } from './gate-preview-dom';
-import { wireGatePreviewSession } from './gate-session';
+import { buildGatePreviewSessionDeps } from './gate-preview-session-deps';
+import { wireGatePreviewSession, type GatePreviewSessionDeps } from './gate-session';
 import type { GateRuntime } from './runtime-settings';
 import { resolveGateRuntime } from './runtime-settings';
 
@@ -21,6 +23,8 @@ export type MountGateHostDeps = {
   createFaceEmbedder?: () => FaceEmbedder;
   /** When true (default), register `beforeunload` teardown like production. */
   addBeforeUnload?: boolean;
+  /** Merged into `buildGatePreviewSessionDeps` (e.g. `persistence`, `evaluateDecision`). */
+  sessionDepsExtras?: Partial<GatePreviewSessionDeps>;
 };
 
 /**
@@ -41,6 +45,7 @@ export function createMountGateHostDeps(
     createFaceEmbedder:
       overrides?.createFaceEmbedder ?? (() => createFaceEmbedder(getEmbedderRuntimeSettings())),
     addBeforeUnload: overrides?.addBeforeUnload,
+    sessionDepsExtras: overrides?.sessionDepsExtras,
   };
 }
 
@@ -52,33 +57,44 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
     createYoloDetector: createDet = () => createYoloDetector(getDetectorRuntimeSettings()),
     createFaceEmbedder: createEmb = () => createFaceEmbedder(getEmbedderRuntimeSettings()),
     addBeforeUnload = true,
+    sessionDepsExtras,
   } = deps;
 
   document.title = rt.gatePageTitle;
   host.innerHTML = '';
 
-  const { main, startBtn, stopBtn, statusEl, previewWrap, video, canvas, overlayCanvas } =
-    buildGateDom(rt);
+  const {
+    main,
+    startBtn,
+    stopBtn,
+    statusEl,
+    previewWrap,
+    video,
+    canvas,
+    overlayCanvas,
+    decisionEl,
+  } = buildGateDom(rt);
   host.appendChild(main);
 
   const yoloDetector = createDet();
   const faceEmbedder = createEmb();
 
   const teardown = wireSession(
-    { startBtn, stopBtn, statusEl, previewWrap, video, canvas, overlayCanvas },
     {
-      createCamera: createCam,
-      getDefaultVideoConstraintsForCamera: () => rt.getDefaultVideoConstraintsForCamera(),
-      getCameraUserFacingMessage: (code) => rt.getCameraUserFacingMessage(code),
-      yoloDetector,
-      faceEmbedder,
-      logEmbeddingTimings: rt.devLogEmbeddingTimings,
-      detectorLoadingMessage: rt.getDetectorLoadingMessage(),
-      detectorLoadFailedMessage: rt.getDetectorLoadFailedMessage(),
-      noFaceMessage: rt.getNoFaceMessage(),
-      multiFaceMessage: rt.getMultiFaceMessage(),
-      cooldownMs: rt.getDatabaseSeedSettings().cooldownMs,
+      startBtn,
+      stopBtn,
+      statusEl,
+      previewWrap,
+      video,
+      canvas,
+      overlayCanvas,
+      decisionEl,
     },
+    buildGatePreviewSessionDeps(
+      rt,
+      { createCamera: createCam, yoloDetector, faceEmbedder },
+      sessionDepsExtras,
+    ),
     { showFpsOverlay: rt.showFpsOverlay },
   );
 
@@ -93,5 +109,14 @@ export function mountGateView(): void {
   const app = document.getElementById('app');
   if (!app) return;
 
-  mountGateIntoHost(app, createMountGateHostDeps(resolveGateRuntime()));
+  const rt = resolveGateRuntime();
+  mountGateIntoHost(
+    app,
+    createMountGateHostDeps(rt, {
+      sessionDepsExtras: {
+        persistence: getDefaultPersistence(),
+        databaseSeedFallback: rt.getDatabaseSeedSettings(),
+      },
+    }),
+  );
 }

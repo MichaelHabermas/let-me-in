@@ -3,16 +3,14 @@ import { createCooldown } from './cooldown';
 import { createDetectionPipeline } from './pipeline';
 import type { GatePreviewElements, GatePreviewSessionDeps } from './gate-session';
 
-export type DetectorGateState = {
+type DetectorGateState = {
   loadState: 'none' | 'pending' | 'ready' | 'failed';
-  /** Mirrors detector lifecycle when an embedder is mounted (E4). */
   embedderLoadState?: 'none' | 'pending' | 'ready' | 'failed';
-  /** Started in `beginDetectorLoad`; await in `waitForDetectorReady` (no polling). */
   modelsSettled?: Promise<boolean>;
   stopPipeline?: () => void;
 };
 
-export function beginDetectorLoad(ctx: {
+function beginDetectorLoad(ctx: {
   deps: GatePreviewSessionDeps;
   camera: Camera;
   statusEl: HTMLElement;
@@ -59,7 +57,7 @@ export function beginDetectorLoad(ctx: {
   })();
 }
 
-export async function waitForDetectorReady(ctx: {
+async function waitForDetectorReady(ctx: {
   deps: GatePreviewSessionDeps;
   statusEl: HTMLElement;
   state: DetectorGateState;
@@ -72,7 +70,7 @@ export async function waitForDetectorReady(ctx: {
   return state.modelsSettled;
 }
 
-export function attachPipeline(ctx: {
+function attachPipeline(ctx: {
   camera: Camera;
   deps: GatePreviewSessionDeps;
   elements: GatePreviewElements;
@@ -99,4 +97,43 @@ export function attachPipeline(ctx: {
     cooldown,
     evaluateDecision: deps.evaluateDecision,
   });
+}
+
+export type DetectorPipelineCoordinator = {
+  beginModelLoad(deps: GatePreviewSessionDeps, loadingMsg: string, failedMsg: string): void;
+  waitReady(deps: GatePreviewSessionDeps, loadingMsg: string): Promise<boolean>;
+  attachRunningPipeline(deps: GatePreviewSessionDeps): void;
+  stopPipeline(): void;
+};
+
+/** Owns model load promise + pipeline stop handle for one preview session. */
+export function createDetectorPipelineCoordinator(ctx: {
+  elements: GatePreviewElements;
+  camera: Camera;
+  statusEl: HTMLElement;
+}): DetectorPipelineCoordinator {
+  const state: DetectorGateState = { loadState: 'none' };
+
+  return {
+    beginModelLoad(deps, loadingMsg, failedMsg) {
+      beginDetectorLoad({
+        deps,
+        camera: ctx.camera,
+        statusEl: ctx.statusEl,
+        state,
+        loadingMsg,
+        failedMsg,
+      });
+    },
+    waitReady(deps, loadingMsg) {
+      return waitForDetectorReady({ deps, statusEl: ctx.statusEl, state, loadingMsg });
+    },
+    attachRunningPipeline(deps) {
+      attachPipeline({ camera: ctx.camera, deps, elements: ctx.elements, state });
+    },
+    stopPipeline() {
+      state.stopPipeline?.();
+      state.stopPipeline = undefined;
+    },
+  };
 }

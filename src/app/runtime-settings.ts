@@ -5,22 +5,28 @@
 
 import { config } from '../config';
 import type { DatabaseSeedSettings } from '../domain/database-seed';
-import { createGateUiRuntimeSlice } from './gate-ui-runtime';
+import { createGateUiRuntimeSlice, type GateUiRuntimeSlice } from './gate-ui-runtime';
 import { getDatabaseSeedSettingsFromConfig } from './gate-seed-settings';
 
-export type GateRuntime = ReturnType<typeof createGateUiRuntimeSlice> & {
+export type GateRuntime = GateUiRuntimeSlice & {
   getDatabaseSeedSettings(): DatabaseSeedSettings;
 };
+
+/** Single merge of UI slice + DB seed accessor — used by prod resolver and test harness. */
+export function composeGateRuntime(
+  ui: GateUiRuntimeSlice,
+  getDatabaseSeedSettings: () => DatabaseSeedSettings,
+): GateRuntime {
+  return {
+    ...ui,
+    getDatabaseSeedSettings,
+  };
+}
 
 /**
  * @param isDev - When omitted, uses `import.meta.env.DEV`. Tests should pass an explicit boolean.
  */
 export function resolveGateRuntime(isDev: boolean = import.meta.env.DEV): GateRuntime {
   const ui = createGateUiRuntimeSlice(config, Boolean(isDev));
-  return {
-    ...ui,
-    getDatabaseSeedSettings(): DatabaseSeedSettings {
-      return getDatabaseSeedSettingsFromConfig(config);
-    },
-  };
+  return composeGateRuntime(ui, () => getDatabaseSeedSettingsFromConfig(config));
 }

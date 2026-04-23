@@ -1,14 +1,12 @@
-import type { CameraErrorCode } from '../infra/camera';
+import type { DatabaseSeedSettings } from '../domain/database-seed';
 import type { Decision } from '../domain/types';
+import type { CameraErrorCode } from '../infra/camera';
 import type { YoloDetector } from '../infra/detector-core';
 import type { FaceEmbedder } from '../infra/embedder-ort';
+import type { DexiePersistence } from '../infra/persistence';
 import type { Camera, CreateCameraOptions } from './camera';
-import {
-  attachPipeline,
-  beginDetectorLoad,
-  waitForDetectorReady,
-  type DetectorGateState,
-} from './gate-detector-coordinator';
+import { createDetectorPipelineCoordinator } from './gate-detector-coordinator';
+import { loadLiveAccessDecisionFn } from './gate-live-access';
 
 export type GatePreviewSessionDeps = {
   createCamera: (
@@ -28,6 +26,10 @@ export type GatePreviewSessionDeps = {
   multiFaceMessage: string;
   cooldownMs: number;
   evaluateDecision?: (input: { embedding: Float32Array; frame: ImageData }) => Decision | null;
+  /** When set with `databaseSeedFallback`, live access loads users/thresholds before the pipeline starts. */
+  persistence?: DexiePersistence;
+  /** Defaults for settings rows when DB was only seeded minimally. */
+  databaseSeedFallback?: DatabaseSeedSettings;
 };
 
 export type GatePreviewElements = {
@@ -38,6 +40,8 @@ export type GatePreviewElements = {
   video: HTMLVideoElement;
   canvas: HTMLCanvasElement;
   overlayCanvas?: HTMLCanvasElement;
+  /** Live access result (`#decision`); optional for tests that omit DOM shell. */
+  decisionEl?: HTMLElement;
 };
 
 function wireCameraControls(
@@ -48,20 +52,37 @@ function wireCameraControls(
   const { startBtn, stopBtn, statusEl } = elements;
   const loadingMsg = deps.detectorLoadingMessage;
   const failedMsg = deps.detectorLoadFailedMessage;
-  const state: DetectorGateState = { loadState: deps.yoloDetector ? 'pending' : 'none' };
-  beginDetectorLoad({ deps, camera, statusEl, state, loadingMsg, failedMsg });
+  const coord = createDetectorPipelineCoordinator({ elements, camera, statusEl });
+  coord.beginModelLoad(deps, loadingMsg, failedMsg);
 
   const onStart = async () => {
     startBtn.disabled = true;
     try {
-      if (!(await waitForDetectorReady({ deps, statusEl, state, loadingMsg }))) {
+      if (!(await coord.waitReady(deps, loadingMsg))) {
         startBtn.disabled = false;
         return;
       }
       statusEl.textContent = '';
+
+      let attachDeps = deps;
+      if (!deps.evaluateDecision && deps.persistence && deps.databaseSeedFallback) {
+        const evaluateDecision = await loadLiveAccessDecisionFn(
+          deps.persistence,
+          deps.databaseSeedFallback,
+          elements.decisionEl
+            ? {
+                onDecision: (d) => {
+                  elements.decisionEl!.textContent = d;
+                },
+              }
+            : undefined,
+        );
+        attachDeps = { ...deps, evaluateDecision };
+      }
+
       await camera.start();
       stopBtn.disabled = false;
-      attachPipeline({ camera, deps, elements, state });
+      coord.attachRunningPipeline(attachDeps);
     } catch {
       startBtn.disabled = false;
     }
@@ -72,16 +93,14 @@ function wireCameraControls(
   });
 
   stopBtn.addEventListener('click', () => {
-    state.stopPipeline?.();
-    state.stopPipeline = undefined;
+    coord.stopPipeline();
     camera.stop();
     startBtn.disabled = false;
     stopBtn.disabled = true;
   });
 
   return () => {
-    state.stopPipeline?.();
-    state.stopPipeline = undefined;
+    coord.stopPipeline();
   };
 }
 

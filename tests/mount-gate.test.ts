@@ -1,11 +1,14 @@
 /** @vitest-environment happy-dom */
 
+import Dexie from 'dexie';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { Camera } from '../src/app/camera';
+import { l2normalize } from '../src/app/match';
 import { createMountGateHostDeps, mountGateIntoHost } from '../src/app/mount-gate';
 import type { YoloDetector } from '../src/infra/detector-core';
 import type { FaceEmbedder } from '../src/infra/embedder-ort';
+import { createDexiePersistence } from '../src/infra/persistence';
 
 import { createTestGateRuntime } from './support/create-test-gate-runtime';
 
@@ -93,5 +96,109 @@ describe('mountGateIntoHost', () => {
 
     teardown();
     expect(fakeCamera.stop).toHaveBeenCalled();
+  });
+
+  it('updates #decision from IndexedDB-backed live access when embedding matches enrollment', async () => {
+    const dbName = `gate-mount-live-${crypto.randomUUID()}`;
+    const persistence = createDexiePersistence(dbName);
+    const rt = createTestGateRuntime();
+    const seed = rt.getDatabaseSeedSettings();
+    await persistence.initDatabase(seed);
+
+    const raw = new Float32Array(512).map((_, i) => (i < 8 ? (i + 1) * 0.1 : 0));
+    const emb = l2normalize(new Float32Array(raw));
+
+    await persistence.usersRepo.put({
+      id: 'user-1',
+      name: 'Enrolled',
+      role: 'staff',
+      referenceImageBlob: new Blob(),
+      embedding: emb,
+      createdAt: 1,
+    });
+
+    const frame = new ImageData(rt.previewCanvasWidth, rt.previewCanvasHeight);
+    let frameCb: ((t: number) => void) | undefined;
+    let running = false;
+
+    const fakeCamera = {
+      start: vi.fn(async () => {
+        running = true;
+      }),
+      stop: vi.fn(() => {
+        running = false;
+      }),
+      onError: vi.fn(() => () => {}),
+      onFrame: vi.fn((cb: (t: number) => void) => {
+        frameCb = cb;
+        return () => {
+          frameCb = undefined;
+        };
+      }),
+      getFrame: vi.fn(() => frame),
+      isRunning: vi.fn(() => running),
+    } as unknown as Camera;
+
+    const yoloDetector: YoloDetector = {
+      load: vi.fn().mockResolvedValue(undefined),
+      infer: vi.fn().mockResolvedValue([
+        { bbox: [32, 32, 200, 200] as const, confidence: 0.95, classId: 0 },
+      ]),
+      dispose: vi.fn().mockResolvedValue(undefined),
+    } as unknown as YoloDetector;
+
+    const embedder: FaceEmbedder = {
+      load: vi.fn().mockResolvedValue(undefined),
+      infer: vi.fn().mockResolvedValue(new Float32Array(raw)),
+      dispose: vi.fn().mockResolvedValue(undefined),
+    } as unknown as FaceEmbedder;
+
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    mountGateIntoHost(
+      host,
+      createMountGateHostDeps(rt, {
+        createCamera: () => fakeCamera,
+        createYoloDetector: () => yoloDetector,
+        createFaceEmbedder: () => embedder,
+        addBeforeUnload: false,
+        sessionDepsExtras: {
+          persistence,
+          databaseSeedFallback: seed,
+        },
+      }),
+    );
+
+    const overlay = host.querySelector<HTMLCanvasElement>('#detector-overlay')!;
+    const overlayCtx = {
+      clearRect: vi.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
+      strokeStyle: '',
+      lineWidth: 0,
+      strokeRect: vi.fn(),
+      font: '',
+      fillStyle: '',
+      fillRect: vi.fn(),
+      measureText: vi.fn(() => ({ width: 20 })),
+      fillText: vi.fn(),
+    } as unknown as CanvasRenderingContext2D;
+    const getContextSpy = vi.spyOn(overlay, 'getContext').mockImplementation((type) =>
+      type === '2d' ? overlayCtx : null,
+    );
+
+    try {
+      host.querySelector<HTMLButtonElement>('#start')!.click();
+      await vi.waitFor(() => expect(fakeCamera.start).toHaveBeenCalled());
+      await vi.waitFor(() => expect(frameCb).toBeTypeOf('function'));
+      frameCb!(performance.now());
+      await vi.waitFor(() => expect(host.querySelector('#decision')?.textContent).toBe('GRANTED'));
+    } finally {
+      getContextSpy.mockRestore();
+      document.body.removeChild(host);
+      await persistence.resetIndexedDbClientForTests();
+      await Dexie.delete(dbName);
+    }
   });
 });

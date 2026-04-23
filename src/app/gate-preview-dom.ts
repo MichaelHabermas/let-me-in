@@ -62,7 +62,7 @@ export function createGatePreview(rt: GateRuntime): {
   return { previewWrap, video, canvas, overlayCanvas };
 }
 
-interface GateDom {
+export interface BuiltGateDom {
   main: HTMLElement;
   startBtn: HTMLButtonElement;
   stopBtn: HTMLButtonElement;
@@ -71,9 +71,10 @@ interface GateDom {
   video: HTMLVideoElement;
   canvas: HTMLCanvasElement;
   overlayCanvas: HTMLCanvasElement;
+  decisionEl: HTMLElement;
 }
 
-export function buildGateDom(rt: GateRuntime): GateDom {
+export function buildGateDom(rt: GateRuntime): BuiltGateDom {
   const main = document.createElement('main');
   main.className = 'page page--gate';
 
@@ -129,5 +130,15 @@ export function buildGateDom(rt: GateRuntime): GateDom {
   shell.appendChild(liveBar);
   main.appendChild(shell);
 
-  return { main, startBtn, stopBtn, statusEl, previewWrap, video, canvas, overlayCanvas };
+  return {
+    main,
+    startBtn,
+    stopBtn,
+    statusEl,
+    previewWrap,
+    video,
+    canvas,
+    overlayCanvas,
+    decisionEl: decision,
+  };
 }
