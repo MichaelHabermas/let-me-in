@@ -513,7 +513,7 @@ settings: { key (pk, string), value }
 
 **End-of-Epic Human Report (agent produces this verbatim):**
 
-> ## Epic E1 complete — report for human
+> #### Epic E1 complete — report for human
 >
 > **What was done:**
 >
@@ -661,7 +661,7 @@ camera.onError(cb) -> unsubscribe
 
 **End-of-Epic Human Report:**
 
-> ## Epic E2 complete — report for human
+> #### Epic E2 complete — report for human
 >
 > **What was done:**
 >
@@ -826,7 +826,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 
 **End-of-Epic Human Report:**
 
-> ## Epic E3 complete — report for human
+> #### Epic E3 complete — report for human
 >
 > **What was done:**
 >
@@ -963,7 +963,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 
 **End-of-Epic Human Report:**
 
-> ## Epic E4 complete — report for human
+> #### Epic E4 complete — report for human
 >
 > **What was done:**
 >
@@ -1242,7 +1242,7 @@ stateDiagram-v2
 
 **End-of-Epic Human Report:**
 
-> ## Epic E6 complete — report for human (MVP SHIPPABLE AT THIS POINT)
+> #### Epic E6 complete — report for human (MVP SHIPPABLE AT THIS POINT)
 >
 > **What was done:**
 >
@@ -1405,7 +1405,7 @@ stateDiagram-v2
 
 **End-of-Epic Human Report:**
 
-> ## Epic E7 complete — report for human
+> #### Epic E7 complete — report for human
 >
 > **What was done:**
 >
@@ -1654,7 +1654,7 @@ stateDiagram-v2
 
 **End-of-Epic Human Report:**
 
-> ## Epic E9 complete — report for human
+> #### Epic E9 complete — report for human
 >
 > **What was done:**
 >
@@ -1887,7 +1887,7 @@ stateDiagram-v2
 
 **End-of-Epic Human Report:**
 
-> ## Epic E10 complete — report for human (FINAL)
+> #### Epic E10 complete — report for human (FINAL)
 >
 > **What was done:**
 >
