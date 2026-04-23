@@ -16,7 +16,7 @@ test.describe('admin enrollment (E2E doubles)', () => {
     await page.getByTestId('enroll-capture').click();
 
     await page.getByTestId('enroll-name').fill('Test User');
-    await page.getByTestId('enroll-role').fill('Staff');
+    await page.getByTestId('enroll-role').selectOption('Staff');
     await page.getByTestId('enroll-save').click();
 
     await expect(page.getByTestId('enroll-status')).toContainText(/saved/i);

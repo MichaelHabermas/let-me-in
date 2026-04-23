@@ -95,6 +95,9 @@ export interface Config {
       enrollSave: string;
       enrollNameLabel: string;
       enrollRoleLabel: string;
+      enrollRolePlaceholder: string;
+      enrollRoleRequired: string;
+      enrollRoleLegacySuffix: string;
       enrollSuccess: string;
       enrollNameRequired: string;
       /** `{name}` and `{similarity}` placeholders (similarity as integer percent). */
@@ -201,6 +204,9 @@ export const config: Config = {
       enrollSave: 'Save',
       enrollNameLabel: 'Name',
       enrollRoleLabel: 'Role',
+      enrollRolePlaceholder: 'Select a role…',
+      enrollRoleRequired: 'Role is required.',
+      enrollRoleLegacySuffix: ' (legacy)',
       enrollSuccess: 'User saved.',
       enrollNameRequired: 'Name is required.',
       accessGrantedBanner: '{name} — {similarity}%',

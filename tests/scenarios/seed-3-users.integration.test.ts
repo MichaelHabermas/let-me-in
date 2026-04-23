@@ -1,6 +1,7 @@
 import Dexie from 'dexie';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { USER_ROLES } from '../../src/domain/user-roles';
 import { persistEnrolledUser } from '../../src/app/enroll-save';
 import type { DatabaseSeedSettings } from '../../src/infra/persistence';
 import { createDexiePersistence } from '../../src/infra/persistence';
@@ -29,7 +30,7 @@ describe('seed 3 users (dev helper)', () => {
       emb.fill((i + 1) * 0.001);
       await persistEnrolledUser(persistence, {
         name: `Seed User ${i + 1}`,
-        role: `Role ${i + 1}`,
+        role: USER_ROLES[i % USER_ROLES.length]!,
         embedding: emb,
         referenceImageBlob: new Blob([`fake-jpeg-${i}`], { type: 'image/jpeg' }),
         randomId: () => `00000000-0000-4000-8000-00000000000${i + 1}`,

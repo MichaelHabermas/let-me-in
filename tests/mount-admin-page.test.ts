@@ -112,7 +112,7 @@ describe('mountAdminPage', () => {
       await persistence.usersRepo.put({
         id: `id-${i}`,
         name: `User ${i}`,
-        role: 'r',
+        role: 'Staff',
         referenceImageBlob: new Blob([String(i)], { type: 'image/jpeg' }),
         embedding: emb,
         createdAt: 1_700_000_000_000 + i,

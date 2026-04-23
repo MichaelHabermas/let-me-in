@@ -18,7 +18,7 @@ describe('mountLogPageIntoApp', () => {
     await persistence.usersRepo.put({
       id: 'u1',
       name: 'One',
-      role: 'r',
+      role: 'Staff',
       referenceImageBlob: new Blob(),
       embedding: new Float32Array(512),
       createdAt: 1,
@@ -57,7 +57,7 @@ describe('mountLogPageIntoApp', () => {
     await persistence.usersRepo.put({
       id: 'u1',
       name: 'One',
-      role: 'r',
+      role: 'Staff',
       referenceImageBlob: new Blob(),
       embedding: new Float32Array(512),
       createdAt: 1,
@@ -103,7 +103,7 @@ describe('mountLogPageIntoApp', () => {
     await persistence.usersRepo.put({
       id: 'u1',
       name: 'One',
-      role: 'r',
+      role: 'Staff',
       referenceImageBlob: new Blob(),
       embedding: new Float32Array(512),
       createdAt: 1,

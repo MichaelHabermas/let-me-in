@@ -119,7 +119,7 @@ describe('mountGateIntoHost', () => {
     await persistence.usersRepo.put({
       id: 'user-1',
       name: 'Enrolled',
-      role: 'staff',
+      role: 'Staff',
       referenceImageBlob: new Blob(),
       embedding: emb,
       createdAt: 1,

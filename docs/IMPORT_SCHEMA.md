@@ -7,7 +7,7 @@ Epic E8 canonical contract: a single JSON **array** of objects. Each object desc
 | Field          | Type   | Required | Description                                                |
 | -------------- | ------ | -------- | ---------------------------------------------------------- |
 | `name`         | string | yes      | Display name (trimmed for storage).                        |
-| `role`         | string | yes      | Role label (trimmed).                                      |
+| `role`         | string | yes      | Must match an allowed role (see below).                    |
 | `imageBase64`  | string | yes      | Base64-encoded image bytes (JPEG/PNG). Optional `data:image/...;base64,` prefix is accepted. |
 
 ## Root shape
@@ -18,6 +18,10 @@ Epic E8 canonical contract: a single JSON **array** of objects. Each object desc
   { "name": "Bob", "role": "Visitor", "imageBase64": "<base64>" }
 ]
 ```
+
+## Allowed roles
+
+`role` is matched **case-insensitively** against the `USER_ROLES` list in [`src/domain/user-roles.ts`](../src/domain/user-roles.ts). The value stored in the database uses the **canonical** spelling from that array (for example `staff` in JSON becomes `Staff`).
 
 ## Duplicate names
 

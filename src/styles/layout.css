@@ -693,7 +693,8 @@ body {
   color: var(--color-text-muted);
 }
 
-.admin-enroll__form-col input {
+.admin-enroll__form-col input,
+.admin-enroll__form-col select.admin-enroll__select {
   width: 100%;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);

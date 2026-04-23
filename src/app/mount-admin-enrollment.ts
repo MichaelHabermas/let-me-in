@@ -1,5 +1,6 @@
 import type { AdminAuth } from './auth';
 import { renderAdminUserRoster } from './admin-user-roster';
+import { fillEnrollmentRoleSelect } from './admin-enrollment-role-select';
 import { createAdminEnrollmentDom, type AdminEnrollmentDom } from './admin-enrollment-dom';
 import { createCamera } from './camera';
 import { createEnrollmentController, type EnrollmentController } from './enroll';
@@ -22,6 +23,46 @@ export type MountAdminEnrollmentOptions = {
   auth: AdminAuth;
   rerender: () => void;
 };
+
+function bindEnrollmentSaveClick(
+  dom: AdminEnrollmentDom,
+  ctrl: EnrollmentController,
+  rt: GateRuntime,
+  syncButtons: () => void,
+  refreshRoster: () => Promise<void>,
+): void {
+  dom.saveBtn.addEventListener('click', () => {
+    const name = dom.nameInput.value.trim();
+    const ui = rt.getAdminUiStrings();
+    if (!name) {
+      dom.statusEl.textContent = ui.enrollNameRequired;
+      return;
+    }
+    const role = dom.roleSelect.value.trim();
+    if (!role) {
+      dom.statusEl.textContent = ui.enrollRoleRequired;
+      return;
+    }
+    const roleCopy = {
+      enrollRolePlaceholder: ui.enrollRolePlaceholder,
+      enrollRoleLegacySuffix: ui.enrollRoleLegacySuffix,
+    };
+    void ctrl
+      .saveUser(name, role)
+      .then(async () => {
+        dom.statusEl.textContent = ui.enrollSuccess;
+        dom.nameInput.value = '';
+        fillEnrollmentRoleSelect(dom.roleSelect, '', roleCopy);
+        syncButtons();
+        await refreshRoster();
+      })
+      .catch((e: unknown) => {
+        const msg = e instanceof Error ? e.message : String(e);
+        dom.statusEl.textContent = msg;
+        syncButtons();
+      });
+  });
+}
 
 function bindEnrollmentUi(
   dom: AdminEnrollmentDom,
@@ -46,20 +87,7 @@ function bindEnrollmentUi(
     ctrl.retake();
     syncButtons();
   });
-  dom.saveBtn.addEventListener('click', () => {
-    const name = dom.nameInput.value.trim();
-    if (!name) {
-      dom.statusEl.textContent = rt.getAdminUiStrings().enrollNameRequired;
-      return;
-    }
-    void ctrl.saveUser(name, dom.roleInput.value).then(async () => {
-      dom.statusEl.textContent = rt.getAdminUiStrings().enrollSuccess;
-      dom.nameInput.value = '';
-      dom.roleInput.value = '';
-      syncButtons();
-      await refreshRoster();
-    });
-  });
+  bindEnrollmentSaveClick(dom, ctrl, rt, syncButtons, refreshRoster);
 }
 
 function enrollmentControllerBase(
@@ -112,7 +140,7 @@ export function mountAuthenticatedAdminEnrollment(opts: MountAdminEnrollmentOpti
     dom.retakeBtn.disabled = s !== 'editing' || !camOn;
     dom.saveBtn.disabled = s !== 'editing';
     dom.nameInput.disabled = s !== 'editing';
-    dom.roleInput.disabled = s !== 'editing';
+    dom.roleSelect.disabled = s !== 'editing';
   };
 
   const refreshRoster = async () => {
@@ -123,7 +151,10 @@ export function mountAuthenticatedAdminEnrollment(opts: MountAdminEnrollmentOpti
     revokeRosterUrls = renderAdminUserRoster(dom.rosterTbody, users, copy, {
       onEdit: (user) => {
         dom.nameInput.value = user.name;
-        dom.roleInput.value = user.role;
+        fillEnrollmentRoleSelect(dom.roleSelect, user.role, {
+          enrollRolePlaceholder: copy.enrollRolePlaceholder,
+          enrollRoleLegacySuffix: copy.enrollRoleLegacySuffix,
+        });
         ctrl.beginEditFromUser(user);
         syncButtons();
       },

@@ -1,3 +1,5 @@
+import { formatAllowedRolesHint, resolveUserRole } from '../domain/user-roles';
+
 export type BulkImportRow = {
   name: string;
   role: string;
@@ -56,6 +58,20 @@ function tryParseImportRow(
   if (typeof role !== 'string') {
     return { ok: false, error: { index, message: 'role must be a string' } };
   }
+  const trimmedRole = role.trim();
+  if (!trimmedRole) {
+    return { ok: false, error: { index, message: 'Missing or empty role' } };
+  }
+  const resolvedRole = resolveUserRole(trimmedRole);
+  if (!resolvedRole) {
+    return {
+      ok: false,
+      error: {
+        index,
+        message: `Unknown role "${trimmedRole}". Allowed: ${formatAllowedRolesHint()}`,
+      },
+    };
+  }
   if (typeof imageBase64 !== 'string' || !imageBase64.trim()) {
     return { ok: false, error: { index, message: 'Missing or empty imageBase64' } };
   }
@@ -67,7 +83,7 @@ function tryParseImportRow(
     ok: true,
     row: {
       name: name.trim(),
-      role: role.trim(),
+      role: resolvedRole,
       imageBase64: rawB64,
       sourceIndex: index,
     },

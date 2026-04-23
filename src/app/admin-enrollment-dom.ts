@@ -1,3 +1,4 @@
+import { fillEnrollmentRoleSelect } from './admin-enrollment-role-select';
 import type { GateRuntime } from './runtime-settings';
 
 export type AdminEnrollmentDom = {
@@ -15,7 +16,7 @@ export type AdminEnrollmentDom = {
   overlayCanvas: HTMLCanvasElement;
   statusEl: HTMLElement;
   nameInput: HTMLInputElement;
-  roleInput: HTMLInputElement;
+  roleSelect: HTMLSelectElement;
   cameraToggleBtn: HTMLButtonElement;
   capBtn: HTMLButtonElement;
   retakeBtn: HTMLButtonElement;
@@ -152,7 +153,7 @@ function buildNameFields(rt: GateRuntime): {
   nameLabel: HTMLLabelElement;
   nameInput: HTMLInputElement;
   roleLabel: HTMLLabelElement;
-  roleInput: HTMLInputElement;
+  roleSelect: HTMLSelectElement;
 } {
   const nameLabel = document.createElement('label');
   nameLabel.className = 'admin-enroll__label';
@@ -168,13 +169,17 @@ function buildNameFields(rt: GateRuntime): {
   roleLabel.className = 'admin-enroll__label';
   roleLabel.htmlFor = 'enroll-role';
   roleLabel.textContent = rt.getAdminUiStrings().enrollRoleLabel;
-  const roleInput = document.createElement('input');
-  roleInput.id = 'enroll-role';
-  roleInput.type = 'text';
-  roleInput.autocomplete = 'off';
-  roleInput.setAttribute('data-testid', 'enroll-role');
+  const roleSelect = document.createElement('select');
+  roleSelect.id = 'enroll-role';
+  roleSelect.className = 'admin-enroll__select';
+  roleSelect.setAttribute('data-testid', 'enroll-role');
+  const copy = rt.getAdminUiStrings();
+  fillEnrollmentRoleSelect(roleSelect, '', {
+    enrollRolePlaceholder: copy.enrollRolePlaceholder,
+    enrollRoleLegacySuffix: copy.enrollRoleLegacySuffix,
+  });
 
-  return { nameLabel, nameInput, roleLabel, roleInput };
+  return { nameLabel, nameInput, roleLabel, roleSelect };
 }
 
 function buildActionButtons(rt: GateRuntime): {
@@ -227,7 +232,7 @@ function buildActionButtons(rt: GateRuntime): {
 function buildFormColumn(rt: GateRuntime): {
   column: HTMLElement;
   nameInput: HTMLInputElement;
-  roleInput: HTMLInputElement;
+  roleSelect: HTMLSelectElement;
   cameraToggleBtn: HTMLButtonElement;
   capBtn: HTMLButtonElement;
   retakeBtn: HTMLButtonElement;
@@ -246,14 +251,14 @@ function buildFormColumn(rt: GateRuntime): {
     names.nameLabel,
     names.nameInput,
     names.roleLabel,
-    names.roleInput,
+    names.roleSelect,
     actions.btnRow,
   );
 
   return {
     column,
     nameInput: names.nameInput,
-    roleInput: names.roleInput,
+    roleSelect: names.roleSelect,
     cameraToggleBtn: actions.cameraToggleBtn,
     capBtn: actions.capBtn,
     retakeBtn: actions.retakeBtn,
@@ -292,7 +297,7 @@ export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
     overlayCanvas: preview.overlayCanvas,
     statusEl: preview.statusEl,
     nameInput: form.nameInput,
-    roleInput: form.roleInput,
+    roleSelect: form.roleSelect,
     cameraToggleBtn: form.cameraToggleBtn,
     capBtn: form.capBtn,
     retakeBtn: form.retakeBtn,

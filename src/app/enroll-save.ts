@@ -1,5 +1,14 @@
+import { formatAllowedRolesHint, resolveUserRole } from '../domain/user-roles';
 import type { User } from '../domain/types';
 import type { DexiePersistence } from '../infra/persistence';
+
+function normalizePersistedRole(role: string, existingId: string | undefined, prev: User | undefined): string {
+  const t = role.trim();
+  const canon = resolveUserRole(t);
+  if (canon) return canon;
+  if (existingId && prev && t === prev.role.trim()) return t;
+  throw new Error(`Unknown role "${t}". Allowed: ${formatAllowedRolesHint()}`);
+}
 
 export type PersistEnrolledUserInput = {
   name: string;
@@ -26,10 +35,11 @@ export async function persistEnrolledUser(
     const prev = await persistence.usersRepo.get(existingId);
     const preserve = input.preserveCreatedAt !== false;
     const createdAt = preserve ? (prev?.createdAt ?? now) : now;
+    const roleNorm = normalizePersistedRole(input.role, existingId, prev);
     const user: User = {
       id: existingId,
       name: input.name.trim(),
-      role: input.role.trim(),
+      role: roleNorm,
       referenceImageBlob: input.referenceImageBlob,
       embedding: input.embedding,
       createdAt,
@@ -39,10 +49,11 @@ export async function persistEnrolledUser(
   }
 
   const id = input.randomId?.() ?? crypto.randomUUID();
+  const roleNorm = normalizePersistedRole(input.role, undefined, undefined);
   const user: User = {
     id,
     name: input.name.trim(),
-    role: input.role.trim(),
+    role: roleNorm,
     referenceImageBlob: input.referenceImageBlob,
     embedding: input.embedding,
     createdAt: now,

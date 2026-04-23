@@ -96,7 +96,7 @@ describe('createDexiePersistence', () => {
       await p.usersRepo.put({
         id: uid,
         name: 'X',
-        role: 'r',
+        role: 'Staff',
         referenceImageBlob: new Blob(),
         embedding: new Float32Array(8),
         createdAt: 1,

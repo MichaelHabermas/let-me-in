@@ -36,6 +36,30 @@ describe('parseBulkImportJson', () => {
     expect(r.valid).toHaveLength(0);
     expect(r.errors.some((e) => e.message.includes('array'))).toBe(true);
   });
+
+  it('rejects unknown role', () => {
+    const r = parseBulkImportJson(
+      JSON.stringify([{ name: 'A', role: 'Intern', imageBase64: png1x1 }]),
+    );
+    expect(r.valid).toHaveLength(0);
+    expect(r.errors.some((e) => e.message.includes('Unknown role'))).toBe(true);
+  });
+
+  it('accepts role case-insensitively and stores canonical casing', () => {
+    const r = parseBulkImportJson(
+      JSON.stringify([{ name: 'A', role: 'staff', imageBase64: png1x1 }]),
+    );
+    expect(r.valid).toHaveLength(1);
+    expect(r.valid[0]!.role).toBe('Staff');
+  });
+
+  it('rejects empty role string', () => {
+    const r = parseBulkImportJson(
+      JSON.stringify([{ name: 'A', role: '   ', imageBase64: png1x1 }]),
+    );
+    expect(r.valid).toHaveLength(0);
+    expect(r.errors.some((e) => e.message.includes('empty role'))).toBe(true);
+  });
 });
 
 describe('runBulkImport', () => {
@@ -52,8 +76,8 @@ describe('runBulkImport', () => {
     const p = createDexiePersistence(dbName);
     await p.initDatabase(seed);
     const rows = [
-      { name: 'A', role: 'r', imageBase64: png1x1 },
-      { name: 'B', role: 'r', imageBase64: png1x1 },
+      { name: 'A', role: 'Staff', imageBase64: png1x1 },
+      { name: 'B', role: 'Visitor', imageBase64: png1x1 },
     ];
     const res = await runBulkImport(p, JSON.stringify(rows), {
       onProgress: () => {},
@@ -71,8 +95,8 @@ describe('runBulkImport', () => {
     const p = createDexiePersistence(dbName);
     await p.initDatabase(seed);
     const dupRows = [
-      { name: 'Same', role: 'a', imageBase64: png1x1 },
-      { name: 'same', role: 'b', imageBase64: png1x1 },
+      { name: 'Same', role: 'Staff', imageBase64: png1x1 },
+      { name: 'same', role: 'Visitor', imageBase64: png1x1 },
     ];
     const res = await runBulkImport(p, JSON.stringify(dupRows), {
       onProgress: () => {},

@@ -35,6 +35,9 @@ export type AdminUiStrings = {
   enrollSave: string;
   enrollNameLabel: string;
   enrollRoleLabel: string;
+  enrollRolePlaceholder: string;
+  enrollRoleRequired: string;
+  enrollRoleLegacySuffix: string;
   enrollSuccess: string;
   enrollNameRequired: string;
 };
@@ -117,6 +120,9 @@ function adminStringsFromConfig(cfg: GateUiConfigSlice): AdminUiStrings {
     enrollSave: s.enrollSave,
     enrollNameLabel: s.enrollNameLabel,
     enrollRoleLabel: s.enrollRoleLabel,
+    enrollRolePlaceholder: s.enrollRolePlaceholder,
+    enrollRoleRequired: s.enrollRoleRequired,
+    enrollRoleLegacySuffix: s.enrollRoleLegacySuffix,
     enrollSuccess: s.enrollSuccess,
     enrollNameRequired: s.enrollNameRequired,
   };

@@ -70,12 +70,13 @@ describe('createEnrollmentController with E2E doubles', () => {
     expect(ok).toBe(true);
     expect(ctrl.getState()).toBe('editing');
 
-    await ctrl.saveUser('E2E User', 'Role');
+    await ctrl.saveUser('E2E User', 'Staff');
     expect(ctrl.getState()).toBe('detecting');
 
     const users = await persistence.usersRepo.toArray();
     expect(users).toHaveLength(1);
     expect(users[0]!.name).toBe('E2E User');
+    expect(users[0]!.role).toBe('Staff');
 
     ctrl.dispose();
     wrap.remove();
