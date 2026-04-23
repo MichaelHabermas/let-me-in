@@ -41,8 +41,7 @@ export type GatePreviewSessionDeps = {
 };
 
 export type GatePreviewElements = {
-  startBtn: HTMLButtonElement;
-  stopBtn: HTMLButtonElement;
+  cameraToggleBtn: HTMLButtonElement;
   statusEl: HTMLElement;
   previewWrap: HTMLElement;
   video: HTMLVideoElement;
@@ -52,22 +51,52 @@ export type GatePreviewElements = {
   decisionEl?: HTMLElement;
 };
 
+function readCameraToggleLabels(btn: HTMLButtonElement): { start: string; stop: string } {
+  return {
+    start: btn.dataset.labelStart ?? 'Start camera',
+    stop: btn.dataset.labelStop ?? 'Stop camera',
+  };
+}
+
+function syncCameraToggleUi(
+  btn: HTMLButtonElement,
+  mode: 'idle' | 'loading' | 'running',
+): void {
+  const { start, stop } = readCameraToggleLabels(btn);
+  if (mode === 'running') {
+    btn.textContent = stop;
+    btn.dataset.cameraState = 'running';
+    btn.setAttribute('aria-label', stop);
+    btn.disabled = false;
+  } else if (mode === 'loading') {
+    btn.textContent = start;
+    btn.dataset.cameraState = 'idle';
+    btn.setAttribute('aria-label', start);
+    btn.disabled = true;
+  } else {
+    btn.textContent = start;
+    btn.dataset.cameraState = 'idle';
+    btn.setAttribute('aria-label', start);
+    btn.disabled = false;
+  }
+}
+
 function wireCameraControls(
   camera: Camera,
   elements: GatePreviewElements,
   deps: GatePreviewSessionDeps,
 ): () => void {
-  const { startBtn, stopBtn, statusEl } = elements;
+  const { cameraToggleBtn, statusEl } = elements;
   const loadingMsg = deps.detectorLoadingMessage;
   const failedMsg = deps.detectorLoadFailedMessage;
   const coord = createDetectorPipelineCoordinator({ elements, camera, statusEl });
   coord.beginModelLoad(deps, loadingMsg, failedMsg);
 
   const onStart = async () => {
-    startBtn.disabled = true;
+    syncCameraToggleUi(cameraToggleBtn, 'loading');
     try {
       if (!(await coord.waitReady(deps, loadingMsg))) {
-        startBtn.disabled = false;
+        syncCameraToggleUi(cameraToggleBtn, 'idle');
         return;
       }
       statusEl.textContent = '';
@@ -93,22 +122,21 @@ function wireCameraControls(
       }
 
       await camera.start();
-      stopBtn.disabled = false;
       coord.attachRunningPipeline(attachDeps);
+      syncCameraToggleUi(cameraToggleBtn, 'running');
     } catch {
-      startBtn.disabled = false;
+      syncCameraToggleUi(cameraToggleBtn, 'idle');
     }
   };
 
-  startBtn.addEventListener('click', () => {
-    void onStart();
-  });
-
-  stopBtn.addEventListener('click', () => {
-    coord.stopPipeline();
-    camera.stop();
-    startBtn.disabled = false;
-    stopBtn.disabled = true;
+  cameraToggleBtn.addEventListener('click', () => {
+    if (camera.isRunning()) {
+      coord.stopPipeline();
+      camera.stop();
+      syncCameraToggleUi(cameraToggleBtn, 'idle');
+    } else {
+      void onStart();
+    }
   });
 
   return () => {

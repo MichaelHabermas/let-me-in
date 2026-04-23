@@ -4,22 +4,22 @@ import type { ConsentModalStrings } from '../ui/components/consent';
 import { mountConsentModal } from '../ui/components/consent';
 
 /**
- * If consent is not recorded, blocks `#start` with a modal until accept; decline keeps start disabled.
+ * If consent is not recorded, blocks the gate camera toggle until accept; decline keeps it disabled.
  */
 export async function bootstrapGateConsentIfNeeded(options: {
   persistence: DexiePersistence;
-  startBtn: HTMLButtonElement;
+  cameraToggleBtn: HTMLButtonElement;
   shell: HTMLElement;
   strings: ConsentModalStrings;
 }): Promise<void> {
-  const { persistence, startBtn, shell, strings } = options;
+  const { persistence, cameraToggleBtn, shell, strings } = options;
   const existing = await readConsentAccepted(persistence);
   if (existing) {
-    startBtn.disabled = false;
+    cameraToggleBtn.disabled = false;
     return;
   }
 
-  startBtn.disabled = true;
+  cameraToggleBtn.disabled = true;
   let removeModal: (() => void) | undefined;
 
   const closeModal = () => {
@@ -31,12 +31,12 @@ export async function bootstrapGateConsentIfNeeded(options: {
     onAccept: () => {
       void writeConsentAccepted(persistence).then(() => {
         closeModal();
-        startBtn.disabled = false;
+        cameraToggleBtn.disabled = false;
       });
     },
     onDecline: () => {
       closeModal();
-      startBtn.disabled = true;
+      cameraToggleBtn.disabled = true;
     },
   });
 }

@@ -13,23 +13,31 @@ import {
 } from './fixtures/gate-copy';
 
 function buildElements() {
-  const startBtn = document.createElement('button');
-  const stopBtn = document.createElement('button');
-  stopBtn.disabled = true;
+  const cameraToggleBtn = document.createElement('button');
+  cameraToggleBtn.dataset.labelStart = 'Start camera';
+  cameraToggleBtn.dataset.labelStop = 'Stop camera';
+  cameraToggleBtn.dataset.cameraState = 'idle';
+  cameraToggleBtn.textContent = 'Start camera';
+  cameraToggleBtn.setAttribute('aria-label', 'Start camera');
   const statusEl = document.createElement('p');
   const previewWrap = document.createElement('div');
   const video = document.createElement('video');
   const canvas = document.createElement('canvas');
-  return { startBtn, stopBtn, statusEl, previewWrap, video, canvas };
+  return { cameraToggleBtn, statusEl, previewWrap, video, canvas };
 }
 
 describe('wireGatePreviewSession', () => {
-  it('enables stop after start succeeds', async () => {
+  it('shows stop label after start succeeds and stops on second click', async () => {
     const els = buildElements();
     let onErrorCb: Parameters<Camera['onError']>[0] | undefined;
+    let running = false;
     const fakeCamera = {
-      start: vi.fn().mockResolvedValue(undefined),
-      stop: vi.fn(),
+      start: vi.fn(async () => {
+        running = true;
+      }),
+      stop: vi.fn(() => {
+        running = false;
+      }),
       onError(cb: Parameters<Camera['onError']>[0]) {
         onErrorCb = cb;
         return () => {
@@ -38,7 +46,7 @@ describe('wireGatePreviewSession', () => {
       },
       onFrame: vi.fn(() => () => {}),
       getFrame: vi.fn(),
-      isRunning: vi.fn(() => false),
+      isRunning: vi.fn(() => running),
     } as unknown as Camera;
 
     const createCamera = vi.fn(() => fakeCamera);
@@ -62,11 +70,15 @@ describe('wireGatePreviewSession', () => {
     expect(createCamera).toHaveBeenCalledWith(els.video, els.canvas, { defaultConstraints });
     expect(onErrorCb).toBeTypeOf('function');
 
-    els.startBtn.click();
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(fakeCamera.start).toHaveBeenCalled();
-    expect(els.stopBtn.disabled).toBe(false);
+    els.cameraToggleBtn.click();
+    await vi.waitFor(() => expect(fakeCamera.start).toHaveBeenCalled());
+    await vi.waitFor(() => expect(els.cameraToggleBtn.textContent).toBe('Stop camera'));
+    expect(els.cameraToggleBtn.dataset.cameraState).toBe('running');
+
+    els.cameraToggleBtn.click();
+    expect(fakeCamera.stop).toHaveBeenCalled();
+    expect(els.cameraToggleBtn.textContent).toBe('Start camera');
+    expect(els.cameraToggleBtn.dataset.cameraState).toBe('idle');
   });
 
   it('maps camera errors to status text', () => {
@@ -150,7 +162,7 @@ describe('wireGatePreviewSession', () => {
       },
     );
 
-    els.startBtn.click();
+    els.cameraToggleBtn.click();
     expect(fakeCamera.start).not.toHaveBeenCalled();
     await Promise.resolve();
     await Promise.resolve();

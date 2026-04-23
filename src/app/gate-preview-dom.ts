@@ -2,26 +2,27 @@ import type { GateRuntime } from './runtime-settings';
 
 export function createGateToolbar(rt: GateRuntime): {
   toolbar: HTMLElement;
-  startBtn: HTMLButtonElement;
-  stopBtn: HTMLButtonElement;
+  cameraToggleBtn: HTMLButtonElement;
 } {
   const toolbar = document.createElement('div');
   toolbar.className = 'gate-toolbar';
 
-  const startBtn = document.createElement('button');
-  startBtn.type = 'button';
-  startBtn.id = 'start';
-  startBtn.textContent = rt.getCameraStartLabel();
+  const startLabel = rt.getCameraStartLabel();
+  const stopLabel = rt.getCameraStopLabel();
 
-  const stopBtn = document.createElement('button');
-  stopBtn.type = 'button';
-  stopBtn.id = 'stop';
-  stopBtn.textContent = rt.getCameraStopLabel();
-  stopBtn.disabled = true;
+  const cameraToggleBtn = document.createElement('button');
+  cameraToggleBtn.type = 'button';
+  cameraToggleBtn.id = 'gate-camera-toggle';
+  cameraToggleBtn.className = 'gate-toolbar__camera';
+  cameraToggleBtn.setAttribute('data-testid', 'gate-camera-toggle');
+  cameraToggleBtn.dataset.labelStart = startLabel;
+  cameraToggleBtn.dataset.labelStop = stopLabel;
+  cameraToggleBtn.dataset.cameraState = 'idle';
+  cameraToggleBtn.textContent = startLabel;
+  cameraToggleBtn.setAttribute('aria-label', startLabel);
 
-  toolbar.appendChild(startBtn);
-  toolbar.appendChild(stopBtn);
-  return { toolbar, startBtn, stopBtn };
+  toolbar.appendChild(cameraToggleBtn);
+  return { toolbar, cameraToggleBtn };
 }
 
 export function createGatePreview(rt: GateRuntime): {
@@ -64,8 +65,7 @@ export function createGatePreview(rt: GateRuntime): {
 
 export interface BuiltGateDom {
   main: HTMLElement;
-  startBtn: HTMLButtonElement;
-  stopBtn: HTMLButtonElement;
+  cameraToggleBtn: HTMLButtonElement;
   statusEl: HTMLElement;
   previewWrap: HTMLElement;
   video: HTMLVideoElement;
@@ -111,7 +111,7 @@ export function buildGateDom(rt: GateRuntime): BuiltGateDom {
     intro.appendChild(h1);
   }
 
-  const { toolbar, startBtn, stopBtn } = createGateToolbar(rt);
+  const { toolbar, cameraToggleBtn } = createGateToolbar(rt);
   toolbar.classList.add('gate-header__actions');
 
   const statusEl = document.createElement('p');
@@ -146,8 +146,7 @@ export function buildGateDom(rt: GateRuntime): BuiltGateDom {
 
   return {
     main,
-    startBtn,
-    stopBtn,
+    cameraToggleBtn,
     statusEl,
     previewWrap,
     video,

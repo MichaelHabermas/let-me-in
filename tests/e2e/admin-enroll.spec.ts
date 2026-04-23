@@ -9,8 +9,8 @@ test.describe('admin enrollment (E2E doubles)', () => {
 
     await expect(page.getByTestId('admin-enroll-root')).toBeVisible();
 
-    await expect(page.getByTestId('enroll-start')).toBeEnabled();
-    await page.getByTestId('enroll-start').click();
+    await expect(page.getByTestId('enroll-camera')).toBeEnabled();
+    await page.getByTestId('enroll-camera').click();
 
     await expect(page.getByTestId('enroll-capture')).toBeEnabled();
     await page.getByTestId('enroll-capture').click();

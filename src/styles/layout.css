@@ -226,6 +226,42 @@ body {
   cursor: not-allowed;
 }
 
+.gate-toolbar button.gate-toolbar__camera[data-camera-state='idle'] {
+  border-color: transparent;
+  background: var(--color-granted);
+  color: #f8fafc;
+}
+
+.gate-toolbar button.gate-toolbar__camera[data-camera-state='idle']:hover:not(:disabled) {
+  background: #15803d;
+  border-color: transparent;
+}
+
+.gate-toolbar button.gate-toolbar__camera[data-camera-state='idle']:active:not(:disabled) {
+  background: #166534;
+}
+
+.gate-toolbar button.gate-toolbar__camera[data-camera-state='running'] {
+  border-color: transparent;
+  background: var(--color-denied);
+  color: #f8fafc;
+}
+
+.gate-toolbar button.gate-toolbar__camera[data-camera-state='running']:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: transparent;
+}
+
+.gate-toolbar button.gate-toolbar__camera[data-camera-state='running']:active:not(:disabled) {
+  background: #991b1b;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gate-toolbar button.gate-toolbar__camera {
+    transition: none;
+  }
+}
+
 .gate-status {
   min-height: 1.5rem;
   flex: 1 1 18rem;
@@ -698,6 +734,21 @@ body {
   border-color: transparent;
   background: var(--color-granted);
   color: #f8fafc;
+}
+
+.btn--camera-stop {
+  border-color: transparent;
+  background: var(--color-denied);
+  color: #f8fafc;
+}
+
+.btn--camera-stop:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: transparent;
+}
+
+.btn--camera-stop:active:not(:disabled) {
+  background: #991b1b;
 }
 
 @media (max-width: 900px) {

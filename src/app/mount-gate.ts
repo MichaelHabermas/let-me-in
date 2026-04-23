@@ -66,8 +66,7 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
 
   const {
     main,
-    startBtn,
-    stopBtn,
+    cameraToggleBtn,
     statusEl,
     previewWrap,
     video,
@@ -79,10 +78,10 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
 
   const persistence = sessionDepsExtras?.persistence;
   if (persistence) {
-    startBtn.disabled = true;
+    cameraToggleBtn.disabled = true;
     void bootstrapGateConsentIfNeeded({
       persistence,
-      startBtn,
+      cameraToggleBtn,
       shell: main,
       strings: rt.getConsentModalStrings(),
     });
@@ -93,8 +92,7 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
 
   const teardown = wireSession(
     {
-      startBtn,
-      stopBtn,
+      cameraToggleBtn,
       statusEl,
       previewWrap,
       video,

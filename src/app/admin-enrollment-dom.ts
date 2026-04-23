@@ -10,8 +10,7 @@ export type AdminEnrollmentDom = {
   statusEl: HTMLElement;
   nameInput: HTMLInputElement;
   roleInput: HTMLInputElement;
-  startBtn: HTMLButtonElement;
-  stopBtn: HTMLButtonElement;
+  cameraToggleBtn: HTMLButtonElement;
   capBtn: HTMLButtonElement;
   retakeBtn: HTMLButtonElement;
   saveBtn: HTMLButtonElement;
@@ -98,8 +97,7 @@ function buildNameFields(rt: GateRuntime): {
 
 function buildActionButtons(rt: GateRuntime): {
   btnRow: HTMLDivElement;
-  startBtn: HTMLButtonElement;
-  stopBtn: HTMLButtonElement;
+  cameraToggleBtn: HTMLButtonElement;
   capBtn: HTMLButtonElement;
   retakeBtn: HTMLButtonElement;
   saveBtn: HTMLButtonElement;
@@ -107,17 +105,17 @@ function buildActionButtons(rt: GateRuntime): {
   const btnRow = document.createElement('div');
   btnRow.className = 'admin-enroll__actions';
 
-  const startBtn = document.createElement('button');
-  startBtn.type = 'button';
-  startBtn.className = 'btn btn--primary';
-  startBtn.textContent = rt.getAdminUiStrings().enrollStartCamera;
-  startBtn.setAttribute('data-testid', 'enroll-start');
+  const startLabel = rt.getAdminUiStrings().enrollStartCamera;
+  const stopLabel = rt.getCameraStopLabel();
 
-  const stopBtn = document.createElement('button');
-  stopBtn.type = 'button';
-  stopBtn.className = 'btn';
-  stopBtn.textContent = rt.getCameraStopLabel();
-  stopBtn.disabled = true;
+  const cameraToggleBtn = document.createElement('button');
+  cameraToggleBtn.type = 'button';
+  cameraToggleBtn.className = 'btn btn--primary';
+  cameraToggleBtn.textContent = startLabel;
+  cameraToggleBtn.setAttribute('aria-label', startLabel);
+  cameraToggleBtn.dataset.labelStart = startLabel;
+  cameraToggleBtn.dataset.labelStop = stopLabel;
+  cameraToggleBtn.setAttribute('data-testid', 'enroll-camera');
 
   const capBtn = document.createElement('button');
   capBtn.type = 'button';
@@ -140,16 +138,15 @@ function buildActionButtons(rt: GateRuntime): {
   saveBtn.setAttribute('data-testid', 'enroll-save');
   saveBtn.disabled = true;
 
-  btnRow.append(startBtn, stopBtn, capBtn, retakeBtn, saveBtn);
-  return { btnRow, startBtn, stopBtn, capBtn, retakeBtn, saveBtn };
+  btnRow.append(cameraToggleBtn, capBtn, retakeBtn, saveBtn);
+  return { btnRow, cameraToggleBtn, capBtn, retakeBtn, saveBtn };
 }
 
 function buildFormColumn(rt: GateRuntime): {
   column: HTMLElement;
   nameInput: HTMLInputElement;
   roleInput: HTMLInputElement;
-  startBtn: HTMLButtonElement;
-  stopBtn: HTMLButtonElement;
+  cameraToggleBtn: HTMLButtonElement;
   capBtn: HTMLButtonElement;
   retakeBtn: HTMLButtonElement;
   saveBtn: HTMLButtonElement;
@@ -175,8 +172,7 @@ function buildFormColumn(rt: GateRuntime): {
     column,
     nameInput: names.nameInput,
     roleInput: names.roleInput,
-    startBtn: actions.startBtn,
-    stopBtn: actions.stopBtn,
+    cameraToggleBtn: actions.cameraToggleBtn,
     capBtn: actions.capBtn,
     retakeBtn: actions.retakeBtn,
     saveBtn: actions.saveBtn,
@@ -207,8 +203,7 @@ export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
     statusEl: preview.statusEl,
     nameInput: form.nameInput,
     roleInput: form.roleInput,
-    startBtn: form.startBtn,
-    stopBtn: form.stopBtn,
+    cameraToggleBtn: form.cameraToggleBtn,
     capBtn: form.capBtn,
     retakeBtn: form.retakeBtn,
     saveBtn: form.saveBtn,

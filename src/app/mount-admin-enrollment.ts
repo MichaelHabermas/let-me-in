@@ -27,12 +27,14 @@ function bindEnrollmentUi(
   rt: GateRuntime,
   syncButtons: () => void,
 ): void {
-  dom.startBtn.addEventListener('click', () => {
-    void ctrl.startSession().catch(() => {});
-  });
-  dom.stopBtn.addEventListener('click', () => {
-    ctrl.stopSession();
-    syncButtons();
+  dom.cameraToggleBtn.addEventListener('click', () => {
+    const s = ctrl.getState();
+    if (s === 'idle') {
+      void ctrl.startSession().catch(() => {});
+    } else if (s !== 'saving') {
+      ctrl.stopSession();
+      syncButtons();
+    }
   });
   dom.capBtn.addEventListener('click', () => {
     void ctrl.captureFace().then(() => syncButtons());
@@ -82,8 +84,19 @@ function wireEnrollmentController(
   let ctrl!: EnrollmentController;
   const syncButtons = () => {
     const s = ctrl.getState();
-    dom.startBtn.disabled = s !== 'idle';
-    dom.stopBtn.disabled = s === 'idle' || s === 'saving';
+    const startLabel = rt.getAdminUiStrings().enrollStartCamera;
+    const stopLabel = rt.getCameraStopLabel();
+    if (s === 'idle') {
+      dom.cameraToggleBtn.textContent = startLabel;
+      dom.cameraToggleBtn.setAttribute('aria-label', startLabel);
+      dom.cameraToggleBtn.className = 'btn btn--primary';
+      dom.cameraToggleBtn.disabled = false;
+    } else {
+      dom.cameraToggleBtn.textContent = stopLabel;
+      dom.cameraToggleBtn.setAttribute('aria-label', stopLabel);
+      dom.cameraToggleBtn.className = 'btn btn--camera-stop';
+      dom.cameraToggleBtn.disabled = s === 'saving';
+    }
     dom.capBtn.disabled = s !== 'detecting';
     dom.retakeBtn.disabled = s !== 'editing';
     dom.saveBtn.disabled = s !== 'editing';
