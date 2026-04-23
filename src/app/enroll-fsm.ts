@@ -17,6 +17,7 @@ export type EnrollFsmEvent =
   | { type: 'ready_detecting' }
   | { type: 'capture' }
   | { type: 'begin_edit' }
+  | { type: 'begin_edit_from_user' }
   | { type: 'retake' }
   | { type: 'save' }
   | { type: 'save_ok' }
@@ -28,13 +29,15 @@ export type EnrollFsmEvent =
 export function transitionEnrollState(state: EnrollState, e: EnrollFsmEvent): EnrollState {
   switch (e.type) {
     case 'start_camera':
-      return state === 'idle' ? 'camera' : state;
+      return state === 'idle' || state === 'editing' ? 'camera' : state;
     case 'ready_detecting':
       return state === 'camera' ? 'detecting' : state;
     case 'capture':
       return state === 'detecting' ? 'captured' : state;
     case 'begin_edit':
       return state === 'captured' ? 'editing' : state;
+    case 'begin_edit_from_user':
+      return state === 'idle' ? 'editing' : state;
     case 'retake':
       return state === 'captured' || state === 'editing' ? 'detecting' : state;
     case 'save':

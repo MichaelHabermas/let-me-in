@@ -23,7 +23,8 @@ const variantMeta: Record<
     documentTitle: (rt) => rt.logPageTitle,
     headingText: (rt) => `${rt.orgName} — Entry log`,
     pageClass: 'page page--log',
-    ledeText: 'The live table is mounted by the log bundle (`mountLogView`). This shell is for static previews only.',
+    ledeText:
+      'The live table is mounted by the log bundle (`mountLogView`). This shell is for static previews only.',
   },
 };
 

@@ -78,11 +78,13 @@ export async function saveEnrollmentUser(
   role: string,
   embedding: Float32Array,
   referenceImageBlob: Blob,
+  opts?: { existingUserId?: string },
 ): Promise<void> {
   await persistEnrolledUser(persistence, {
     name,
     role,
     embedding,
     referenceImageBlob,
+    existingUserId: opts?.existingUserId,
   });
 }

@@ -16,9 +16,9 @@ Frames and embeddings stay on the device—better privacy and simpler hosting (m
 
 1. Detect a face and compute an embedding for the current frame.
 2. Compare it (cosine similarity) to enrolled vectors in IndexedDB.
-3. [`decideFromMatch`](src/domain/access-policy.ts) maps the best score and margin vs. the runner-up to **GRANTED**, **UNCERTAIN**, or **DENIED** using configurable thresholds.
+3. `[decideFromMatch](src/domain/access-policy.ts)` maps the best score and margin vs. the runner-up to **GRANTED**, **UNCERTAIN**, or **DENIED** using configurable thresholds.
 
-The gate UI reflects that verdict. **GRANTED** and **DENIED** outcomes are written to the local access log ([`pipeline-frame.ts`](src/app/pipeline-frame.ts), [`gate-live-access.ts`](src/app/gate-live-access.ts)).
+The gate UI reflects that verdict. **GRANTED** and **DENIED** outcomes are written to the local access log (`[pipeline-frame.ts](src/app/pipeline-frame.ts)`, `[gate-live-access.ts](src/app/gate-live-access.ts)`).
 
 ## Prerequisites
 
@@ -42,47 +42,49 @@ Open:
 
 ## Scripts
 
-| Script                  | Purpose                     |
-| ----------------------- | --------------------------- |
-| `pnpm run dev`          | Vite dev server with HMR    |
-| `pnpm run build`        | Production build to `dist/` |
-| `pnpm run preview`      | Serve `dist/` locally       |
-| `pnpm run typecheck`    | `tsc --noEmit`              |
-| `pnpm run lint`         | ESLint (`src/`)             |
-| `pnpm run format`       | Prettier write (`src/`)     |
-| `pnpm run format:check` | Prettier check              |
-| `pnpm test`             | Vitest (unit; excludes `tests/e2e`) |
-| `pnpm test:e2e`         | Playwright (`tests/e2e`; installs Chromium on first run via `pnpm exec playwright install`) |
+
+| Script                  | Purpose                                                                                        |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| `pnpm run dev`          | Vite dev server with HMR                                                                       |
+| `pnpm run build`        | Production build to `dist/`                                                                    |
+| `pnpm run preview`      | Serve `dist/` locally                                                                          |
+| `pnpm run typecheck`    | `tsc --noEmit`                                                                                 |
+| `pnpm run lint`         | ESLint (`src/`)                                                                                |
+| `pnpm run format`       | Prettier write (`src/`)                                                                        |
+| `pnpm run format:check` | Prettier check                                                                                 |
+| `pnpm test`             | Vitest (unit; excludes `tests/e2e`)                                                            |
+| `pnpm test:e2e`         | Playwright (`tests/e2e`; installs Chromium on first run via `pnpm exec playwright install`)    |
 | `pnpm seed:users`       | Seeds three sample users into IndexedDB (`gatekeeper`) — see `tests/scenarios/seed-3-users.js` |
-| `pnpm sync:netlify`     | Rewrite `netlify.toml` redirect blocks from `multi-page.ts` |
-| `pnpm verify:netlify`   | Fail if redirects drift from `multi-page.ts` (no writes)   |
+| `pnpm sync:netlify`     | Rewrite `netlify.toml` redirect blocks from `multi-page.ts`                                    |
+| `pnpm verify:netlify`   | Fail if redirects drift from `multi-page.ts` (no writes)                                       |
+
 
 ## Source layout (current)
 
-- **Entries:** [`src/main.ts`](src/main.ts), [`src/admin.ts`](src/admin.ts), [`src/log.ts`](src/log.ts) each call [`bootstrapApp({ mount })`](src/app/bootstrap-app.ts) (optional `persistence` for tests).
-- **Gate page:** [`src/app/mount-gate.ts`](src/app/mount-gate.ts) builds DOM and wires the camera preview via [`src/app/gate-session.ts`](src/app/gate-session.ts).
-- **Admin / enrollment:** [`src/app/mount-admin-page.ts`](src/app/mount-admin-page.ts) (mounted from [`src/ui/admin-view.ts`](src/ui/admin-view.ts)) — login modal, camera enrollment, IndexedDB save. E2E uses `VITE_E2E_STUB_ENROLL=true` (see Playwright `webServer` env in [`playwright.config.ts`](playwright.config.ts)).
-- **Runtime copy / seed:** [`src/app/runtime-settings.ts`](src/app/runtime-settings.ts) centralizes config- and env-derived values (page titles, camera strings, preview canvas size, dev FPS overlay).
-- **Deploy routes:** [`multi-page.ts`](multi-page.ts) feeds Vite and `netlify.toml` (keep in sync with `pnpm sync:netlify` or `pnpm verify:netlify`).
+- **Entries:** `[src/main.ts](src/main.ts)`, `[src/admin.ts](src/admin.ts)`, `[src/log.ts](src/log.ts)` each call `[bootstrapApp({ mount })](src/app/bootstrap-app.ts)` (optional `persistence` for tests).
+- **Gate page:** `[src/app/mount-gate.ts](src/app/mount-gate.ts)` builds DOM and wires the camera preview via `[src/app/gate-session.ts](src/app/gate-session.ts)`.
+- **Admin / enrollment:** `[src/app/mount-admin-page.ts](src/app/mount-admin-page.ts)` (mounted from `[src/ui/admin-view.ts](src/ui/admin-view.ts)`) — login modal, camera enrollment, IndexedDB save. E2E uses `VITE_E2E_STUB_ENROLL=true` (see Playwright `webServer` env in `[playwright.config.ts](playwright.config.ts)`).
+- **Runtime copy / seed:** `[src/app/runtime-settings.ts](src/app/runtime-settings.ts)` centralizes config- and env-derived values (page titles, camera strings, preview canvas size, dev FPS overlay).
+- **Deploy routes:** `[multi-page.ts](multi-page.ts)` feeds Vite and `netlify.toml` (keep in sync with `pnpm sync:netlify` or `pnpm verify:netlify`).
 
 ## Configuration
 
-- All org-tunable values live in [`src/config.ts`](src/config.ts).
-- Admin credentials for production builds: set `VITE_ADMIN_USER` and `VITE_ADMIN_PASS` at build time (see [`.env.example`](.env.example)). If unset, the app warns and uses dev defaults (`admin` / `admin`).
+- All org-tunable values live in `[src/config.ts](src/config.ts)`.
+- Admin credentials for production builds: set `VITE_ADMIN_USER` and `VITE_ADMIN_PASS` at build time (see `[.env.example](.env.example)`). If unset, the app warns and uses dev defaults (`admin` / `admin`).
 
 ## Deploy (Netlify)
 
 See **[docs/DEPLOY.md](docs/DEPLOY.md)** for admin credential env vars and rotation.
 
-- [`netlify.toml`](netlify.toml) — build command and publish directory.
-- [`public/_headers`](public/_headers) — long cache for `/models/*` and `*.onnx`.
+- `[netlify.toml](netlify.toml)` — build command and publish directory.
+- `[public/_headers](public/_headers)` — long cache for `/models/`* and `*.onnx`.
 - Canonical site (from PRD): `https://let-me-in-gatekeeper.netlify.app` — after deploy, verify headers with  
 `curl -I https://let-me-in-gatekeeper.netlify.app/models/yolov9t.onnx`  
 (expect `Cache-Control: public, max-age=3600`).
 
 ## IndexedDB
 
-The app uses database name `**gatekeeper`** with stores `users`, `accessLog`, and `settings` (Dexie). After first load, `settings` is seeded with default threshold and cooldown snapshots supplied at bootstrap from [`resolveGateRuntime().getDatabaseSeedSettings()`](src/app/runtime-settings.ts) (same numbers as [`src/config.ts`](src/config.ts); [`src/infra/persistence.ts`](src/infra/persistence.ts) does not import `config` directly).
+The app uses database name `**gatekeeper`** with stores `users`, `accessLog`, and `settings` (Dexie). After first load, `settings` is seeded with default threshold and cooldown snapshots supplied at bootstrap from `[resolveGateRuntime().getDatabaseSeedSettings()](src/app/runtime-settings.ts)` (same numbers as `[src/config.ts](src/config.ts)`; `[src/infra/persistence.ts](src/infra/persistence.ts)` does not import `config` directly).
 
 ## Validation checklist (Epic E1)
 

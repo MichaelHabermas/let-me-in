@@ -73,6 +73,21 @@ export interface Config {
       adminLoginSubmit: string;
       adminLoginError: string;
       adminLogout: string;
+      rosterTitle: string;
+      rosterColPhoto: string;
+      rosterColName: string;
+      rosterColRole: string;
+      rosterColCreated: string;
+      rosterColActions: string;
+      rosterEdit: string;
+      rosterDelete: string;
+      rosterThumbnailAlt: string;
+      rosterBulkImport: string;
+      rosterImportPick: string;
+      rosterImportConfirmDuplicates: string;
+      rosterImportProgress: string;
+      rosterImportDone: string;
+      rosterDeleteConfirm: string;
       enrollTitle: string;
       enrollStartCamera: string;
       enrollCapture: string;
@@ -164,6 +179,21 @@ export const config: Config = {
       adminLoginSubmit: 'Sign in',
       adminLoginError: 'Invalid username or password.',
       adminLogout: 'Sign out',
+      rosterTitle: 'Enrolled users',
+      rosterColPhoto: 'Photo',
+      rosterColName: 'Name',
+      rosterColRole: 'Role',
+      rosterColCreated: 'Added',
+      rosterColActions: 'Actions',
+      rosterEdit: 'Edit',
+      rosterDelete: 'Delete',
+      rosterThumbnailAlt: 'Reference face',
+      rosterBulkImport: 'Import JSON',
+      rosterImportPick: 'Choose JSON file…',
+      rosterImportConfirmDuplicates: 'Duplicate names found. Import anyway?',
+      rosterImportProgress: 'Importing {current} / {total}…',
+      rosterImportDone: 'Import finished.',
+      rosterDeleteConfirm: 'Delete this user? Their log entries will show as Unknown.',
       enrollTitle: 'Enroll a user',
       enrollStartCamera: 'Start camera',
       enrollCapture: 'Capture',
@@ -182,8 +212,10 @@ export const config: Config = {
         'Live video is processed in your browser to verify identity for access control. Nothing is sent to our servers for recognition.',
       consentBulletStored:
         'Embeddings and a reference face image are stored only in this browser (IndexedDB). They can be inspected with developer tools on this device.',
-      consentBulletRetention: 'Data remains until an administrator deletes your enrollment from this deployment.',
-      consentBulletRefuse: 'You may refuse by closing this tab; the camera will not start without your consent.',
+      consentBulletRetention:
+        'Data remains until an administrator deletes your enrollment from this deployment.',
+      consentBulletRefuse:
+        'You may refuse by closing this tab; the camera will not start without your consent.',
       consentAccept: 'I understand — continue',
       consentDecline: 'Decline',
     },

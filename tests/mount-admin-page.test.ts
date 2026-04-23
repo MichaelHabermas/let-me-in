@@ -35,6 +35,16 @@ function memoryStorage(): Storage {
 
 const testDbName = 'mount-admin-page-test';
 
+async function waitForRosterRows(expected: number): Promise<void> {
+  for (let i = 0; i < 100; i += 1) {
+    if (document.querySelectorAll('[data-testid="admin-user-roster-tbody"] tr').length === expected) {
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 10));
+  }
+  throw new Error(`Timed out waiting for ${expected} roster rows`);
+}
+
 describe('mountAdminPage', () => {
   beforeEach(async () => {
     await Dexie.delete(testDbName);
@@ -65,7 +75,7 @@ describe('mountAdminPage', () => {
     expect(document.querySelector('[data-testid="admin-logout"]')).toBeNull();
   });
 
-  it('shows enrollment when injected auth is already admin', () => {
+  it('shows enrollment when injected auth is already admin', async () => {
     const storage = memoryStorage();
     const auth = createAdminAuth({
       storage,
@@ -74,9 +84,11 @@ describe('mountAdminPage', () => {
     });
     expect(auth.login('u', 'p')).toBe(true);
 
+    const persistence = createDexiePersistence(testDbName);
+    await persistence.initDatabase(createTestGateRuntime().getDatabaseSeedSettings());
     mountAdminPage({
       rt: createTestGateRuntime(),
-      persistence: createDexiePersistence(testDbName),
+      persistence,
       auth,
     });
 
@@ -84,7 +96,7 @@ describe('mountAdminPage', () => {
     expect(document.querySelector('[data-testid="admin-logout"]')).not.toBeNull();
   });
 
-  it('logout uses injected auth storage only', () => {
+  it('lists seeded users in roster table', async () => {
     const storage = memoryStorage();
     const auth = createAdminAuth({
       storage,
@@ -93,9 +105,43 @@ describe('mountAdminPage', () => {
     });
     expect(auth.login('u', 'p')).toBe(true);
 
+    const persistence = createDexiePersistence(testDbName);
+    await persistence.initDatabase(createTestGateRuntime().getDatabaseSeedSettings());
+    const emb = new Float32Array(512).fill(0.02);
+    for (let i = 0; i < 3; i += 1) {
+      await persistence.usersRepo.put({
+        id: `id-${i}`,
+        name: `User ${i}`,
+        role: 'r',
+        referenceImageBlob: new Blob([String(i)], { type: 'image/jpeg' }),
+        embedding: emb,
+        createdAt: 1_700_000_000_000 + i,
+      });
+    }
+
     mountAdminPage({
       rt: createTestGateRuntime(),
-      persistence: createDexiePersistence(testDbName),
+      persistence,
+      auth,
+    });
+
+    await waitForRosterRows(3);
+  });
+
+  it('logout uses injected auth storage only', async () => {
+    const storage = memoryStorage();
+    const auth = createAdminAuth({
+      storage,
+      nowMs: () => 1_700_000_000_000,
+      admin: { user: 'u', pass: 'p' },
+    });
+    expect(auth.login('u', 'p')).toBe(true);
+
+    const persistence = createDexiePersistence(testDbName);
+    await persistence.initDatabase(createTestGateRuntime().getDatabaseSeedSettings());
+    mountAdminPage({
+      rt: createTestGateRuntime(),
+      persistence,
       auth,
     });
 

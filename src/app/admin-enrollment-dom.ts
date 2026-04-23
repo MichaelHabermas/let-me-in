@@ -3,6 +3,12 @@ import type { GateRuntime } from './runtime-settings';
 export type AdminEnrollmentDom = {
   shell: HTMLElement;
   logoutBtn: HTMLButtonElement;
+  rosterSection: HTMLElement;
+  rosterTbody: HTMLTableSectionElement;
+  importToolbar: HTMLElement;
+  importFileInput: HTMLInputElement;
+  importButton: HTMLButtonElement;
+  importStatusEl: HTMLElement;
   main: HTMLElement;
   video: HTMLVideoElement;
   frameCanvas: HTMLCanvasElement;
@@ -29,6 +35,82 @@ function buildAdminHeader(rt: GateRuntime): { header: HTMLElement; logoutBtn: HT
   logoutBtn.setAttribute('data-testid', 'admin-logout');
   header.append(h1, logoutBtn);
   return { header, logoutBtn };
+}
+
+function buildUserRosterSection(rt: GateRuntime): {
+  section: HTMLElement;
+  tbody: HTMLTableSectionElement;
+} {
+  const copy = rt.getAdminUiStrings();
+  const section = document.createElement('section');
+  section.className = 'admin-user-roster';
+  section.setAttribute('data-testid', 'admin-user-roster');
+
+  const h2 = document.createElement('h2');
+  h2.className = 'admin-user-roster__title';
+  h2.textContent = copy.rosterTitle;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'admin-user-roster__table-wrap';
+  const table = document.createElement('table');
+  table.className = 'admin-user-table';
+  const thead = document.createElement('thead');
+  const hr = document.createElement('tr');
+  for (const label of [
+    copy.rosterColPhoto,
+    copy.rosterColName,
+    copy.rosterColRole,
+    copy.rosterColCreated,
+    copy.rosterColActions,
+  ]) {
+    const th = document.createElement('th');
+    th.textContent = label;
+    hr.appendChild(th);
+  }
+  thead.appendChild(hr);
+  const tbody = document.createElement('tbody');
+  tbody.setAttribute('data-testid', 'admin-user-roster-tbody');
+  table.append(thead, tbody);
+  wrap.appendChild(table);
+  section.append(h2, wrap);
+  return { section, tbody };
+}
+
+function buildImportToolbar(rt: GateRuntime): {
+  toolbar: HTMLElement;
+  importFileInput: HTMLInputElement;
+  importButton: HTMLButtonElement;
+  importStatusEl: HTMLElement;
+} {
+  const copy = rt.getAdminUiStrings();
+  const toolbar = document.createElement('div');
+  toolbar.className = 'admin-import-toolbar';
+  toolbar.setAttribute('data-testid', 'admin-import-toolbar');
+
+  const importFileInput = document.createElement('input');
+  importFileInput.type = 'file';
+  importFileInput.accept = 'application/json,.json';
+  importFileInput.setAttribute('data-testid', 'admin-import-file');
+  importFileInput.className = 'admin-import-toolbar__file';
+  importFileInput.id = 'admin-bulk-import-file';
+
+  const importButton = document.createElement('button');
+  importButton.type = 'button';
+  importButton.className = 'btn btn--primary';
+  importButton.textContent = copy.rosterBulkImport;
+  importButton.setAttribute('data-testid', 'admin-import-trigger');
+
+  const importStatusEl = document.createElement('p');
+  importStatusEl.className = 'admin-import-toolbar__status';
+  importStatusEl.setAttribute('data-testid', 'admin-import-status');
+
+  const fileLabel = document.createElement('label');
+  fileLabel.className = 'admin-import-toolbar__pick';
+  fileLabel.htmlFor = importFileInput.id;
+  fileLabel.textContent = copy.rosterImportPick;
+
+  toolbar.append(fileLabel, importFileInput, importButton, importStatusEl);
+  return { toolbar, importFileInput, importButton, importStatusEl };
 }
 
 function buildPreviewColumn(rt: GateRuntime): {
@@ -185,17 +267,25 @@ export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
   shell.setAttribute('data-testid', 'admin-enroll-root');
 
   const { header, logoutBtn } = buildAdminHeader(rt);
+  const roster = buildUserRosterSection(rt);
+  const importUi = buildImportToolbar(rt);
   const main = document.createElement('main');
   main.className = 'admin-enroll';
 
   const preview = buildPreviewColumn(rt);
   const form = buildFormColumn(rt);
   main.append(preview.column, form.column);
-  shell.append(header, main);
+  shell.append(header, roster.section, importUi.toolbar, main);
 
   return {
     shell,
     logoutBtn,
+    rosterSection: roster.section,
+    rosterTbody: roster.tbody,
+    importToolbar: importUi.toolbar,
+    importFileInput: importUi.importFileInput,
+    importButton: importUi.importButton,
+    importStatusEl: importUi.importStatusEl,
     main,
     video: preview.video,
     frameCanvas: preview.frameCanvas,

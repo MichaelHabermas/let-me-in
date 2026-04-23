@@ -41,4 +41,30 @@ describe('persistEnrolledUser', () => {
     expect(users[0]!.name).toBe('Ada');
     expect(users[0]!.embedding.length).toBe(512);
   });
+
+  it('updates existing user id and preserves createdAt by default', async () => {
+    const persistence = createDexiePersistence(dbName);
+    await persistence.initDatabase(seed);
+    await persistEnrolledUser(persistence, {
+      name: 'Ada',
+      role: 'Engineer',
+      embedding: new Float32Array(512).fill(0.01),
+      referenceImageBlob: new Blob(['x'], { type: 'image/jpeg' }),
+      randomId: () => 'id-1',
+      nowMs: () => 100,
+    });
+    await persistEnrolledUser(persistence, {
+      name: 'Ada II',
+      role: 'Lead',
+      embedding: new Float32Array(512).fill(0.02),
+      referenceImageBlob: new Blob(['y'], { type: 'image/jpeg' }),
+      existingUserId: 'id-1',
+      nowMs: () => 9999,
+    });
+    const u = await persistence.usersRepo.get('id-1');
+    expect(u?.name).toBe('Ada II');
+    expect(u?.role).toBe('Lead');
+    expect(u?.createdAt).toBe(100);
+    expect(await persistence.usersRepo.toArray()).toHaveLength(1);
+  });
 });

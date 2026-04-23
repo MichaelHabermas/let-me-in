@@ -20,6 +20,8 @@ export function createYoloWorkerDetector(opts: YoloWorkerDetectorOptions): YoloD
   });
   const rpc = new YoloWorkerTransport(worker);
   let loaded = false;
+  /** ORT session.run is not re-entrant; RAF overlay + capture can overlap without this queue. */
+  let inferChain: Promise<unknown> = Promise.resolve();
 
   return {
     async load() {
@@ -49,19 +51,28 @@ export function createYoloWorkerDetector(opts: YoloWorkerDetectorOptions): YoloD
         height,
         rgba,
       };
-      const reply = await rpc.postToWorker(msg, [rgba]);
-      if (reply.type !== YOLO_WORKER_MSG.inferOk) {
-        throw new Error(
-          reply.type === YOLO_WORKER_MSG.inferErr ? reply.error : 'unexpected worker reply',
-        );
-      }
-      return reply.dets;
+      const job = inferChain.then(async () => {
+        const reply = await rpc.postToWorker(msg, [rgba]);
+        if (reply.type !== YOLO_WORKER_MSG.inferOk) {
+          throw new Error(
+            reply.type === YOLO_WORKER_MSG.inferErr ? reply.error : 'unexpected worker reply',
+          );
+        }
+        return reply.dets;
+      });
+      inferChain = job.then(
+        () => {},
+        () => {},
+      );
+      return job;
     },
 
     async dispose() {
+      await inferChain.catch(() => {});
       rpc.clearPending();
       rpc.terminate();
       loaded = false;
+      inferChain = Promise.resolve();
     },
   };
 }

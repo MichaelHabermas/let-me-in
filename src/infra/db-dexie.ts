@@ -17,6 +17,8 @@ export interface DexiePersistence {
     put(user: User): Promise<string>;
     get(id: string): Promise<User | undefined>;
     delete(id: string): Promise<void>;
+    /** Atomically nulls `userId` on matching log rows, then removes the user. */
+    deleteWithAnonymization(userId: string): Promise<void>;
     toArray(): Promise<User[]>;
   };
   accessLogRepo: {
@@ -24,6 +26,7 @@ export interface DexiePersistence {
     get(timestamp: number): Promise<AccessLogRow | undefined>;
     delete(timestamp: number): Promise<void>;
     toArray(): Promise<AccessLogRow[]>;
+    whereTimestampBetween(fromMs: number, toMs: number): Promise<AccessLogRow[]>;
     appendDecision(payload: {
       userId: string | null;
       similarity01: number;
@@ -84,6 +87,13 @@ function makeUsersRepo(db: GatekeeperDB, ensureDbReady: EnsureDbReady) {
       await ensureDbReady();
       return db.users.delete(id);
     },
+    async deleteWithAnonymization(userId: string): Promise<void> {
+      await ensureDbReady();
+      await db.transaction('rw', db.users, db.accessLog, async () => {
+        await db.accessLog.where('userId').equals(userId).modify({ userId: null });
+        await db.users.delete(userId);
+      });
+    },
     async toArray(): Promise<User[]> {
       await ensureDbReady();
       return db.users.toArray();
@@ -108,6 +118,10 @@ function makeAccessLogRepo(db: GatekeeperDB, ensureDbReady: EnsureDbReady) {
     async toArray(): Promise<AccessLogRow[]> {
       await ensureDbReady();
       return db.accessLog.toArray();
+    },
+    async whereTimestampBetween(fromMs: number, toMs: number): Promise<AccessLogRow[]> {
+      await ensureDbReady();
+      return db.accessLog.where('timestamp').between(fromMs, toMs, true, true).toArray();
     },
     async appendDecision(payload: {
       userId: string | null;

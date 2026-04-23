@@ -39,6 +39,7 @@ Use this when mapping prose in older notes to the **current** tree (supersedes p
 | Shared row / match types | `src/domain/types.ts`. |
 | Vite multi-page inputs, dev pretty URLs, Netlify redirect TOML canonical string | `multi-page.ts`; keep `netlify.toml` aligned with `pnpm sync:netlify` or `pnpm verify:netlify` (see `README.md`). |
 | Thin admin/log HTML shells | `src/ui/admin-view.ts` re-exports `src/app/mount-admin-page.ts`; `src/ui/log-view.ts` → `src/app/mount-log-page.ts`; `src/ui/page-shell.ts`. |
+| Admin roster + bulk import UI | `src/app/mount-admin-enrollment.ts` + `src/app/admin-enrollment-dom.ts` + `src/app/admin-user-roster.ts` + `src/app/bulk-import.ts` (parser in `bulk-import-parse.ts`). |
 
 **Authoritative layout:** `docs/PRD.md` §2.7 repository tree + `README.md` **Source layout (current)**.
 

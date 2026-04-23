@@ -58,10 +58,7 @@ function readCameraToggleLabels(btn: HTMLButtonElement): { start: string; stop: 
   };
 }
 
-function syncCameraToggleUi(
-  btn: HTMLButtonElement,
-  mode: 'idle' | 'loading' | 'running',
-): void {
+function syncCameraToggleUi(btn: HTMLButtonElement, mode: 'idle' | 'loading' | 'running'): void {
   const { start, stop } = readCameraToggleLabels(btn);
   if (mode === 'running') {
     btn.textContent = stop;
@@ -116,8 +113,7 @@ function wireCameraControls(
             : undefined,
         );
         const appendAccessLog: AppendAccessLogFn | undefined =
-          deps.appendAccessLog ??
-          ((p) => deps.persistence!.accessLogRepo.appendDecision(p));
+          deps.appendAccessLog ?? ((p) => deps.persistence!.accessLogRepo.appendDecision(p));
         attachDeps = { ...deps, evaluateDecision, appendAccessLog };
       }
 

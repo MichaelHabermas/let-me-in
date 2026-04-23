@@ -1,5 +1,19 @@
 import type { GateRuntime } from './runtime-settings';
 
+export type BaseGatePreviewElements = {
+  previewWrap: HTMLElement;
+  video: HTMLVideoElement;
+  canvas: HTMLCanvasElement;
+  overlayCanvas: HTMLCanvasElement;
+};
+
+export interface BuiltGateDom extends BaseGatePreviewElements {
+  main: HTMLElement;
+  cameraToggleBtn: HTMLButtonElement;
+  statusEl: HTMLElement;
+  decisionEl: HTMLElement;
+}
+
 export function createGateToolbar(rt: GateRuntime): {
   toolbar: HTMLElement;
   cameraToggleBtn: HTMLButtonElement;
@@ -25,12 +39,7 @@ export function createGateToolbar(rt: GateRuntime): {
   return { toolbar, cameraToggleBtn };
 }
 
-export function createGatePreview(rt: GateRuntime): {
-  previewWrap: HTMLElement;
-  video: HTMLVideoElement;
-  canvas: HTMLCanvasElement;
-  overlayCanvas: HTMLCanvasElement;
-} {
+export function createGatePreview(rt: GateRuntime): BaseGatePreviewElements {
   const previewWrap = document.createElement('div');
   previewWrap.className = 'gate-preview';
   previewWrap.style.setProperty('--gate-preview-width', String(rt.previewCanvasWidth));
@@ -61,17 +70,6 @@ export function createGatePreview(rt: GateRuntime): {
   previewWrap.appendChild(canvas);
   previewWrap.appendChild(overlayCanvas);
   return { previewWrap, video, canvas, overlayCanvas };
-}
-
-export interface BuiltGateDom {
-  main: HTMLElement;
-  cameraToggleBtn: HTMLButtonElement;
-  statusEl: HTMLElement;
-  previewWrap: HTMLElement;
-  video: HTMLVideoElement;
-  canvas: HTMLCanvasElement;
-  overlayCanvas: HTMLCanvasElement;
-  decisionEl: HTMLElement;
 }
 
 export function buildGateDom(rt: GateRuntime): BuiltGateDom {

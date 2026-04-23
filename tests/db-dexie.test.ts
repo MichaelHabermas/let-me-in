@@ -87,6 +87,79 @@ describe('Dexie schema v1', () => {
 });
 
 describe('createDexiePersistence', () => {
+  it('deleteWithAnonymization nulls accessLog userId then deletes user', async () => {
+    const dbName = `gatekeeper-anon-${crypto.randomUUID()}`;
+    const p = createDexiePersistence(dbName);
+    try {
+      await p.initDatabase(defaultTestSeed);
+      const uid = 'user-to-delete';
+      await p.usersRepo.put({
+        id: uid,
+        name: 'X',
+        role: 'r',
+        referenceImageBlob: new Blob(),
+        embedding: new Float32Array(8),
+        createdAt: 1,
+      });
+      await p.accessLogRepo.appendDecision({
+        userId: uid,
+        similarity01: 0.9,
+        decision: 'GRANTED',
+        capturedFrameBlob: new Blob(['a']),
+        timestamp: 10_000,
+      });
+      await p.accessLogRepo.appendDecision({
+        userId: 'other',
+        similarity01: 0.5,
+        decision: 'DENIED',
+        capturedFrameBlob: new Blob(['b']),
+        timestamp: 10_001,
+      });
+      const before = await p.accessLogRepo.toArray();
+      expect(before.length).toBe(2);
+      await p.usersRepo.deleteWithAnonymization(uid);
+      expect(await p.usersRepo.get(uid)).toBeUndefined();
+      const after = await p.accessLogRepo.toArray();
+      expect(after.length).toBe(2);
+      const row0 = after.find((r) => r.timestamp === 10_000);
+      expect(row0?.userId).toBeNull();
+      const row1 = after.find((r) => r.timestamp === 10_001);
+      expect(row1?.userId).toBe('other');
+    } finally {
+      await p.resetIndexedDbClientForTests();
+      await Dexie.delete(dbName);
+    }
+  });
+
+  it('whereTimestampBetween returns inclusive range', async () => {
+    const dbName = `gatekeeper-range-${crypto.randomUUID()}`;
+    const p = createDexiePersistence(dbName);
+    try {
+      await p.initDatabase(defaultTestSeed);
+      await p.accessLogRepo.put({
+        timestamp: 100,
+        userId: null,
+        similarity01: 0.1,
+        decision: 'DENIED',
+        capturedFrameBlob: new Blob(),
+      });
+      await p.accessLogRepo.put({
+        timestamp: 200,
+        userId: null,
+        similarity01: 0.2,
+        decision: 'DENIED',
+        capturedFrameBlob: new Blob(),
+      });
+      const mid = await p.accessLogRepo.whereTimestampBetween(150, 250);
+      expect(mid.map((r) => r.timestamp)).toEqual([200]);
+      const all = await p.accessLogRepo.whereTimestampBetween(100, 200);
+      expect(all.length).toBe(2);
+    } finally {
+      await p.resetIndexedDbClientForTests();
+      await Dexie.delete(dbName);
+    }
+  });
+
   it('isolates data by database name', async () => {
     const dbName = `gatekeeper-isolated-${crypto.randomUUID()}`;
     const p = createDexiePersistence(dbName);

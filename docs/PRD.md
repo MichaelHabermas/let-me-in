@@ -1433,7 +1433,7 @@ stateDiagram-v2
 
 ---
 
-### Epic E8: Admin CRUD, Bulk Import, Full Log Viewer — [ ]
+### Epic E8: Admin CRUD, Bulk Import, Full Log Viewer — [x]
 
 **Goal:** Complete the admin surface: full user CRUD (including delete with log anonymization), bulk JSON import, and a sortable/filterable log viewer.
 
@@ -1460,11 +1460,11 @@ stateDiagram-v2
 - DRY: filter predicates reused between sort/filter.
 - Module boundaries respected.
 
-#### User Story E8.S1: As an admin, I want to edit and delete enrolled users. — [ ]
+#### User Story E8.S1: As an admin, I want to edit and delete enrolled users. — [x]
 
-##### Feature E8.S1.F1: User list + edit + delete — [ ]
+##### Feature E8.S1.F1: User list + edit + delete — [x]
 
-###### Task E8.S1.F1.T1: User list table on `/admin` — [ ]
+###### Task E8.S1.F1.T1: User list table on `/admin` — [x]
 
 - Files: `src/ui/admin-view.ts`
 - Preconditions: E6 complete
@@ -1473,7 +1473,7 @@ stateDiagram-v2
 - Acceptance test: with 3 seeded users, table shows 3 rows.
 - SOLID/DRY note: one table component.
 
-###### Task E8.S1.F1.T2: Edit flow (name, role, optional re-capture) — [ ]
+###### Task E8.S1.F1.T2: Edit flow (name, role, optional re-capture) — [x]
 
 - Files: `src/ui/admin-view.ts`, `src/app/enroll.ts`
 - Preconditions: E8.S1.F1.T1 done
@@ -1483,7 +1483,7 @@ stateDiagram-v2
 - Acceptance test: edit name → list updates; gate still recognizes.
 - SOLID/DRY note: reuses enrollment FSM (DRY).
 
-###### Task E8.S1.F1.T3: Delete with log anonymization — [ ]
+###### Task E8.S1.F1.T3: Delete with log anonymization — [x]
 
 - Files: `src/infra/db-dexie.ts`
 - Preconditions: E8.S1.F1.T2 done
@@ -1492,11 +1492,11 @@ stateDiagram-v2
 - Acceptance test: delete user → `usersRepo.get(id)` returns undefined; `accessLog` rows for that id have `userId === null`; row count unchanged.
 - SOLID/DRY note: atomic transaction enforces consistency (SRP of repo).
 
-#### User Story E8.S2: As an admin, I want to import many users from a JSON file so we can onboard quickly. — [ ]
+#### User Story E8.S2: As an admin, I want to import many users from a JSON file so we can onboard quickly. — [x]
 
-##### Feature E8.S2.F1: Bulk JSON import — [ ]
+##### Feature E8.S2.F1: Bulk JSON import — [x]
 
-###### Task E8.S2.F1.T1: Define import schema — [ ]
+###### Task E8.S2.F1.T1: Define import schema — [x]
 
 - Files: `docs/IMPORT_SCHEMA.md`, `src/app/bulk-import.ts`
 - Preconditions: E6 complete
@@ -1506,7 +1506,7 @@ stateDiagram-v2
 - Acceptance test: JSON schema validator passes/fails known fixtures.
 - SOLID/DRY note: contract documented once.
 
-###### Task E8.S2.F1.T2: Implement parser + duplicate detection — [ ]
+###### Task E8.S2.F1.T2: Implement parser + duplicate detection — [x]
 
 - Files: `src/app/bulk-import.ts`
 - Preconditions: E8.S2.F1.T1 done
@@ -1516,7 +1516,7 @@ stateDiagram-v2
 - Acceptance test: fixture with 3 valid + 2 invalid rows returns `{valid: 3, errors: 2, duplicates: 1}`.
 - SOLID/DRY note: pure function.
 
-###### Task E8.S2.F1.T3: Execute import — [ ]
+###### Task E8.S2.F1.T3: Execute import — [x]
 
 - Files: `src/app/bulk-import.ts`, `src/ui/admin-view.ts`
 - Preconditions: E8.S2.F1.T2 done
@@ -1527,11 +1527,11 @@ stateDiagram-v2
 - Acceptance test: 10-row fixture imports in <30 s; all 10 rows in DB.
 - SOLID/DRY note: reuses pipeline embed (DRY).
 
-#### User Story E8.S3: As an admin, I want to search and sort the entry log. — [ ]
+#### User Story E8.S3: As an admin, I want to search and sort the entry log. — [x]
 
-##### Feature E8.S3.F1: Sortable/filterable log viewer — [ ]
+##### Feature E8.S3.F1: Sortable/filterable log viewer — [x]
 
-###### Task E8.S3.F1.T1: Filter by date range — [ ]
+###### Task E8.S3.F1.T1: Filter by date range — [x]
 
 - Files: `src/ui/log-view.ts`
 - Preconditions: E7 complete
@@ -1540,7 +1540,7 @@ stateDiagram-v2
 - Acceptance test: filter narrows results.
 - SOLID/DRY note: one filter helper.
 
-###### Task E8.S3.F1.T2: Filter by user and decision — [ ]
+###### Task E8.S3.F1.T2: Filter by user and decision — [x]
 
 - Files: `src/ui/log-view.ts`
 - Preconditions: E8.S3.F1.T1 done
@@ -1549,7 +1549,7 @@ stateDiagram-v2
 - Acceptance test: each filter independently narrows.
 - SOLID/DRY note: filter predicates combine via AND.
 
-###### Task E8.S3.F1.T3: Sortable columns — [ ]
+###### Task E8.S3.F1.T3: Sortable columns — [x]
 
 - Files: `src/ui/log-view.ts`
 - Preconditions: E8.S3.F1.T2 done
@@ -1989,11 +1989,11 @@ stateDiagram-v2
 - [x] E5 Matching Engine (5/5 tasks)
 - [x] E6 Minimal Enrollment — MVP gate (7/7 tasks)
 - [x] E7 Decision UI & Entry Log (8/8 tasks)
-- [ ] E8 Admin CRUD, Bulk Import, Log Viewer (0/9 tasks)
+- [x] E8 Admin CRUD, Bulk Import, Log Viewer (9/9 tasks)
 - [ ] E9 Stretch Features (0/3 tasks)
 - [ ] E10 Validation & Submission (0/15 tasks)
 
-**Total: 58/85 tasks complete.**
+**Total: 67/85 tasks complete.**
 
 **MVP hard-gate path (24 h):** E1 → E2 → E3 → E4 → E5 → E6. 49 tasks.
 

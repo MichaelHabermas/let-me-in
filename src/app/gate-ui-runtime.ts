@@ -13,6 +13,21 @@ export type AdminUiStrings = {
   loginSubmit: string;
   loginError: string;
   logout: string;
+  rosterTitle: string;
+  rosterColPhoto: string;
+  rosterColName: string;
+  rosterColRole: string;
+  rosterColCreated: string;
+  rosterColActions: string;
+  rosterEdit: string;
+  rosterDelete: string;
+  rosterThumbnailAlt: string;
+  rosterBulkImport: string;
+  rosterImportPick: string;
+  rosterImportConfirmDuplicates: string;
+  rosterImportProgress: string;
+  rosterImportDone: string;
+  rosterDeleteConfirm: string;
   enrollTitle: string;
   enrollStartCamera: string;
   enrollCapture: string;
@@ -80,6 +95,21 @@ function adminStringsFromConfig(cfg: GateUiConfigSlice): AdminUiStrings {
     loginSubmit: s.adminLoginSubmit,
     loginError: s.adminLoginError,
     logout: s.adminLogout,
+    rosterTitle: s.rosterTitle,
+    rosterColPhoto: s.rosterColPhoto,
+    rosterColName: s.rosterColName,
+    rosterColRole: s.rosterColRole,
+    rosterColCreated: s.rosterColCreated,
+    rosterColActions: s.rosterColActions,
+    rosterEdit: s.rosterEdit,
+    rosterDelete: s.rosterDelete,
+    rosterThumbnailAlt: s.rosterThumbnailAlt,
+    rosterBulkImport: s.rosterBulkImport,
+    rosterImportPick: s.rosterImportPick,
+    rosterImportConfirmDuplicates: s.rosterImportConfirmDuplicates,
+    rosterImportProgress: s.rosterImportProgress,
+    rosterImportDone: s.rosterImportDone,
+    rosterDeleteConfirm: s.rosterDeleteConfirm,
     enrollTitle: s.enrollTitle,
     enrollStartCamera: s.enrollStartCamera,
     enrollCapture: s.enrollCapture,
@@ -92,6 +122,7 @@ function adminStringsFromConfig(cfg: GateUiConfigSlice): AdminUiStrings {
   };
 }
 
+/* eslint-disable max-lines-per-function -- single runtime slice factory */
 export function createGateUiRuntimeSlice(
   cfg: GateUiConfigSlice,
   isDev: boolean,
@@ -171,3 +202,4 @@ export function createGateUiRuntimeSlice(
     },
   };
 }
+/* eslint-enable max-lines-per-function */

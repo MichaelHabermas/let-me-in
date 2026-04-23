@@ -64,16 +64,8 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
   document.title = rt.gatePageTitle;
   host.innerHTML = '';
 
-  const {
-    main,
-    cameraToggleBtn,
-    statusEl,
-    previewWrap,
-    video,
-    canvas,
-    overlayCanvas,
-    decisionEl,
-  } = buildGateDom(rt);
+  const { main, cameraToggleBtn, statusEl, previewWrap, video, canvas, overlayCanvas, decisionEl } =
+    buildGateDom(rt);
   host.appendChild(main);
 
   const persistence = sessionDepsExtras?.persistence;

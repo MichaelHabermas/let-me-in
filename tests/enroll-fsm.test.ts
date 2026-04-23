@@ -64,4 +64,24 @@ describe('transitionEnrollState', () => {
     ]);
     expect(s).toBe('idle');
   });
+
+  it('begin_edit_from_user reaches editing from idle', () => {
+    const s = walk([{ type: 'begin_edit_from_user' }]);
+    expect(s).toBe('editing');
+  });
+
+  it('allows start_camera from editing', () => {
+    const s = walk([{ type: 'begin_edit_from_user' }, { type: 'start_camera' }]);
+    expect(s).toBe('camera');
+  });
+
+  it('begin_edit_from_user can save then reset to idle', () => {
+    const s = walk([
+      { type: 'begin_edit_from_user' },
+      { type: 'save' },
+      { type: 'save_ok' },
+      { type: 'reset_after_saved' },
+    ]);
+    expect(s).toBe('idle');
+  });
 });

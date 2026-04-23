@@ -14,6 +14,8 @@ function createYoloMainThreadDetector(
   const modelUrl = options?.modelUrl ?? settings.detectorModelUrl;
   const modelSource = options?.modelBytes ?? modelUrl;
   let bundle: OrtSessionBundle | null = null;
+  /** Same non-reentrancy guarantee as the worker-backed detector. */
+  let inferChain: Promise<unknown> = Promise.resolve();
 
   return {
     async load() {
@@ -29,14 +31,22 @@ function createYoloMainThreadDetector(
       if (!bundle) {
         throw new Error('detector.load() must be called before infer()');
       }
-      return runYoloDetectorInference(bundle.session, imageData);
+      const session = bundle.session;
+      const job = inferChain.then(() => runYoloDetectorInference(session, imageData));
+      inferChain = job.then(
+        () => {},
+        () => {},
+      );
+      return job;
     },
 
     async dispose() {
+      await inferChain.catch(() => {});
       if (bundle) {
         await bundle.session.release();
         bundle = null;
       }
+      inferChain = Promise.resolve();
     },
   };
 }

@@ -11,6 +11,7 @@ import {
 import type { Detection } from '../infra/detector-core';
 import type { FaceEmbedder } from '../infra/embedder-ort';
 import type { DexiePersistence } from '../infra/persistence';
+import type { User } from '../domain/types';
 
 export type EnrollmentControllerOptions = {
   camera: Camera;
@@ -32,6 +33,9 @@ export type EnrollmentControllerOptions = {
 
 export type EnrollmentController = {
   getState(): EnrollState;
+  /** Load an existing user for name/role edits and optional re-capture (idle only). */
+  beginEditFromUser(user: User): void;
+  isCameraRunning(): boolean;
   startSession(): Promise<void>;
   stopSession(): void;
   captureFace(): Promise<boolean>;
@@ -70,6 +74,7 @@ export function createEnrollmentController(
   let inferenceBusy = false;
   let pendingEmbedding: Float32Array | null = null;
   let pendingReferenceBlob: Blob | null = null;
+  let editingUserId: string | null = null;
   let unsubFrame: (() => void) | null = null;
 
   function emit() {
@@ -105,8 +110,20 @@ export function createEnrollmentController(
       return state;
     },
 
-    async startSession() {
+    beginEditFromUser(user: User) {
       if (state !== 'idle') return;
+      pendingEmbedding = new Float32Array(user.embedding);
+      pendingReferenceBlob = user.referenceImageBlob;
+      editingUserId = user.id;
+      apply({ type: 'begin_edit_from_user' });
+    },
+
+    isCameraRunning() {
+      return opts.camera.isRunning();
+    },
+
+    async startSession() {
+      if (state !== 'idle' && state !== 'editing') return;
       apply({ type: 'start_camera' });
       try {
         await Promise.all([opts.detector.load(), opts.embedder.load()]);
@@ -120,6 +137,7 @@ export function createEnrollmentController(
         console.error('[enrollment] start failed', e);
         pendingEmbedding = null;
         pendingReferenceBlob = null;
+        editingUserId = null;
         unsubFrame?.();
         unsubFrame = null;
         opts.camera.stop();
@@ -137,6 +155,7 @@ export function createEnrollmentController(
       opts.statusEl.textContent = '';
       pendingEmbedding = null;
       pendingReferenceBlob = null;
+      editingUserId = null;
       setState('idle');
     },
 
@@ -158,6 +177,9 @@ export function createEnrollmentController(
     },
 
     retake() {
+      if (state === 'editing' && !opts.camera.isRunning()) {
+        return;
+      }
       if (state !== 'captured' && state !== 'editing') return;
       pendingEmbedding = null;
       pendingReferenceBlob = null;
@@ -169,17 +191,24 @@ export function createEnrollmentController(
       if (state !== 'editing' || !pendingEmbedding || !pendingReferenceBlob) return;
       apply({ type: 'save' });
       try {
+        const existingId = editingUserId ?? undefined;
         await saveEnrollmentUser(
           opts.persistence,
           name,
           role,
           pendingEmbedding,
           pendingReferenceBlob,
+          existingId ? { existingUserId: existingId } : undefined,
         );
         apply({ type: 'save_ok' });
         pendingEmbedding = null;
         pendingReferenceBlob = null;
-        apply({ type: 'continue_enrolling' });
+        editingUserId = null;
+        if (opts.camera.isRunning()) {
+          apply({ type: 'continue_enrolling' });
+        } else {
+          apply({ type: 'reset_after_saved' });
+        }
       } catch (e) {
         console.error('[enrollment] save', e);
         apply({ type: 'save_err' });
