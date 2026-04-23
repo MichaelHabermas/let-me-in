@@ -1,9 +1,5 @@
 import type { Camera } from './camera';
-import {
-  drawDetections,
-  embedFace,
-  handleDetectionCardinality,
-} from './detection-pipeline-internals';
+import { drawDetections, embedFace, handleDetectionCardinality } from './enroll-detection-bridge';
 import { imageDataToJpegBlob } from './enroll-image';
 import { persistEnrolledUser } from './enroll-save';
 import { squareCropWithMargin, type Bbox } from './crop';

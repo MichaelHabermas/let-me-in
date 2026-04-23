@@ -1,12 +1,13 @@
 /** @vitest-environment happy-dom */
 
 import Dexie from 'dexie';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAdminAuth } from '../src/app/auth';
 import { mountAdminPage } from '../src/app/mount-admin-page';
 import { createDexiePersistence } from '../src/infra/persistence';
 import { createTestGateRuntime } from './support/create-test-gate-runtime';
+import { stubCanvas2dContext } from './support/stub-canvas-2d-context';
 
 function memoryStorage(): Storage {
   const m = new Map<string, string>();
@@ -38,9 +39,11 @@ describe('mountAdminPage', () => {
   beforeEach(async () => {
     await Dexie.delete(testDbName);
     document.body.innerHTML = '<div id="app"></div>';
+    stubCanvas2dContext();
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     await Dexie.delete(testDbName);
     document.body.innerHTML = '';
   });

@@ -10,6 +10,17 @@ import type { FaceEmbedder } from '../infra/embedder-ort';
 
 const E2E_EMBEDDING_UNIT = 1 / Math.sqrt(512);
 
+function greyImageData(frameWidth: number, frameHeight: number): ImageData {
+  const data = new Uint8ClampedArray(frameWidth * frameHeight * 4);
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = 120;
+    data[i + 1] = 120;
+    data[i + 2] = 120;
+    data[i + 3] = 255;
+  }
+  return new ImageData(data, frameWidth, frameHeight);
+}
+
 export type E2eEnrollmentDetector = {
   load(): Promise<void>;
   infer(imageData: ImageData): Promise<Detection[]>;
@@ -34,7 +45,8 @@ export function createE2eEnrollmentDetector(): E2eEnrollmentDetector {
 export function createE2eEnrollmentEmbedder(): FaceEmbedder {
   return {
     async load() {},
-    async infer(_chw: Float32Array) {
+    async infer(_: Float32Array) {
+      void _;
       const out = new Float32Array(512);
       out.fill(E2E_EMBEDDING_UNIT);
       return out;
@@ -69,7 +81,8 @@ export function createE2eEnrollmentCamera(frameWidth: number, frameHeight: numbe
         frameListeners.delete(cb);
       };
     },
-    onError(_cb: ErrorCallback): Unsubscribe {
+    onError(_: ErrorCallback): Unsubscribe {
+      void _;
       return () => {};
     },
     async start(): Promise<void> {
@@ -85,17 +98,8 @@ export function createE2eEnrollmentCamera(frameWidth: number, frameHeight: numbe
       }
     },
     getFrame(): ImageData {
-      if (!running) {
-        throw makeCameraError('camera-stopped', 'Camera is stopped.', undefined);
-      }
-      const data = new Uint8ClampedArray(frameWidth * frameHeight * 4);
-      for (let i = 0; i < data.length; i += 4) {
-        data[i] = 120;
-        data[i + 1] = 120;
-        data[i + 2] = 120;
-        data[i + 3] = 255;
-      }
-      return new ImageData(data, frameWidth, frameHeight);
+      if (!running) throw makeCameraError('camera-stopped', 'Camera is stopped.', undefined);
+      return greyImageData(frameWidth, frameHeight);
     },
   };
 }

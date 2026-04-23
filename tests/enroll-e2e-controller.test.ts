@@ -4,6 +4,7 @@ import Dexie from 'dexie';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createEnrollmentController } from '../src/app/enroll';
+import { stubCanvas2dContext } from './support/stub-canvas-2d-context';
 import {
   createE2eEnrollmentCamera,
   createE2eEnrollmentDetector,
@@ -19,39 +20,10 @@ const seed: DatabaseSeedSettings = {
 
 const dbName = 'enroll-e2e-controller-test';
 
-function stubCanvas2d(): void {
-  const noop = (): void => {};
-  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(function (
-    this: HTMLCanvasElement,
-    type: string,
-  ) {
-    if (type !== '2d') return null;
-    const w = this.width || 640;
-    const h = this.height || 480;
-    return {
-      drawImage: noop,
-      clearRect: noop,
-      putImageData: noop,
-      save: noop,
-      restore: noop,
-      strokeRect: noop,
-      fillRect: noop,
-      fillText: noop,
-      strokeStyle: '',
-      lineWidth: 2,
-      font: '14px system-ui',
-      fillStyle: '#000',
-      measureText: () => ({ width: 40 } as TextMetrics),
-      getImageData: (_sx: number, _sy: number, sw: number, sh: number) =>
-        new ImageData(new Uint8ClampedArray(sw * sh * 4).fill(128), sw, sh),
-    } as unknown as CanvasRenderingContext2D;
-  });
-}
-
 describe('createEnrollmentController with E2E doubles', () => {
   beforeEach(async () => {
     await Dexie.delete(dbName);
-    stubCanvas2d();
+    stubCanvas2dContext();
   });
 
   afterEach(async () => {
@@ -99,7 +71,7 @@ describe('createEnrollmentController with E2E doubles', () => {
     expect(ctrl.getState()).toBe('editing');
 
     await ctrl.saveUser('E2E User', 'Role');
-    expect(ctrl.getState()).toBe('idle');
+    expect(ctrl.getState()).toBe('detecting');
 
     const users = await persistence.usersRepo.toArray();
     expect(users).toHaveLength(1);

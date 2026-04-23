@@ -14,14 +14,7 @@ export function buildGatePreviewSessionDeps(
 ): GatePreviewSessionDeps {
   return {
     ...factories,
-    getDefaultVideoConstraintsForCamera: () => rt.getDefaultVideoConstraintsForCamera(),
-    getCameraUserFacingMessage: (code) => rt.getCameraUserFacingMessage(code),
-    logEmbeddingTimings: rt.devLogEmbeddingTimings,
-    detectorLoadingMessage: rt.getDetectorLoadingMessage(),
-    detectorLoadFailedMessage: rt.getDetectorLoadFailedMessage(),
-    noFaceMessage: rt.getNoFaceMessage(),
-    multiFaceMessage: rt.getMultiFaceMessage(),
-    cooldownMs: rt.getDatabaseSeedSettings().cooldownMs,
+    ...rt.getGatePreviewSessionCoreDeps(),
     ...extras,
   };
 }

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-test.describe('admin enrollment (stub)', () => {
-  test('walks idle → saved with stub controller', async ({ page }) => {
+test.describe('admin enrollment (E2E doubles)', () => {
+  test('walks idle → saved with enrollment controller + doubles', async ({ page }) => {
     await page.goto('/admin');
     await page.getByTestId('admin-login-user').fill('e2e_admin');
     await page.getByTestId('admin-login-pass').fill('e2e_secret');

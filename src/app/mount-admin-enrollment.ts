@@ -56,6 +56,24 @@ function bindEnrollmentUi(
   });
 }
 
+function enrollmentControllerBase(
+  dom: AdminEnrollmentDom,
+  rt: GateRuntime,
+  persistence: DexiePersistence,
+  onStateChange: () => void,
+) {
+  return {
+    video: dom.video,
+    frameCanvas: dom.frameCanvas,
+    overlayCanvas: dom.overlayCanvas,
+    statusEl: dom.statusEl,
+    getNoFaceMessage: () => rt.getNoFaceMessage(),
+    getMultiFaceMessage: () => rt.getMultiFaceMessage(),
+    persistence,
+    onStateChange,
+  };
+}
+
 function wireEnrollmentController(
   dom: AdminEnrollmentDom,
   rt: GateRuntime,
@@ -73,38 +91,22 @@ function wireEnrollmentController(
     dom.roleInput.disabled = s !== 'editing';
   };
 
-  if (config.e2eStubEnrollment) {
-    ctrl = createEnrollmentController({
-      camera: createE2eEnrollmentCamera(dom.frameCanvas.width, dom.frameCanvas.height),
-      detector: createE2eEnrollmentDetector(),
-      embedder: createE2eEnrollmentEmbedder(),
-      video: dom.video,
-      frameCanvas: dom.frameCanvas,
-      overlayCanvas: dom.overlayCanvas,
-      statusEl: dom.statusEl,
-      getNoFaceMessage: () => rt.getNoFaceMessage(),
-      getMultiFaceMessage: () => rt.getMultiFaceMessage(),
-      persistence,
-      onStateChange: syncButtons,
-    });
-  } else {
-    const camera = createCamera(dom.video, dom.frameCanvas, {
-      defaultConstraints: rt.getDefaultVideoConstraintsForCamera(),
-    });
-    ctrl = createEnrollmentController({
-      camera,
-      detector: createYoloDetector(getDetectorRuntimeSettings()),
-      embedder: createFaceEmbedder(getEmbedderRuntimeSettings()),
-      video: dom.video,
-      frameCanvas: dom.frameCanvas,
-      overlayCanvas: dom.overlayCanvas,
-      statusEl: dom.statusEl,
-      getNoFaceMessage: () => rt.getNoFaceMessage(),
-      getMultiFaceMessage: () => rt.getMultiFaceMessage(),
-      persistence,
-      onStateChange: syncButtons,
-    });
-  }
+  const base = enrollmentControllerBase(dom, rt, persistence, syncButtons);
+  ctrl = config.e2eStubEnrollment
+    ? createEnrollmentController({
+        ...base,
+        camera: createE2eEnrollmentCamera(dom.frameCanvas.width, dom.frameCanvas.height),
+        detector: createE2eEnrollmentDetector(),
+        embedder: createE2eEnrollmentEmbedder(),
+      })
+    : createEnrollmentController({
+        ...base,
+        camera: createCamera(dom.video, dom.frameCanvas, {
+          defaultConstraints: rt.getDefaultVideoConstraintsForCamera(),
+        }),
+        detector: createYoloDetector(getDetectorRuntimeSettings()),
+        embedder: createFaceEmbedder(getEmbedderRuntimeSettings()),
+      });
 
   syncButtons();
   bindEnrollmentUi(dom, ctrl, rt, syncButtons);

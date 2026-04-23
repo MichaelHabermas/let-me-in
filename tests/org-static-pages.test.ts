@@ -20,6 +20,22 @@ function fakeRuntime(): GateRuntime {
       thresholds: { strong: 1, weak: 1, unknown: 1, margin: 1 },
       cooldownMs: 0,
     }),
+    getGatePreviewSessionCoreDeps() {
+      return {
+        getDefaultVideoConstraintsForCamera: () => ({
+          idealWidth: 1,
+          idealHeight: 1,
+          facingMode: 'user',
+        }),
+        getCameraUserFacingMessage: () => '',
+        logEmbeddingTimings: false,
+        detectorLoadingMessage: '',
+        detectorLoadFailedMessage: '',
+        noFaceMessage: 'No face',
+        multiFaceMessage: 'Multiple faces',
+        cooldownMs: 0,
+      };
+    },
     getDefaultVideoConstraintsForCamera: () => ({
       idealWidth: 1,
       idealHeight: 1,
