@@ -19,3 +19,80 @@ export function l2normalize(vec: Float32Array): Float32Array {
   }
   return vec;
 }
+
+/** Stable shape for matching against enrolled embeddings. */
+export type EnrolledEmbedding = {
+  userId: string;
+  embedding: Float32Array;
+};
+
+export type MatchOneResult = {
+  best: { userId: string; score: number };
+  runnerUp: { userId: string; score: number } | null;
+};
+
+/**
+ * Cosine similarity for equal-length vectors.
+ * Assumes vectors are already normalized in the calling pipeline.
+ */
+export function cosine(a: Float32Array, b: Float32Array): number {
+  if (a.length !== b.length) {
+    throw new Error(`cosine() length mismatch: ${a.length} !== ${b.length}`);
+  }
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < a.length; i++) {
+    const av = a[i]!;
+    const bv = b[i]!;
+    dot += av * bv;
+    normA += av * av;
+    normB += bv * bv;
+  }
+  const denom = Math.sqrt(normA) * Math.sqrt(normB);
+  if (denom < 1e-12) return 0;
+  return dot / denom;
+}
+
+/** Maps cosine [-1, 1] to [0, 1]. */
+export function similarity01(a: Float32Array, b: Float32Array): number {
+  const c = cosine(a, b);
+  const clamped = Math.max(-1, Math.min(1, c));
+  return (1 + clamped) / 2;
+}
+
+/** Brute-force 1:N matching with top-2 ranking. */
+export function matchOne(
+  live: Float32Array,
+  enrolled: readonly EnrolledEmbedding[],
+): MatchOneResult {
+  if (enrolled.length === 0) {
+    throw new Error('matchOne() requires at least one enrolled embedding');
+  }
+
+  let bestIdx = -1;
+  let bestScore = Number.NEGATIVE_INFINITY;
+  let runnerIdx = -1;
+  let runnerScore = Number.NEGATIVE_INFINITY;
+
+  for (let i = 0; i < enrolled.length; i++) {
+    const cur = enrolled[i]!;
+    const score = similarity01(live, cur.embedding);
+    if (score > bestScore) {
+      runnerIdx = bestIdx;
+      runnerScore = bestScore;
+      bestIdx = i;
+      bestScore = score;
+    } else if (score > runnerScore) {
+      runnerIdx = i;
+      runnerScore = score;
+    }
+  }
+
+  const best = enrolled[bestIdx]!;
+  const runner = runnerIdx >= 0 ? enrolled[runnerIdx]! : null;
+  return {
+    best: { userId: best.userId, score: bestScore },
+    runnerUp: runner ? { userId: runner.userId, score: runnerScore } : null,
+  };
+}

@@ -1,4 +1,5 @@
 import type { Camera } from './camera';
+import { createCooldown } from './cooldown';
 import { createDetectionPipeline } from './pipeline';
 import type { GatePreviewElements, GatePreviewSessionDeps } from './gate-session';
 
@@ -83,6 +84,7 @@ export function attachPipeline(ctx: {
   const octx = elements.overlayCanvas.getContext('2d');
   if (!octx) return;
   state.stopPipeline?.();
+  const cooldown = createCooldown(deps.cooldownMs, () => performance.now());
   state.stopPipeline = createDetectionPipeline({
     camera,
     detector: deps.yoloDetector,
@@ -91,5 +93,10 @@ export function attachPipeline(ctx: {
     overlayHeight: elements.overlayCanvas.height,
     faceEmbedder: deps.faceEmbedder,
     logEmbeddingTimings: deps.logEmbeddingTimings,
+    statusEl: elements.statusEl,
+    noFaceMessage: deps.noFaceMessage,
+    multiFaceMessage: deps.multiFaceMessage,
+    cooldown,
+    evaluateDecision: deps.evaluateDecision,
   });
 }

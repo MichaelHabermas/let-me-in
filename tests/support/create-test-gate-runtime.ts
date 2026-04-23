@@ -31,7 +31,7 @@ const testGateUiConfig: Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingT
 export function createTestGateRuntime(): GateRuntime {
   const ui = createGateUiRuntimeSlice(testGateUiConfig, false);
   const seedCfg = {
-    thresholds: { strong: 0.8, weak: 0.65, unknown: 0.6, margin: 0.05 },
+    thresholds: { strong: 0.85, weak: 0.65, unknown: 0.65, margin: 0.05 },
     cooldownMs: 3000,
   };
   return {

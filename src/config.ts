@@ -96,9 +96,9 @@ export const config: Config = {
     logoUrl: '',
   },
   thresholds: {
-    strong: 0.8,
+    strong: 0.85,
     weak: 0.65,
-    unknown: 0.6,
+    unknown: 0.65,
     margin: 0.05,
   },
   cooldownMs: 3000,

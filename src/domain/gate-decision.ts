@@ -13,6 +13,8 @@ export type GateDecisionInput = {
 
 export type GateAccessVerdict = {
   decision: Decision;
+  userId: string | null;
+  label: string;
   /** Stable machine-oriented tags for logs and replay. */
   reasons: readonly string[];
   bestScore: number;
@@ -40,7 +42,7 @@ function reasonsFor(
 ): readonly string[] {
   const score = match.best.score;
   const marginDelta = marginDeltaFor(match);
-  if (decision === 'DENIED') return ['below-unknown'];
+  if (decision === 'DENIED') return ['below-weak-band'];
   if (decision === 'GRANTED') return ['strong-and-margin'];
   return reasonsForUncertain(score, marginDelta, t);
 }
@@ -52,6 +54,8 @@ export function evaluateGateAccessMatch(input: GateDecisionInput): GateAccessVer
   const marginDelta = marginDeltaFor(match);
   return {
     decision,
+    userId: decision === 'DENIED' ? null : match.best.userId,
+    label: decision === 'DENIED' ? 'Unknown' : 'Matched user',
     reasons: reasonsFor(match, thresholds, decision),
     bestScore,
     marginDelta,

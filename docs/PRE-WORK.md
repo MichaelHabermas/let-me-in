@@ -139,7 +139,7 @@ Normalized checklist—**not** a full reprint of `SPECS.txt`.
 - **IndexedDB in production app:** **Dexie.js** wrapper.
 - **Matching geometry:** **Cosine** on **L2-normalized** embeddings.
 - **Displayed / thresholded score:** `similarity01 = (1 + cosine) / 2` ∈ [0,1] so band constants match the adopted evaluation table.
-- **Bands:** **strong** `similarity01 ≥ 0.80`; **weak** `[0.65, 0.80)`; **reject** `similarity01 < 0.65`; align **Unknown** narrative with spec row **&lt; 0.60** (exact copy in `[OPEN]`).
+- **Bands:** **strong** `similarity01 ≥ 0.85`; **weak** `[0.65, 0.85)`; **reject** `similarity01 < 0.65`; **Unknown** label applies to reject-band decisions.
 - **Weak band:** **`UNCERTAIN` — not access** (no “GRANTED with warning”).
 - **Strong GRANTED:** requires **margin `Δ ≥ 0.05`** vs runner-up **when** a runner-up exists (`secondScore` not null).
 - **Cooldown:** **3 seconds** between verification attempts (spec: enforce ≥ 3 s).

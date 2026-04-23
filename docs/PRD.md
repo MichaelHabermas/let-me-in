@@ -111,8 +111,8 @@ flowchart LR
     E --> N[L2 normalize]
     N --> M[Cosine match vs<br/>IndexedDB users]
     M --> P{Decision bands}
-    P -->|>=0.80 + margin| G[GRANTED<br/>green]
-    P -->|0.65-0.80| UN[UNCERTAIN<br/>yellow]
+    P -->|>=0.85 + margin| G[GRANTED<br/>green]
+    P -->|0.65-0.85| UN[UNCERTAIN<br/>yellow]
     P -->|<0.65| DN[DENIED<br/>red]
     G --> L[(accessLog<br/>IndexedDB)]
     UN --> L
@@ -271,10 +271,10 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 | ----------------------- | ------------------------------------------------------------------------------------------------------- |
 | **Embedding**           | 512-dimensional float vector produced by `w600k_mbf.onnx` representing a face.                          |
 | **similarity01**        | `(1 + cosine) / 2`, mapping cosine [-1,1] to [0,1] for UI display. Source: `docs/PRE-WORK.md` [LOCKED]. |
-| **Strong band**         | `similarity01 >= 0.80` AND margin `Δ >= 0.05` vs runner-up (if any) → GRANTED.                          |
-| **Weak band**           | `0.65 <= similarity01 < 0.80` OR margin `Δ < 0.05` → UNCERTAIN (no access).                             |
+| **Strong band**         | `similarity01 >= 0.85` AND margin `Δ >= 0.05` vs runner-up (if any) → GRANTED.                          |
+| **Weak band**           | `0.65 <= similarity01 < 0.85` OR margin `Δ < 0.05` → UNCERTAIN (no access).                             |
 | **Reject band**         | `similarity01 < 0.65` → DENIED ("Unknown").                                                             |
-| **Unknown threshold**   | `similarity01 < 0.60` → explicitly label decision as "Unknown".                                         |
+| **Unknown threshold**   | `similarity01 < 0.65` → explicitly label decision as "Unknown".                                         |
 | **Cooldown**            | 3-second lockout between decision attempts per `docs/SPECS.txt`.                                        |
 | **MVP hard gate**       | SPECS.txt 24-hour checklist. See §1.3.                                                                  |
 | **Canonical benchmark** | Measurement taken on real MacBook Pro + desktop Chrome (not Cursor-embedded Chromium).                  |
@@ -402,8 +402,8 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 - Preconditions: E1.S1.F1.T4 done
 - Steps:
   1. Declare and export `interface Config` with fields: `org: { name: string; logoUrl: string }`, `thresholds: { strong: number; weak: number; unknown: number; margin: number }`, `cooldownMs: number`, `modelUrls: { detector: string; embedder: string }`, `adminCredentialSource: 'env' | 'dev-default'`, `admin: { user: string; pass: string }`, `ortWasmBase: string`, `audioEnabled: boolean`, `ui: { strings: { unknown: string; noFace: string; multiFace: string } }`.
-  2. Export `const config: Config` with default values: `thresholds.strong=0.80`, `thresholds.weak=0.65`, `thresholds.unknown=0.60`, `thresholds.margin=0.05`, `cooldownMs=3000`, strings from §3 Glossary.
-- Acceptance test: `pnpm run typecheck` passes; `import { config } from './config.ts'` resolves; `config.thresholds.strong === 0.80`.
+  2. Export `const config: Config` with default values: `thresholds.strong=0.85`, `thresholds.weak=0.65`, `thresholds.unknown=0.65`, `thresholds.margin=0.05`, `cooldownMs=3000`, strings from §3 Glossary.
+- Acceptance test: `pnpm run typecheck` passes; `import { config } from './config.ts'` resolves; `config.thresholds.strong === 0.85`.
 - SOLID/DRY note: single source of truth (SRP + DRY); TypeScript enforces the shape.
 
 ###### Task E1.S1.F2.T2: Add env-override for admin credential — [x]
@@ -1017,9 +1017,9 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 **Acceptance criteria:**
 
 - given an embedding that matches a known user ≥0.85 with margin ≥0.05, then the decision is `GRANTED` with that user's id.
-- given a best match in [0.65, 0.80), then the decision is `UNCERTAIN`.
+- given a best match in [0.65, 0.85), then the decision is `UNCERTAIN`.
 - given all matches <0.65, then the decision is `DENIED` with `userId=null` and `label="Unknown"`.
-- given no face detected, then the decision is `DENIED` with reason `no-face`.
+- given no face detected, then the system remains in scanning state and renders "No face detected" status (no decision emitted).
 
 ##### Feature E5.S1.F1: Cosine similarity — [ ]
 
@@ -1052,7 +1052,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 - Steps:
   1. If `best.score >= thresholds.strong` AND (no runnerUp OR `best.score - runnerUp.score >= thresholds.margin`) → `{decision:"GRANTED", userId, score}`.
   2. Else if `best.score >= thresholds.weak` → `{decision:"UNCERTAIN", userId, score}`.
-  3. Else → `{decision:"DENIED", userId:null, score, label: best.score < thresholds.unknown ? "Unknown" : "Low confidence"}`.
+  3. Else → `{decision:"DENIED", userId:null, score, label:"Unknown"}`.
 - Acceptance test: table-driven tests cover all 5 paths.
 - SOLID/DRY note: single pure function maps inputs → decision.
 
@@ -1620,7 +1620,7 @@ stateDiagram-v2
 - Preconditions: E7 complete
 - Steps:
   1. Render a 100% wide bar with fill proportional to `similarity01`.
-  2. Color bands mirror decision bands (green ≥0.80, yellow 0.65–0.80, red <0.65).
+  2. Color bands mirror decision bands (green ≥0.85, yellow 0.65–0.85, red <0.65).
 - Acceptance test: component test renders expected width + color per score.
 - SOLID/DRY note: reads thresholds from `config` (DRY).
 

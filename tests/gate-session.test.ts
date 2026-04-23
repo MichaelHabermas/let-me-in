@@ -54,6 +54,9 @@ describe('wireGatePreviewSession', () => {
       getCameraUserFacingMessage: () => '',
       detectorLoadingMessage: testDetectorLoadingMessage,
       detectorLoadFailedMessage: testDetectorLoadFailedMessage,
+      noFaceMessage: 'No face',
+      multiFaceMessage: 'Multiple faces',
+      cooldownMs: 3000,
     });
 
     expect(createCamera).toHaveBeenCalledWith(els.video, els.canvas, { defaultConstraints });
@@ -94,6 +97,9 @@ describe('wireGatePreviewSession', () => {
         code === 'permission-denied' ? 'Camera blocked' : 'other',
       detectorLoadingMessage: testDetectorLoadingMessage,
       detectorLoadFailedMessage: testDetectorLoadFailedMessage,
+      noFaceMessage: 'No face',
+      multiFaceMessage: 'Multiple faces',
+      cooldownMs: 3000,
     });
 
     onErrorCb?.(makeCameraError('permission-denied', 'nope'));
@@ -138,6 +144,9 @@ describe('wireGatePreviewSession', () => {
         yoloDetector,
         detectorLoadingMessage: testDetectorLoadingMessage,
         detectorLoadFailedMessage: testDetectorLoadFailedMessage,
+        noFaceMessage: 'No face',
+        multiFaceMessage: 'Multiple faces',
+        cooldownMs: 3000,
       },
     );
 

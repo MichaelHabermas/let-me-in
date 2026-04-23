@@ -75,6 +75,9 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
       logEmbeddingTimings: rt.devLogEmbeddingTimings,
       detectorLoadingMessage: rt.getDetectorLoadingMessage(),
       detectorLoadFailedMessage: rt.getDetectorLoadFailedMessage(),
+      noFaceMessage: rt.getNoFaceMessage(),
+      multiFaceMessage: rt.getMultiFaceMessage(),
+      cooldownMs: rt.getDatabaseSeedSettings().cooldownMs,
     },
     { showFpsOverlay: rt.showFpsOverlay },
   );

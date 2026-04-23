@@ -10,7 +10,7 @@ import {
 } from '../src/infra/persistence';
 
 const defaultTestSeed = {
-  thresholds: { strong: 0.8, weak: 0.65, unknown: 0.6, margin: 0.05 },
+  thresholds: { strong: 0.85, weak: 0.65, unknown: 0.65, margin: 0.05 },
   cooldownMs: 3000,
 } satisfies DatabaseSeedSettings;
 
@@ -40,7 +40,7 @@ describe('Dexie schema v1', () => {
     const keys = rows.map((r) => r.key).sort();
     expect(keys).toEqual(['cooldownMs', 'thresholds']);
     const th = rows.find((r) => r.key === 'thresholds');
-    expect(th?.value).toMatchObject({ strong: 0.8, weak: 0.65, unknown: 0.6, margin: 0.05 });
+    expect(th?.value).toMatchObject({ strong: 0.85, weak: 0.65, unknown: 0.65, margin: 0.05 });
   });
 
   it('round-trips a user record', async () => {

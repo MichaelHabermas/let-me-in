@@ -29,6 +29,8 @@ function fakeRuntime(): GateRuntime {
     getCameraStopLabel: () => '',
     getDetectorLoadingMessage: () => '',
     getDetectorLoadFailedMessage: () => '',
+    getNoFaceMessage: () => 'No face',
+    getMultiFaceMessage: () => 'Multiple faces',
   };
 }
 

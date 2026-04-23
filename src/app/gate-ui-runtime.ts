@@ -23,6 +23,8 @@ export type GateUiRuntimeSlice = {
   getCameraStopLabel(): string;
   getDetectorLoadingMessage(): string;
   getDetectorLoadFailedMessage(): string;
+  getNoFaceMessage(): string;
+  getMultiFaceMessage(): string;
 };
 
 /**
@@ -80,6 +82,12 @@ export function createGateUiRuntimeSlice(
     },
     getDetectorLoadFailedMessage(): string {
       return cfg.ui.strings.detectorLoadFailed;
+    },
+    getNoFaceMessage(): string {
+      return cfg.ui.strings.noFace;
+    },
+    getMultiFaceMessage(): string {
+      return cfg.ui.strings.multiFace;
     },
   };
 }

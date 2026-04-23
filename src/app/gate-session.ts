@@ -1,4 +1,5 @@
 import type { CameraErrorCode } from '../infra/camera';
+import type { Decision } from '../domain/types';
 import type { YoloDetector } from '../infra/detector-core';
 import type { FaceEmbedder } from '../infra/embedder-ort';
 import type { Camera, CreateCameraOptions } from './camera';
@@ -23,6 +24,10 @@ export type GatePreviewSessionDeps = {
   logEmbeddingTimings?: boolean;
   detectorLoadingMessage: string;
   detectorLoadFailedMessage: string;
+  noFaceMessage: string;
+  multiFaceMessage: string;
+  cooldownMs: number;
+  evaluateDecision?: (input: { embedding: Float32Array; frame: ImageData }) => Decision | null;
 };
 
 export type GatePreviewElements = {
