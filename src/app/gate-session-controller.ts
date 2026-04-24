@@ -85,6 +85,7 @@ async function withLiveAccessDeps(
   };
 }
 
+/* eslint-disable max-lines-per-function -- consolidated lifecycle orchestration */
 export function wireCameraControls(
   camera: Camera,
   elements: GatePreviewElements,
@@ -158,3 +159,4 @@ export function wireCameraControls(
     state.stopPipeline = undefined;
   };
 }
+/* eslint-enable max-lines-per-function */

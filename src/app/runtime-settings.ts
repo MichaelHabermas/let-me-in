@@ -22,8 +22,8 @@ export type GatePreviewSessionCoreDeps = Pick<
 >;
 
 export type GateRuntime = GateUiRuntimeSlice & {
-  databaseSeedSettings?: DatabaseSeedSettings;
-  gatePreviewSessionCoreDeps?: GatePreviewSessionCoreDeps;
+  databaseSeedSettings: DatabaseSeedSettings;
+  gatePreviewSessionCoreDeps: GatePreviewSessionCoreDeps;
 };
 
 /** Single merge of UI slice + DB seed accessor — used by prod resolver and test harness. */

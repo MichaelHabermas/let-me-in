@@ -48,7 +48,7 @@ export async function bootstrapApp(options: BootstrapAppOptions): Promise<Bootst
   const getHttps = options.getHttpsStartupState ?? defaultGetHttpsStartupState;
   const renderHttpsBanner = options.renderHttpsBanner ?? defaultRenderHttpsBanner;
   const getDatabaseSeedSettings =
-    options.getDatabaseSeedSettings ?? (() => resolveGateRuntime().databaseSeedSettings!);
+    options.getDatabaseSeedSettings ?? (() => resolveGateRuntime().databaseSeedSettings);
 
   const https = getHttps();
   if (!https.ok) {
