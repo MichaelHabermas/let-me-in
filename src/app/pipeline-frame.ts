@@ -15,6 +15,7 @@ import {
   recordLastEmbedInferMs,
 } from './gatekeeper-metrics';
 import type { Decision } from '../domain/types';
+import type { GateAccessEvaluation } from './gate-access-evaluation';
 import type { EvaluateGateAccessFn } from './gate-access-evaluation';
 import { policyDecisionForCooldown } from './gate-access-evaluation';
 import type { Camera } from './camera';
@@ -45,6 +46,34 @@ export type FramePipelineOpts = {
   evaluateDecision?: EvaluateGateAccessFn;
   appendAccessLog?: AppendAccessLogFn;
 };
+
+async function evaluateAccessDecision(
+  opts: FramePipelineOpts,
+  emb: Float32Array,
+  frame: ImageData,
+): Promise<GateAccessEvaluation | null> {
+  if (!opts.evaluateDecision) return null;
+  const tEval0 = performance.now();
+  const raw = opts.evaluateDecision({ embedding: emb, frame });
+  const evaluation = await Promise.resolve(raw);
+  recordLastAccessEvaluationMs(performance.now() - tEval0);
+  return evaluation;
+}
+
+async function appendAccessLogIfNeeded(
+  opts: FramePipelineOpts,
+  evaluation: GateAccessEvaluation,
+): Promise<void> {
+  if (!opts.appendAccessLog) return;
+  const { policy } = evaluation;
+  if (policy.decision !== 'GRANTED' && policy.decision !== 'DENIED') return;
+  await opts.appendAccessLog({
+    userId: policy.decision === 'GRANTED' ? policy.userId : null,
+    similarity01: policy.score,
+    decision: policy.decision,
+    capturedFrameBlob: evaluation.capturedFrameBlob,
+  });
+}
 
 export async function runDetectionPipelineFrame(
   opts: FramePipelineOpts,
@@ -82,23 +111,9 @@ export async function runDetectionPipelineFrame(
   if (opts.logEmbeddingTimings) {
     console.info(`[gate] embed: ${ms.toFixed(1)} ms, len: ${emb.length}`);
   }
-  if (!opts.evaluateDecision) return;
-  const tEval0 = performance.now();
-  const raw = opts.evaluateDecision({ embedding: emb, frame });
-  const evaluation = await Promise.resolve(raw);
-  recordLastAccessEvaluationMs(performance.now() - tEval0);
+  const evaluation = await evaluateAccessDecision(opts, emb, frame);
   if (!evaluation) return;
   const cd = policyDecisionForCooldown(evaluation.policy);
   if (cd) opts.cooldown?.markAttempt(opts.getNowMs());
-  if (opts.appendAccessLog) {
-    const { policy } = evaluation;
-    if (policy.decision === 'GRANTED' || policy.decision === 'DENIED') {
-      await opts.appendAccessLog({
-        userId: policy.decision === 'GRANTED' ? policy.userId : null,
-        similarity01: policy.score,
-        decision: policy.decision,
-        capturedFrameBlob: evaluation.capturedFrameBlob,
-      });
-    }
-  }
+  await appendAccessLogIfNeeded(opts, evaluation);
 }

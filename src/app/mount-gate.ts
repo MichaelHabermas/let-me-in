@@ -49,38 +49,65 @@ export function createMountGateHostDeps(
   };
 }
 
-export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): () => void {
-  const {
-    rt,
-    createCamera: createCam,
-    wireGatePreviewSession: wireSession,
-    createYoloDetector: createDet = () => createYoloDetector(getDetectorRuntimeSettings()),
-    createFaceEmbedder: createEmb = () => createFaceEmbedder(getEmbedderRuntimeSettings()),
-    addBeforeUnload = true,
-    sessionDepsExtras,
-  } = deps;
+function maybeBootstrapConsent(
+  persistence: GatePreviewSessionDeps['persistence'] | undefined,
+  cameraToggleBtn: HTMLButtonElement,
+  main: HTMLElement,
+  rt: GateRuntime,
+): void {
+  if (!persistence) return;
+  cameraToggleBtn.disabled = true;
+  void bootstrapGateConsentIfNeeded({
+    persistence,
+    cameraToggleBtn,
+    shell: main,
+    strings: rt.getConsentModalStrings(),
+  });
+}
 
+function buildSessionDeps(
+  rt: GateRuntime,
+  createCam: MountGateHostDeps['createCamera'],
+  yoloDetector: YoloDetector,
+  faceEmbedder: FaceEmbedder,
+  sessionDepsExtras: MountGateHostDeps['sessionDepsExtras'],
+): GatePreviewSessionDeps {
+  return {
+    createCamera: createCam,
+    yoloDetector,
+    faceEmbedder,
+    ...(rt.gatePreviewSessionCoreDeps ?? rt.getGatePreviewSessionCoreDeps()),
+    accessUiStrings: rt.getGateAccessUiStrings(),
+    ...sessionDepsExtras,
+  };
+}
+
+export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): () => void {
+  const { rt } = deps;
+  const createCam = deps.createCamera;
+  const wireSession = deps.wireGatePreviewSession;
+  const createDet =
+    deps.createYoloDetector ?? (() => createYoloDetector(getDetectorRuntimeSettings()));
+  const createEmb =
+    deps.createFaceEmbedder ?? (() => createFaceEmbedder(getEmbedderRuntimeSettings()));
+  const addBeforeUnload = deps.addBeforeUnload ?? true;
+  const { sessionDepsExtras } = deps;
   document.title = rt.gatePageTitle;
   host.innerHTML = '';
 
   const { main, cameraToggleBtn, statusEl, previewWrap, video, canvas, overlayCanvas, decisionEl } =
     buildGateDom(rt);
   host.appendChild(main);
-
-  const persistence = sessionDepsExtras?.persistence;
-  if (persistence) {
-    cameraToggleBtn.disabled = true;
-    void bootstrapGateConsentIfNeeded({
-      persistence,
-      cameraToggleBtn,
-      shell: main,
-      strings: rt.getConsentModalStrings(),
-    });
-  }
-
+  maybeBootstrapConsent(sessionDepsExtras?.persistence, cameraToggleBtn, main, rt);
   const yoloDetector = createDet();
   const faceEmbedder = createEmb();
-
+  const sessionDeps = buildSessionDeps(
+    rt,
+    createCam,
+    yoloDetector,
+    faceEmbedder,
+    sessionDepsExtras,
+  );
   const teardown = wireSession(
     {
       cameraToggleBtn,
@@ -91,14 +118,7 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
       overlayCanvas,
       decisionEl,
     },
-    {
-      createCamera: createCam,
-      yoloDetector,
-      faceEmbedder,
-      ...(rt.gatePreviewSessionCoreDeps ?? rt.getGatePreviewSessionCoreDeps()),
-      accessUiStrings: rt.getGateAccessUiStrings(),
-      ...sessionDepsExtras,
-    },
+    sessionDeps,
     { showFpsOverlay: rt.showFpsOverlay },
   );
 

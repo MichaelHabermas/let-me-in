@@ -72,13 +72,7 @@ export function createGatePreview(rt: GateRuntime): BaseGatePreviewElements {
   return { previewWrap, video, canvas, overlayCanvas };
 }
 
-export function buildGateDom(rt: GateRuntime): BuiltGateDom {
-  const main = document.createElement('main');
-  main.className = 'page page--gate';
-
-  const shell = document.createElement('div');
-  shell.className = 'gate-shell';
-
+function createGateHeaderIntro(rt: GateRuntime): HTMLElement {
   const header = document.createElement('header');
   header.className = 'gate-header';
 
@@ -108,6 +102,17 @@ export function buildGateDom(rt: GateRuntime): BuiltGateDom {
   } else {
     intro.appendChild(h1);
   }
+  return intro;
+}
+
+function createGateHeader(rt: GateRuntime): {
+  header: HTMLElement;
+  cameraToggleBtn: HTMLButtonElement;
+  statusEl: HTMLElement;
+} {
+  const header = document.createElement('header');
+  header.className = 'gate-header';
+  const intro = createGateHeaderIntro(rt);
 
   const { toolbar, cameraToggleBtn } = createGateToolbar(rt);
   toolbar.classList.add('gate-header__actions');
@@ -117,9 +122,13 @@ export function buildGateDom(rt: GateRuntime): BuiltGateDom {
   statusEl.setAttribute('role', 'status');
   header.appendChild(intro);
   header.appendChild(toolbar);
+  return { header, cameraToggleBtn, statusEl };
+}
 
-  const { previewWrap, video, canvas, overlayCanvas } = createGatePreview(rt);
-
+function createGateLiveBar(statusEl: HTMLElement): {
+  liveBar: HTMLElement;
+  decisionEl: HTMLElement;
+} {
   const liveBar = document.createElement('section');
   liveBar.className = 'gate-livebar';
 
@@ -137,6 +146,18 @@ export function buildGateDom(rt: GateRuntime): BuiltGateDom {
   liveBar.appendChild(statusEl);
   liveBar.appendChild(decisionLabel);
   liveBar.appendChild(decision);
+  return { liveBar, decisionEl: decision };
+}
+
+export function buildGateDom(rt: GateRuntime): BuiltGateDom {
+  const main = document.createElement('main');
+  main.className = 'page page--gate';
+
+  const shell = document.createElement('div');
+  shell.className = 'gate-shell';
+  const { header, cameraToggleBtn, statusEl } = createGateHeader(rt);
+  const { previewWrap, video, canvas, overlayCanvas } = createGatePreview(rt);
+  const { liveBar, decisionEl } = createGateLiveBar(statusEl);
 
   shell.appendChild(header);
   shell.appendChild(previewWrap);
@@ -151,6 +172,6 @@ export function buildGateDom(rt: GateRuntime): BuiltGateDom {
     video,
     canvas,
     overlayCanvas,
-    decisionEl: decision,
+    decisionEl,
   };
 }
