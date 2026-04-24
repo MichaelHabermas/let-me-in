@@ -2,11 +2,13 @@
  * Similarity and embedding helpers for the matching engine (E5 will add brute-force cosine).
  */
 
+import { f32At } from '../infra/typed-index';
+
 /** In-place L2 normalization; returns the same buffer for chaining. */
 export function l2normalize(vec: Float32Array): Float32Array {
   let sumSq = 0;
   for (let i = 0; i < vec.length; i++) {
-    const v = vec[i];
+    const v = f32At(vec, i);
     sumSq += v * v;
   }
   const n = Math.sqrt(sumSq);
@@ -15,7 +17,7 @@ export function l2normalize(vec: Float32Array): Float32Array {
   }
   const inv = 1 / n;
   for (let i = 0; i < vec.length; i++) {
-    vec[i] *= inv;
+    vec[i] = f32At(vec, i) * inv;
   }
   return vec;
 }
@@ -43,8 +45,8 @@ export function cosine(a: Float32Array, b: Float32Array): number {
   let normA = 0;
   let normB = 0;
   for (let i = 0; i < a.length; i++) {
-    const av = a[i];
-    const bv = b[i];
+    const av = f32At(a, i);
+    const bv = f32At(b, i);
     dot += av * bv;
     normA += av * av;
     normB += bv * bv;

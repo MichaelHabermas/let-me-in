@@ -47,7 +47,9 @@ describe('createYoloWorkerDetector', () => {
     await det.load();
 
     expect(posted).toHaveLength(1);
-    expect(posted[0].msg).toMatchObject({
+    const firstPosted = posted[0];
+    if (firstPosted === undefined) throw new Error('expected init postMessage');
+    expect(firstPosted.msg).toMatchObject({
       type: YOLO_WORKER_MSG.init,
       ortWasmBase: 'https://cdn/wasm/',
       modelUrl: 'https://example/model.onnx',
@@ -104,7 +106,9 @@ describe('createYoloWorkerDetector', () => {
     const dets = await det.infer(imageData);
 
     expect(dets).toHaveLength(1);
-    expect(dets[0].classId).toBe(0);
+    const firstDet = dets[0];
+    if (firstDet === undefined) throw new Error('expected one detection');
+    expect(firstDet.classId).toBe(0);
     const inferPosted = posted.find(
       (x) => (x.msg as { type: string }).type === YOLO_WORKER_MSG.infer,
     );

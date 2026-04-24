@@ -2,6 +2,8 @@
  * Face crop utilities — canvas pixel space, origin top-left (matches detector bboxes).
  */
 
+import { u8At } from '../infra/typed-index';
+
 export type Bbox = [number, number, number, number];
 
 /**
@@ -39,9 +41,9 @@ export function squareCropWithMargin(imageData: ImageData, bbox: Bbox, marginPct
       const sy = Math.min(H - 1, Math.max(0, Math.floor(top + y)));
       const si = (sy * W + sx) * 4;
       const di = (y * iSide + x) * 4;
-      dst[di] = src[si];
-      dst[di + 1] = src[si + 1];
-      dst[di + 2] = src[si + 2];
+      dst[di] = u8At(src, si);
+      dst[di + 1] = u8At(src, si + 1);
+      dst[di + 2] = u8At(src, si + 2);
       dst[di + 3] = 255;
     }
   }
@@ -67,15 +69,19 @@ function sampleRgbBilinear(
   const i01 = (y1 * sw + x0) * 4;
   const i11 = (y1 * sw + x1) * 4;
   const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-  const r = lerp(lerp(data[i00], data[i10], fx), lerp(data[i01], data[i11], fx), fy);
+  const r = lerp(
+    lerp(u8At(data, i00), u8At(data, i10), fx),
+    lerp(u8At(data, i01), u8At(data, i11), fx),
+    fy,
+  );
   const g = lerp(
-    lerp(data[i00 + 1], data[i10 + 1], fx),
-    lerp(data[i01 + 1], data[i11 + 1], fx),
+    lerp(u8At(data, i00 + 1), u8At(data, i10 + 1), fx),
+    lerp(u8At(data, i01 + 1), u8At(data, i11 + 1), fx),
     fy,
   );
   const b = lerp(
-    lerp(data[i00 + 2], data[i10 + 2], fx),
-    lerp(data[i01 + 2], data[i11 + 2], fx),
+    lerp(u8At(data, i00 + 2), u8At(data, i10 + 2), fx),
+    lerp(u8At(data, i01 + 2), u8At(data, i11 + 2), fx),
     fy,
   );
   return [r, g, b];

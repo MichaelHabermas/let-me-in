@@ -135,7 +135,12 @@ describe('createDetectionPipeline', () => {
     expect(frameCb).toBeTypeOf('function');
     frameCb!(1);
     await vi.waitFor(() => expect(faceEmbedder.infer).toHaveBeenCalled());
-    const arg = vi.mocked(faceEmbedder.infer).mock.calls[0][0] as Float32Array;
+    const inferCalls = vi.mocked(faceEmbedder.infer).mock.calls;
+    const firstInferArgs = inferCalls[0];
+    if (firstInferArgs === undefined) throw new Error('expected embedder infer call');
+    const tensorArg = firstInferArgs[0];
+    if (tensorArg === undefined) throw new Error('expected tensor argument');
+    const arg = tensorArg as Float32Array;
     expect(arg.length).toBe(3 * 112 * 112);
   });
 
@@ -428,8 +433,13 @@ describe('createDetectionPipeline', () => {
 
     frameCb!(1);
     await vi.waitFor(() => expect(appendAccessLog).toHaveBeenCalledTimes(1));
-    expect(appendAccessLog.mock.calls[0][0].decision).toBe('DENIED');
-    expect(appendAccessLog.mock.calls[0][0].userId).toBeNull();
+    const logCalls = appendAccessLog.mock.calls;
+    const firstLog = logCalls[0];
+    if (firstLog === undefined) throw new Error('expected appendAccessLog call');
+    const payload = firstLog[0];
+    if (payload === undefined) throw new Error('expected log payload');
+    expect(payload.decision).toBe('DENIED');
+    expect(payload.userId).toBeNull();
   });
 
   it('does not call appendAccessLog for UNCERTAIN', async () => {

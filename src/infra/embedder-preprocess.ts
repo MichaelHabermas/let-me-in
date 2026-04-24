@@ -1,5 +1,7 @@
 /** InsightFace 112² RGB input — no ONNX / ORT imports. */
 
+import { u8At } from './typed-index';
+
 export const EMBEDDER_INPUT_SIZE = 112;
 
 /**
@@ -17,9 +19,9 @@ export function toEmbedderTensor(imageData: ImageData): Float32Array {
   for (let y = 0; y < EMBEDDER_INPUT_SIZE; y++) {
     for (let x = 0; x < EMBEDDER_INPUT_SIZE; x++) {
       const i = (y * EMBEDDER_INPUT_SIZE + x) * 4;
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
+      const r = u8At(data, i);
+      const g = u8At(data, i + 1);
+      const b = u8At(data, i + 2);
       const idx = y * EMBEDDER_INPUT_SIZE + x;
       out[idx] = (r - 127.5) / 127.5;
       out[plane + idx] = (g - 127.5) / 127.5;

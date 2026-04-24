@@ -34,7 +34,7 @@ export type OrtSessionBundle = {
 export type OrtModelSource = string | Uint8Array;
 
 export class OrtSessionError extends Error {
-  readonly name = 'OrtSessionError';
+  override readonly name = 'OrtSessionError';
 
   constructor(
     message: string,
