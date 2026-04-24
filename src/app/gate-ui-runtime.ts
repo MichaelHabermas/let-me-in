@@ -42,12 +42,19 @@ export type AdminUiStrings = {
   enrollNameRequired: string;
 };
 
+/** Log page copy — keep mounts off raw `config.ui.strings`. */
+export type LogPageStrings = {
+  unknown: string;
+  logExportCsv: string;
+};
+
 export type GateUiRuntimeSlice = {
   orgName: string;
   orgTagline: string;
   gatePageTitle: string;
   adminPageTitle: string;
   logPageTitle: string;
+  logPageStrings: LogPageStrings;
   previewCanvasWidth: number;
   previewCanvasHeight: number;
   showFpsOverlay: boolean;
@@ -141,6 +148,10 @@ export function createGateUiRuntimeSlice(
     gatePageTitle: `${orgName} — Entry`,
     adminPageTitle: `${orgName} — Admin`,
     logPageTitle: `${orgName} — Entry log`,
+    logPageStrings: {
+      unknown: s.unknown,
+      logExportCsv: s.logExportCsv,
+    },
     previewCanvasWidth: cfg.camera.idealWidth,
     previewCanvasHeight: cfg.camera.idealHeight,
     showFpsOverlay: isDev,

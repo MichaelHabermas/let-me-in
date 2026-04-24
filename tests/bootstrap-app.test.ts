@@ -66,6 +66,21 @@ describe('bootstrapApp', () => {
     expect(thresholdsRow?.value).toEqual(seedThresholds);
   });
 
+  it('initializes persistence from persistenceProvider when instance omitted', async () => {
+    const persistence = createDexiePersistence(testDbName);
+    currentPersistence = persistence;
+    const mount = vi.fn();
+    const result = await bootstrapApp({
+      mount,
+      persistenceProvider: { get: () => persistence },
+      getHttpsStartupState: () => ({ ok: true }),
+    });
+    expect(result).toEqual({ ok: true });
+    expect(mount).toHaveBeenCalledOnce();
+    const settings = await persistence.settingsRepo.toArray();
+    expect(settings.some((r) => r.key === 'thresholds')).toBe(true);
+  });
+
   it('returns https result without mounting when HTTPS check fails', async () => {
     const mount = vi.fn();
     const renderHttpsBanner = vi.fn();

@@ -1,6 +1,5 @@
-import { config } from '../config';
-import type { DexiePersistence } from '../infra/persistence';
-import { getDefaultPersistence } from '../infra/persistence';
+import type { DexiePersistence, PersistenceProvider } from '../infra/persistence';
+import { resolvePersistence } from '../infra/persistence';
 import { accessLogToCsv, downloadAccessLogCsv } from './csv-export';
 import { createLogPageController } from './log-page-controller';
 import {
@@ -20,7 +19,7 @@ export async function mountLogPageIntoApp(
   options: { persistence: DexiePersistence; rt: GateRuntime },
 ): Promise<void> {
   const { persistence, rt } = options;
-  const unknown = config.ui.strings.unknown;
+  const { unknown, logExportCsv } = rt.logPageStrings;
 
   const [rows, users] = await Promise.all([
     persistence.accessLogRepo.toArray(),
@@ -37,7 +36,7 @@ export async function mountLogPageIntoApp(
 
   const userNames = createUserNameMap(users);
 
-  const controls = buildLogToolbar(unknown, config.ui.strings.logExportCsv);
+  const controls = buildLogToolbar(unknown, logExportCsv);
   appendUserFilterOptions(controls.userSelect, users);
 
   const tableWrap = document.createElement('div');
@@ -76,10 +75,19 @@ export async function mountLogPageIntoApp(
   controller.render();
 }
 
-export function mountLogView(): void {
+export type MountLogViewOptions = {
+  persistence?: DexiePersistence;
+  persistenceProvider?: PersistenceProvider;
+};
+
+export function mountLogView(options?: MountLogViewOptions): void {
   const app = document.getElementById('app');
   if (!app) return;
   const rt = resolveGateRuntime();
   document.title = rt.logPageTitle;
-  void mountLogPageIntoApp(app, { persistence: getDefaultPersistence(), rt });
+  const persistence = resolvePersistence({
+    persistence: options?.persistence,
+    provider: options?.persistenceProvider,
+  });
+  void mountLogPageIntoApp(app, { persistence, rt });
 }

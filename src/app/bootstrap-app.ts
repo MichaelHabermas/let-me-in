@@ -1,6 +1,6 @@
 import type { DatabaseSeedSettings } from '../domain/database-seed';
-import type { DexiePersistence } from '../infra/persistence';
-import { getDefaultPersistence } from '../infra/persistence';
+import type { DexiePersistence, PersistenceProvider } from '../infra/persistence';
+import { resolvePersistence } from '../infra/persistence';
 import { installGatekeeperMetricsOnWindow } from './gatekeeper-metrics';
 import { getHttpsStartupState as defaultGetHttpsStartupState } from './https-gate';
 import { resolveGateRuntime } from './runtime-settings';
@@ -26,6 +26,8 @@ function defaultRenderHttpsBanner(message: string): void {
 export type BootstrapAppOptions = {
   mount: () => void | Promise<void>;
   persistence?: DexiePersistence;
+  /** When omitted with `persistence`, uses `resolvePersistence({ provider })` default singleton. */
+  persistenceProvider?: PersistenceProvider;
   /** When omitted, uses `resolveGateRuntime().databaseSeedSettings`. */
   getDatabaseSeedSettings?: () => DatabaseSeedSettings;
   getHttpsStartupState?: () => HttpsStartupState;
@@ -43,8 +45,11 @@ export type BootstrapResult =
  * Call from each HTML entry: `void bootstrapApp({ mount }).then(handleBootstrapResult)`.
  */
 export async function bootstrapApp(options: BootstrapAppOptions): Promise<BootstrapResult> {
-  const { mount, persistence: persistenceOverride } = options;
-  const persistence = persistenceOverride ?? getDefaultPersistence();
+  const { mount, persistence: persistenceOverride, persistenceProvider } = options;
+  const persistence = resolvePersistence({
+    persistence: persistenceOverride,
+    provider: persistenceProvider,
+  });
   const getHttps = options.getHttpsStartupState ?? defaultGetHttpsStartupState;
   const renderHttpsBanner = options.renderHttpsBanner ?? defaultRenderHttpsBanner;
   const getDatabaseSeedSettings =

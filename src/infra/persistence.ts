@@ -14,12 +14,28 @@ export type { DexiePersistence } from './db-dexie';
 
 let defaultPersistence: DexiePersistence | null = null;
 
+/** Injectable seam for composition roots — defaults to process-wide singleton. */
+export type PersistenceProvider = {
+  get(): DexiePersistence;
+};
+
 /** Process-wide default DB (`gatekeeper`) — use `createDexiePersistence` in tests for isolation. */
 export function getDefaultPersistence(): DexiePersistence {
   if (!defaultPersistence) {
     defaultPersistence = createDexiePersistence('gatekeeper');
   }
   return defaultPersistence;
+}
+
+/**
+ * Resolves persistence for mounts/bootstrap: explicit instance wins, then provider,
+ * then the default singleton.
+ */
+export function resolvePersistence(args?: {
+  persistence?: DexiePersistence;
+  provider?: PersistenceProvider;
+}): DexiePersistence {
+  return args?.persistence ?? args?.provider?.get() ?? getDefaultPersistence();
 }
 
 /** Open default DB and ensure default settings rows exist (E1.S2.F1.T3). Idempotent per process until reset. */

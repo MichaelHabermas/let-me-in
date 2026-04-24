@@ -2,12 +2,13 @@ import { mountAdminLoginModal } from './admin-login-modal';
 import { createAdminAuth, type AdminAuth } from './auth';
 import { mountAuthenticatedAdminEnrollment } from './mount-admin-enrollment';
 import { config } from '../config';
-import { getDefaultPersistence, type DexiePersistence } from '../infra/persistence';
+import { resolvePersistence, type DexiePersistence, type PersistenceProvider } from '../infra/persistence';
 import { resolveGateRuntime, type GateRuntime } from './runtime-settings';
 
 export type MountAdminShellOptions = {
   rt?: GateRuntime;
   persistence?: DexiePersistence;
+  persistenceProvider?: PersistenceProvider;
   /** When omitted, uses `localStorage` and `config.admin`. */
   auth?: AdminAuth;
   useStubEnrollment?: boolean;
@@ -19,7 +20,10 @@ export type MountAdminShellOptions = {
  */
 export function mountAdminShell(root: HTMLElement, options?: MountAdminShellOptions): void {
   const rt = options?.rt ?? resolveGateRuntime();
-  const persistence = options?.persistence ?? getDefaultPersistence();
+  const persistence = resolvePersistence({
+    persistence: options?.persistence,
+    provider: options?.persistenceProvider,
+  });
   const auth =
     options?.auth ??
     createAdminAuth({

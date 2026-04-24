@@ -99,6 +99,12 @@ describe('createGateUiRuntimeSlice', () => {
     expect(rt.detectorLoadingMessage).toBe('det-loading');
     expect(rt.detectorLoadFailedMessage).toBe('det-fail');
   });
+
+  it('exposes log page strings for mounts', () => {
+    const rt = createGateUiRuntimeSlice(uiCfg, false);
+    expect(rt.logPageStrings.unknown).toBe('u');
+    expect(rt.logPageStrings.logExportCsv).toBe('csv');
+  });
 });
 
 describe('getDatabaseSeedSettingsFromConfig', () => {

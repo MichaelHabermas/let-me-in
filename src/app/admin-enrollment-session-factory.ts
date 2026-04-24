@@ -2,6 +2,7 @@ import { getDetectorRuntimeSettings, getEmbedderRuntimeSettings } from '../confi
 import type { DexiePersistence } from '../infra/persistence';
 import { createFaceEmbedder } from '../infra/embedder-ort';
 import { createYoloDetector } from '../infra/detector-ort';
+import { createDetectorEmbedderRuntime } from '../infra/inference-runtime';
 import { createCamera } from './camera';
 import type { AdminEnrollmentDom } from './admin-enrollment-dom';
 import { createEnrollmentController, type EnrollmentController } from './enroll';
@@ -39,19 +40,28 @@ export function createAdminEnrollmentSessionController(params: {
 }): EnrollmentController {
   const { dom, rt, persistence, useStubEnrollment, onStateChange } = params;
   const base = enrollmentControllerBase(dom, rt, persistence, onStateChange);
-  return useStubEnrollment
-    ? createEnrollmentController({
-        ...base,
-        camera: createE2eEnrollmentCamera(dom.frameCanvas.width, dom.frameCanvas.height),
-        detector: createE2eEnrollmentDetector(),
-        embedder: createE2eEnrollmentEmbedder(),
-      })
-    : createEnrollmentController({
-        ...base,
-        camera: createCamera(dom.video, dom.frameCanvas, {
-          defaultConstraints: rt.defaultVideoConstraintsForCamera,
-        }),
-        detector: createYoloDetector(getDetectorRuntimeSettings()),
-        embedder: createFaceEmbedder(getEmbedderRuntimeSettings()),
-      });
+  if (useStubEnrollment) {
+    const ort = createDetectorEmbedderRuntime({
+      createDetector: () => createE2eEnrollmentDetector(),
+      createEmbedder: () => createE2eEnrollmentEmbedder(),
+    });
+    return createEnrollmentController({
+      ...base,
+      camera: createE2eEnrollmentCamera(dom.frameCanvas.width, dom.frameCanvas.height),
+      detector: ort.detector,
+      embedder: ort.embedder,
+    });
+  }
+  const ort = createDetectorEmbedderRuntime({
+    createDetector: () => createYoloDetector(getDetectorRuntimeSettings()),
+    createEmbedder: () => createFaceEmbedder(getEmbedderRuntimeSettings()),
+  });
+  return createEnrollmentController({
+    ...base,
+    camera: createCamera(dom.video, dom.frameCanvas, {
+      defaultConstraints: rt.defaultVideoConstraintsForCamera,
+    }),
+    detector: ort.detector,
+    embedder: ort.embedder,
+  });
 }

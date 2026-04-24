@@ -2,7 +2,8 @@ import { getDetectorRuntimeSettings, getEmbedderRuntimeSettings } from '../confi
 import type { YoloDetector } from '../infra/detector-core';
 import { createYoloDetector } from '../infra/detector-ort';
 import { createFaceEmbedder, type FaceEmbedder } from '../infra/embedder-ort';
-import { getDefaultPersistence } from '../infra/persistence';
+import { resolvePersistence } from '../infra/persistence';
+import type { DexiePersistence, PersistenceProvider } from '../infra/persistence';
 import type { Camera, CreateCameraOptions } from './camera';
 import { createCamera } from './camera';
 import { buildGateDom } from './gate-preview-dom';
@@ -131,6 +132,8 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
 
 export type MountGateViewOptions = {
   hostDepsOverrides?: Partial<Omit<MountGateHostDeps, 'rt'>>;
+  persistence?: DexiePersistence;
+  persistenceProvider?: PersistenceProvider;
 };
 
 export function mountGateView(options?: MountGateViewOptions): void {
@@ -138,12 +141,17 @@ export function mountGateView(options?: MountGateViewOptions): void {
   if (!app) return;
 
   const rt = resolveGateRuntime();
+  const persistence = resolvePersistence({
+    persistence: options?.persistence,
+    provider: options?.persistenceProvider,
+  });
   mountGateIntoHost(
     app,
     createMountGateHostDeps(rt, {
       ...(options?.hostDepsOverrides ?? {}),
       sessionDepsExtras: {
-        persistence: getDefaultPersistence(),
+        ...(options?.hostDepsOverrides?.sessionDepsExtras ?? {}),
+        persistence,
         databaseSeedFallback: rt.databaseSeedSettings,
       },
     }),

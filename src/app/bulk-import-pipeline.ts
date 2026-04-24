@@ -8,6 +8,7 @@ import { getDetectorRuntimeSettings, getEmbedderRuntimeSettings } from '../confi
 import type { Detection } from '../infra/detector-core';
 import { createFaceEmbedder, type FaceEmbedder } from '../infra/embedder-ort';
 import { createYoloDetector } from '../infra/detector-ort';
+import { createDetectorEmbedderRuntime } from '../infra/inference-runtime';
 import type { DexiePersistence } from '../infra/persistence';
 import { base64ToImageData, greyStubImportFrame } from './bulk-import-image';
 import type { BulkImportRowResult } from './bulk-import-progress';
@@ -21,17 +22,19 @@ type ImportDetector = {
 function makeImportPipeline(useStubEnrollment: boolean): {
   detector: ImportDetector;
   embedder: FaceEmbedder;
+  loadAll(): Promise<void>;
+  disposeAll(): Promise<void>;
 } {
   if (useStubEnrollment) {
-    return {
-      detector: createE2eEnrollmentDetector(),
-      embedder: createE2eEnrollmentEmbedder(),
-    };
+    return createDetectorEmbedderRuntime({
+      createDetector: () => createE2eEnrollmentDetector(),
+      createEmbedder: () => createE2eEnrollmentEmbedder(),
+    });
   }
-  return {
-    detector: createYoloDetector(getDetectorRuntimeSettings()),
-    embedder: createFaceEmbedder(getEmbedderRuntimeSettings()),
-  };
+  return createDetectorEmbedderRuntime({
+    createDetector: () => createYoloDetector(getDetectorRuntimeSettings()),
+    createEmbedder: () => createFaceEmbedder(getEmbedderRuntimeSettings()),
+  });
 }
 
 async function importOneRow(
@@ -77,9 +80,9 @@ export async function runBulkImportRows(params: {
   onProgress: (current: number, total: number) => void;
 }): Promise<BulkImportRowResult[]> {
   const { rows, persistence, useStubEnrollment, onProgress } = params;
-  const { detector, embedder } = makeImportPipeline(useStubEnrollment);
-  await detector.load();
-  await embedder.load();
+  const runtime = makeImportPipeline(useStubEnrollment);
+  const { detector, embedder } = runtime;
+  await runtime.loadAll();
   const rowResults: BulkImportRowResult[] = [];
   try {
     for (let i = 0; i < rows.length; i += 1) {
@@ -88,8 +91,7 @@ export async function runBulkImportRows(params: {
       rowResults.push(await importOneRow(row, persistence, detector, embedder, useStubEnrollment));
     }
   } finally {
-    await detector.dispose().catch(() => {});
-    await embedder.dispose().catch(() => {});
+    await runtime.disposeAll();
   }
   return rowResults;
 }

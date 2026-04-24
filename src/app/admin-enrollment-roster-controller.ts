@@ -14,7 +14,7 @@ export function createAdminEnrollmentRosterController(params: {
   let revokeRosterUrls = () => {};
 
   const refresh = async () => {
-    await persistence.initDatabase(rt.databaseSeedSettings!);
+    await persistence.initDatabase(rt.databaseSeedSettings);
     revokeRosterUrls();
     const users = await persistence.usersRepo.toArray();
     const copy = rt.adminUiStrings;
