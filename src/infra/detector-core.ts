@@ -45,18 +45,8 @@ export function computeLetterboxMeta(srcW: number, srcH: number): LetterboxMeta 
   return { ratio, padX, padY, srcW, srcH };
 }
 
-function sampleRgb(
-  data: Uint8ClampedArray,
-  srcW: number,
-  srcH: number,
-  x: number,
-  y: number,
-): [number, number, number] {
-  const [r, g, b] = sampleRgbBilinear888(data, srcW, srcH, x, y);
-  return [r / 255, g / 255, b / 255];
-}
-
 const PAD_COLOR = 114 / 255;
+const INV_RGB = 1 / 255;
 
 export function preprocessToChwFloat(imageData: ImageData): {
   tensorData: Float32Array;
@@ -78,7 +68,10 @@ export function preprocessToChwFloat(imageData: ImageData): {
       if (xs < 0 || ys < 0 || xs >= srcW - 0.001 || ys >= srcH - 0.001) {
         r = g = b = PAD_COLOR;
       } else {
-        [r, g, b] = sampleRgb(data, srcW, srcH, xs, ys);
+        const [br, bg, bb] = sampleRgbBilinear888(data, srcW, srcH, xs, ys);
+        r = br * INV_RGB;
+        g = bg * INV_RGB;
+        b = bb * INV_RGB;
       }
       const idx = gy * INPUT_SIZE + gx;
       out[idx] = r;
@@ -160,63 +153,57 @@ function personBoxAspectOk(cx: number, cy: number, w: number, h: number): boolea
   return ar <= MAX_PERSON_ASPECT && inv <= MAX_PERSON_ASPECT;
 }
 
-function decodePersonBoxForAnchor(
-  predictions: Float32Array,
-  meta: LetterboxMeta,
-  numAnchors: number,
-  numClasses: number,
-  i: number,
-): BoxModel | null {
-  const cx = f32At(predictions, 0 * numAnchors + i);
-  const cy = f32At(predictions, 1 * numAnchors + i);
-  const w = f32At(predictions, 2 * numAnchors + i);
-  const h = f32At(predictions, 3 * numAnchors + i);
-
-  if (!personBoxAspectOk(cx, cy, w, h)) return null;
-
-  let bestC = 0;
-  let bestScore = -Infinity;
-  let secondScore = -Infinity;
-  for (let c = 0; c < numClasses; c++) {
-    const raw = f32At(predictions, (4 + c) * numAnchors + i);
-    const s = classProbability(raw);
-    if (s > bestScore) {
-      secondScore = bestScore;
-      bestScore = s;
-      bestC = c;
-    } else if (s > secondScore) {
-      secondScore = s;
-    }
-  }
-
-  if (bestC !== PERSON_CLASS || bestScore < CONF_THRESHOLD) return null;
-  if (bestScore - secondScore < TOP_CLASS_MARGIN) return null;
-
-  const x1 = cx - w / 2;
-  const y1 = cy - h / 2;
-  const x2 = cx + w / 2;
-  const y2 = cy + h / 2;
-
-  const person: BoxModel = { x1, y1, x2, y2, score: bestScore, classId: PERSON_CLASS };
-  const banded = applyHeadBand(person);
-  const [sx1, sy1, sx2, sy2] = modelToSource(banded.x1, banded.y1, banded.x2, banded.y2, meta);
-  return {
-    x1: sx1,
-    y1: sy1,
-    x2: sx2,
-    y2: sy2,
-    score: bestScore,
-    classId: PERSON_CLASS,
-  };
-}
-
 export function decodeYoloPredictions(predictions: Float32Array, meta: LetterboxMeta): Detection[] {
   const numAnchors = 8400;
   const numClasses = 80;
   const boxes: BoxModel[] = [];
 
+  function decodePersonBoxForAnchor(i: number): BoxModel | null {
+    const cx = f32At(predictions, i);
+    const cy = f32At(predictions, numAnchors + i);
+    const w = f32At(predictions, 2 * numAnchors + i);
+    const h = f32At(predictions, 3 * numAnchors + i);
+
+    if (!personBoxAspectOk(cx, cy, w, h)) return null;
+
+    let bestC = 0;
+    let bestScore = -Infinity;
+    let secondScore = -Infinity;
+    for (let c = 0; c < numClasses; c++) {
+      const raw = f32At(predictions, (4 + c) * numAnchors + i);
+      const s = classProbability(raw);
+      if (s > bestScore) {
+        secondScore = bestScore;
+        bestScore = s;
+        bestC = c;
+      } else if (s > secondScore) {
+        secondScore = s;
+      }
+    }
+
+    if (bestC !== PERSON_CLASS || bestScore < CONF_THRESHOLD) return null;
+    if (bestScore - secondScore < TOP_CLASS_MARGIN) return null;
+
+    const x1 = cx - w / 2;
+    const y1 = cy - h / 2;
+    const x2 = cx + w / 2;
+    const y2 = cy + h / 2;
+
+    const person: BoxModel = { x1, y1, x2, y2, score: bestScore, classId: PERSON_CLASS };
+    const banded = applyHeadBand(person);
+    const [sx1, sy1, sx2, sy2] = modelToSource(banded.x1, banded.y1, banded.x2, banded.y2, meta);
+    return {
+      x1: sx1,
+      y1: sy1,
+      x2: sx2,
+      y2: sy2,
+      score: bestScore,
+      classId: PERSON_CLASS,
+    };
+  }
+
   for (let i = 0; i < numAnchors; i++) {
-    const box = decodePersonBoxForAnchor(predictions, meta, numAnchors, numClasses, i);
+    const box = decodePersonBoxForAnchor(i);
     if (box) boxes.push(box);
   }
 

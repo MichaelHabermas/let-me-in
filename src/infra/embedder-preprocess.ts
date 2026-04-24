@@ -14,6 +14,7 @@ export function toEmbedderTensor(imageData: ImageData): Float32Array {
   }
   const plane = EMBEDDER_INPUT_SIZE * EMBEDDER_INPUT_SIZE;
   const out = new Float32Array(3 * plane);
+  const normScale = 1 / 127.5;
   for (let y = 0; y < EMBEDDER_INPUT_SIZE; y++) {
     for (let x = 0; x < EMBEDDER_INPUT_SIZE; x++) {
       const i = (y * EMBEDDER_INPUT_SIZE + x) * 4;
@@ -21,9 +22,9 @@ export function toEmbedderTensor(imageData: ImageData): Float32Array {
       const g = u8At(data, i + 1);
       const b = u8At(data, i + 2);
       const idx = y * EMBEDDER_INPUT_SIZE + x;
-      out[idx] = (r - 127.5) / 127.5;
-      out[plane + idx] = (g - 127.5) / 127.5;
-      out[2 * plane + idx] = (b - 127.5) / 127.5;
+      out[idx] = (r - 127.5) * normScale;
+      out[plane + idx] = (g - 127.5) * normScale;
+      out[2 * plane + idx] = (b - 127.5) * normScale;
     }
   }
   return out;

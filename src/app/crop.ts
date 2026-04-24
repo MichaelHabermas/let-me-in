@@ -35,6 +35,7 @@ export function squareCropWithMargin(imageData: ImageData, bbox: Bbox, marginPct
   const iSide = Math.max(1, Math.floor(side));
   const out = new ImageData(iSide, iSide);
   const dst = out.data;
+  // Nearest-neighbor copy from integer source coords; resizeTo112 uses bilinear.
 
   for (let y = 0; y < iSide; y++) {
     for (let x = 0; x < iSide; x++) {
