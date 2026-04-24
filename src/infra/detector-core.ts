@@ -2,7 +2,8 @@
  * Pure YOLO preprocess + decode (no ORT). Safe to import from a Web Worker.
  */
 
-import { f32At, u8At } from './typed-index';
+import { sampleRgbBilinear888 } from './sample-rgb-bilinear';
+import { f32At } from './typed-index';
 
 /** Model-space bbox [x1,y1,x2,y2] on letterboxed 640 input, then mapped to source pixels. */
 export type Detection = {
@@ -51,36 +52,8 @@ function sampleRgb(
   x: number,
   y: number,
 ): [number, number, number] {
-  const x0 = Math.max(0, Math.min(srcW - 1, Math.floor(x)));
-  const y0 = Math.max(0, Math.min(srcH - 1, Math.floor(y)));
-  const x1 = Math.max(0, Math.min(srcW - 1, Math.ceil(x)));
-  const y1 = Math.max(0, Math.min(srcH - 1, Math.ceil(y)));
-  const fx = x - x0;
-  const fy = y - y0;
-  const i00 = (y0 * srcW + x0) * 4;
-  const i10 = (y0 * srcW + x1) * 4;
-  const i01 = (y1 * srcW + x0) * 4;
-  const i11 = (y1 * srcW + x1) * 4;
-  const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-  const r =
-    lerp(
-      lerp(u8At(data, i00), u8At(data, i10), fx),
-      lerp(u8At(data, i01), u8At(data, i11), fx),
-      fy,
-    ) / 255;
-  const g =
-    lerp(
-      lerp(u8At(data, i00 + 1), u8At(data, i10 + 1), fx),
-      lerp(u8At(data, i01 + 1), u8At(data, i11 + 1), fx),
-      fy,
-    ) / 255;
-  const b =
-    lerp(
-      lerp(u8At(data, i00 + 2), u8At(data, i10 + 2), fx),
-      lerp(u8At(data, i01 + 2), u8At(data, i11 + 2), fx),
-      fy,
-    ) / 255;
-  return [r, g, b];
+  const [r, g, b] = sampleRgbBilinear888(data, srcW, srcH, x, y);
+  return [r / 255, g / 255, b / 255];
 }
 
 const PAD_COLOR = 114 / 255;
@@ -187,61 +160,75 @@ function personBoxAspectOk(cx: number, cy: number, w: number, h: number): boolea
   return ar <= MAX_PERSON_ASPECT && inv <= MAX_PERSON_ASPECT;
 }
 
+function decodePersonBoxForAnchor(
+  predictions: Float32Array,
+  meta: LetterboxMeta,
+  numAnchors: number,
+  numClasses: number,
+  i: number,
+): BoxModel | null {
+  const cx = f32At(predictions, 0 * numAnchors + i);
+  const cy = f32At(predictions, 1 * numAnchors + i);
+  const w = f32At(predictions, 2 * numAnchors + i);
+  const h = f32At(predictions, 3 * numAnchors + i);
+
+  if (!personBoxAspectOk(cx, cy, w, h)) return null;
+
+  let bestC = 0;
+  let bestScore = -Infinity;
+  let secondScore = -Infinity;
+  for (let c = 0; c < numClasses; c++) {
+    const raw = f32At(predictions, (4 + c) * numAnchors + i);
+    const s = classProbability(raw);
+    if (s > bestScore) {
+      secondScore = bestScore;
+      bestScore = s;
+      bestC = c;
+    } else if (s > secondScore) {
+      secondScore = s;
+    }
+  }
+
+  if (bestC !== PERSON_CLASS || bestScore < CONF_THRESHOLD) return null;
+  if (bestScore - secondScore < TOP_CLASS_MARGIN) return null;
+
+  const x1 = cx - w / 2;
+  const y1 = cy - h / 2;
+  const x2 = cx + w / 2;
+  const y2 = cy + h / 2;
+
+  const person: BoxModel = { x1, y1, x2, y2, score: bestScore, classId: PERSON_CLASS };
+  const banded = applyHeadBand(person);
+  const [sx1, sy1, sx2, sy2] = modelToSource(banded.x1, banded.y1, banded.x2, banded.y2, meta);
+  return {
+    x1: sx1,
+    y1: sy1,
+    x2: sx2,
+    y2: sy2,
+    score: bestScore,
+    classId: PERSON_CLASS,
+  };
+}
+
 export function decodeYoloPredictions(predictions: Float32Array, meta: LetterboxMeta): Detection[] {
   const numAnchors = 8400;
   const numClasses = 80;
   const boxes: BoxModel[] = [];
 
   for (let i = 0; i < numAnchors; i++) {
-    const cx = f32At(predictions, 0 * numAnchors + i);
-    const cy = f32At(predictions, 1 * numAnchors + i);
-    const w = f32At(predictions, 2 * numAnchors + i);
-    const h = f32At(predictions, 3 * numAnchors + i);
-
-    if (!personBoxAspectOk(cx, cy, w, h)) continue;
-
-    let bestC = 0;
-    let bestScore = -Infinity;
-    let secondScore = -Infinity;
-    for (let c = 0; c < numClasses; c++) {
-      const raw = f32At(predictions, (4 + c) * numAnchors + i);
-      const s = classProbability(raw);
-      if (s > bestScore) {
-        secondScore = bestScore;
-        bestScore = s;
-        bestC = c;
-      } else if (s > secondScore) {
-        secondScore = s;
-      }
-    }
-
-    if (bestC !== PERSON_CLASS || bestScore < CONF_THRESHOLD) continue;
-    if (bestScore - secondScore < TOP_CLASS_MARGIN) continue;
-
-    const x1 = cx - w / 2;
-    const y1 = cy - h / 2;
-    const x2 = cx + w / 2;
-    const y2 = cy + h / 2;
-
-    const person: BoxModel = { x1, y1, x2, y2, score: bestScore, classId: PERSON_CLASS };
-    const banded = applyHeadBand(person);
-    const [sx1, sy1, sx2, sy2] = modelToSource(banded.x1, banded.y1, banded.x2, banded.y2, meta);
-    boxes.push({
-      x1: sx1,
-      y1: sy1,
-      x2: sx2,
-      y2: sy2,
-      score: bestScore,
-      classId: PERSON_CLASS,
-    });
+    const box = decodePersonBoxForAnchor(predictions, meta, numAnchors, numClasses, i);
+    if (box) boxes.push(box);
   }
 
   const kept = nms(boxes, NMS_IOU);
-  return kept.map((b) => ({
-    bbox: [b.x1, b.y1, b.x2, b.y2] as [number, number, number, number],
-    confidence: b.score,
-    classId: b.classId,
-  }));
+  return kept.map((b) => {
+    const bbox: [number, number, number, number] = [b.x1, b.y1, b.x2, b.y2];
+    return {
+      bbox,
+      confidence: b.score,
+      classId: b.classId,
+    };
+  });
 }
 
 export const DETECTOR_INPUT_SIZE = INPUT_SIZE;

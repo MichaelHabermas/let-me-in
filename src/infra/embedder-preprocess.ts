@@ -4,9 +4,7 @@ import { u8At } from './typed-index';
 
 export const EMBEDDER_INPUT_SIZE = 112;
 
-/**
- * NCHW RGB float32, `(pixel - 127.5) / 127.5` per PRE-WORK [PROVEN].
- */
+/** NCHW RGB float32, `(pixel - 127.5) / 127.5`. */
 export function toEmbedderTensor(imageData: ImageData): Float32Array {
   const { width, height, data } = imageData;
   if (width !== EMBEDDER_INPUT_SIZE || height !== EMBEDDER_INPUT_SIZE) {

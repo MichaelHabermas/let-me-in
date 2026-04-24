@@ -34,8 +34,8 @@ export type MatchOneResult = {
 };
 
 /**
- * Cosine similarity for equal-length vectors.
- * Assumes vectors are already normalized in the calling pipeline.
+ * Cosine similarity for equal-length vectors (full formula; for L2-normalized
+ * inputs this matches the dot product).
  */
 export function cosine(a: Float32Array, b: Float32Array): number {
   if (a.length !== b.length) {
