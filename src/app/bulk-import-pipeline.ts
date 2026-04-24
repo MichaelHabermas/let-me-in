@@ -56,7 +56,11 @@ async function importOneRow(
         error: dets.length === 0 ? 'No face detected' : 'Multiple faces in image',
       };
     }
-    const bbox = dets[0]!.bbox as Bbox;
+    const det = dets[0];
+    if (!det) {
+      return { sourceIndex: row.sourceIndex, ok: false, error: 'No face detected' };
+    }
+    const bbox = det.bbox as Bbox;
     const embedding = await embedFace(frame, bbox, embedder);
     const crop = squareCropWithMargin(frame, bbox);
     const referenceImageBlob = await imageDataToJpegBlob(crop, 0.85);
@@ -86,7 +90,8 @@ export async function runBulkImportRows(params: {
   const rowResults: BulkImportRowResult[] = [];
   try {
     for (let i = 0; i < rows.length; i += 1) {
-      const row = rows[i]!;
+      const row = rows[i];
+      if (row === undefined) continue;
       onProgress(i + 1, rows.length);
       rowResults.push(await importOneRow(row, persistence, detector, embedder, useStubEnrollment));
     }

@@ -96,18 +96,24 @@ export function mountAuthenticatedAdminEnrollmentCoordinator(
   const dom = createAdminEnrollmentDom(rt);
   root.appendChild(dom.shell);
 
-  let ctrl!: EnrollmentController;
+  const enrollmentRef: { ctrl: EnrollmentController | null } = { ctrl: null };
 
-  const syncButtons = () => syncAdminEnrollmentButtons(dom, ctrl, rt);
+  const syncButtons = () => {
+    const c = enrollmentRef.ctrl;
+    if (c === null) return;
+    syncAdminEnrollmentButtons(dom, c, rt);
+  };
 
   const beginEdit = (user: User) => {
+    const c = enrollmentRef.ctrl;
+    if (c === null) return;
     const copy = rt.adminUiStrings;
     dom.nameInput.value = user.name;
     fillEnrollmentRoleSelect(dom.roleSelect, user.role, {
       enrollRolePlaceholder: copy.enrollRolePlaceholder,
       enrollRoleLegacySuffix: copy.enrollRoleLegacySuffix,
     });
-    ctrl.beginEditFromUser(user);
+    c.beginEditFromUser(user);
     syncButtons();
   };
   const roster = createAdminEnrollmentRosterController({ dom, rt, persistence, beginEdit });
@@ -117,13 +123,17 @@ export function mountAuthenticatedAdminEnrollmentCoordinator(
     rerender();
   });
 
-  ctrl = createAdminEnrollmentSessionController({
+  enrollmentRef.ctrl = createAdminEnrollmentSessionController({
     dom,
     rt,
     persistence,
     useStubEnrollment,
     onStateChange: syncButtons,
   });
+  const ctrl = enrollmentRef.ctrl;
+  if (ctrl === null) {
+    throw new Error('Enrollment controller failed to initialize');
+  }
 
   syncButtons();
   bindEnrollmentUi(dom, ctrl, rt, syncButtons, roster.refresh);

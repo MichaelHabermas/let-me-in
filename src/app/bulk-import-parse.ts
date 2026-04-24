@@ -17,7 +17,8 @@ export type ParseBulkImportJsonResult = {
 
 export function stripDataUrlBase64(s: string): string {
   const m = s.trim().match(/^data:[^;]+;base64,(.+)$/i);
-  return m ? m[1]!.replace(/\s/g, '') : s.trim().replace(/\s/g, '');
+  const payload = m?.[1];
+  return payload !== undefined ? payload.replace(/\s/g, '') : s.trim().replace(/\s/g, '');
 }
 
 function looksLikeValidBase64(raw: string): boolean {

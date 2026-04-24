@@ -17,6 +17,20 @@ export default [
     },
     rules: {
       ...tseslint.configs.recommended.rules,
+      '@typescript-eslint/no-non-null-assertion': 'error',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'PropertyDefinition[definite=true]',
+          message:
+            'Definite assignment assertions (!:) are not allowed — initialize in the constructor, assign via this.table(), or use an explicit ref/sentinel.',
+        },
+        {
+          selector: 'VariableDeclarator[definite=true]',
+          message:
+            'Definite assignment assertions (!:) are not allowed — initialize before use or use a ref object (e.g. { current: null as T | null }).',
+        },
+      ],
       'max-lines': ['warn', { max: 300, skipBlankLines: true, skipComments: true }],
       'max-lines-per-function': ['warn', { max: 50, skipBlankLines: true, skipComments: true }],
     },

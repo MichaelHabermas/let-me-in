@@ -6,7 +6,7 @@
 export function l2normalize(vec: Float32Array): Float32Array {
   let sumSq = 0;
   for (let i = 0; i < vec.length; i++) {
-    const v = vec[i]!;
+    const v = vec[i];
     sumSq += v * v;
   }
   const n = Math.sqrt(sumSq);
@@ -15,7 +15,7 @@ export function l2normalize(vec: Float32Array): Float32Array {
   }
   const inv = 1 / n;
   for (let i = 0; i < vec.length; i++) {
-    vec[i]! *= inv;
+    vec[i] *= inv;
   }
   return vec;
 }
@@ -43,8 +43,8 @@ export function cosine(a: Float32Array, b: Float32Array): number {
   let normA = 0;
   let normB = 0;
   for (let i = 0; i < a.length; i++) {
-    const av = a[i]!;
-    const bv = b[i]!;
+    const av = a[i];
+    const bv = b[i];
     dot += av * bv;
     normA += av * av;
     normB += bv * bv;
@@ -76,7 +76,8 @@ export function matchOne(
   let runnerScore = Number.NEGATIVE_INFINITY;
 
   for (let i = 0; i < enrolled.length; i++) {
-    const cur = enrolled[i]!;
+    const cur = enrolled[i];
+    if (!cur) continue;
     const score = similarity01(live, cur.embedding);
     if (score > bestScore) {
       runnerIdx = bestIdx;
@@ -89,8 +90,11 @@ export function matchOne(
     }
   }
 
-  const best = enrolled[bestIdx]!;
-  const runner = runnerIdx >= 0 ? enrolled[runnerIdx]! : null;
+  const best = enrolled[bestIdx];
+  if (!best) {
+    throw new Error('matchOne() internal error: missing best match');
+  }
+  const runner = runnerIdx >= 0 ? (enrolled[runnerIdx] ?? null) : null;
   return {
     best: { userId: best.userId, score: bestScore },
     runnerUp: runner ? { userId: runner.userId, score: runnerScore } : null,

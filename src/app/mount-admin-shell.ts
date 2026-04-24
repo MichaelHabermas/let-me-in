@@ -2,7 +2,11 @@ import { mountAdminLoginModal } from './admin-login-modal';
 import { createAdminAuth, type AdminAuth } from './auth';
 import { mountAuthenticatedAdminEnrollment } from './mount-admin-enrollment';
 import { config } from '../config';
-import { resolvePersistence, type DexiePersistence, type PersistenceProvider } from '../infra/persistence';
+import {
+  resolvePersistence,
+  type DexiePersistence,
+  type PersistenceProvider,
+} from '../infra/persistence';
 import { resolveGateRuntime, type GateRuntime } from './runtime-settings';
 
 export type MountAdminShellOptions = {

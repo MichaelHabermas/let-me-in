@@ -45,9 +45,9 @@ export interface DexiePersistence {
 }
 
 class GatekeeperDB extends Dexie {
-  users!: Table<User, string>;
-  accessLog!: Table<AccessLogRow, number>;
-  settings!: Table<SettingsRow, string>;
+  users: Table<User, string>;
+  accessLog: Table<AccessLogRow, number>;
+  settings: Table<SettingsRow, string>;
 
   constructor(databaseName: string) {
     super(databaseName);
@@ -56,6 +56,9 @@ class GatekeeperDB extends Dexie {
       accessLog: 'timestamp,userId,decision',
       settings: 'key',
     });
+    this.users = this.table('users');
+    this.accessLog = this.table('accessLog');
+    this.settings = this.table('settings');
   }
 }
 

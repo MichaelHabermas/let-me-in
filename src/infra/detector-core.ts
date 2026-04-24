@@ -60,13 +60,11 @@ function sampleRgb(
   const i01 = (y1 * srcW + x0) * 4;
   const i11 = (y1 * srcW + x1) * 4;
   const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-  const r = lerp(lerp(data[i00]!, data[i10]!, fx), lerp(data[i01]!, data[i11]!, fx), fy) / 255;
+  const r = lerp(lerp(data[i00], data[i10], fx), lerp(data[i01], data[i11], fx), fy) / 255;
   const g =
-    lerp(lerp(data[i00 + 1]!, data[i10 + 1]!, fx), lerp(data[i01 + 1]!, data[i11 + 1]!, fx), fy) /
-    255;
+    lerp(lerp(data[i00 + 1], data[i10 + 1], fx), lerp(data[i01 + 1], data[i11 + 1], fx), fy) / 255;
   const b =
-    lerp(lerp(data[i00 + 2]!, data[i10 + 2]!, fx), lerp(data[i01 + 2]!, data[i11 + 2]!, fx), fy) /
-    255;
+    lerp(lerp(data[i00 + 2], data[i10 + 2], fx), lerp(data[i01 + 2], data[i11 + 2], fx), fy) / 255;
   return [r, g, b];
 }
 
@@ -147,11 +145,13 @@ function nms(boxes: BoxModel[], iouThresh: number): BoxModel[] {
   const suppressed = new Set<number>();
   for (let i = 0; i < sorted.length; i++) {
     if (suppressed.has(i)) continue;
-    const cur = sorted[i]!;
+    const cur = sorted[i];
+    if (!cur) continue;
     keep.push(cur);
     for (let j = i + 1; j < sorted.length; j++) {
       if (suppressed.has(j)) continue;
-      if (iou(cur, sorted[j]!) >= iouThresh) suppressed.add(j);
+      const other = sorted[j];
+      if (other && iou(cur, other) >= iouThresh) suppressed.add(j);
     }
   }
   return keep;
@@ -178,10 +178,10 @@ export function decodeYoloPredictions(predictions: Float32Array, meta: Letterbox
   const boxes: BoxModel[] = [];
 
   for (let i = 0; i < numAnchors; i++) {
-    const cx = predictions[0 * numAnchors + i]!;
-    const cy = predictions[1 * numAnchors + i]!;
-    const w = predictions[2 * numAnchors + i]!;
-    const h = predictions[3 * numAnchors + i]!;
+    const cx = predictions[0 * numAnchors + i];
+    const cy = predictions[1 * numAnchors + i];
+    const w = predictions[2 * numAnchors + i];
+    const h = predictions[3 * numAnchors + i];
 
     if (!personBoxAspectOk(cx, cy, w, h)) continue;
 
@@ -189,7 +189,7 @@ export function decodeYoloPredictions(predictions: Float32Array, meta: Letterbox
     let bestScore = -Infinity;
     let secondScore = -Infinity;
     for (let c = 0; c < numClasses; c++) {
-      const raw = predictions[(4 + c) * numAnchors + i]!;
+      const raw = predictions[(4 + c) * numAnchors + i];
       const s = classProbability(raw);
       if (s > bestScore) {
         secondScore = bestScore;

@@ -30,8 +30,9 @@ export function drawDetections(
   }>,
 ): void {
   const multi = detections.length > 1;
+  const palette = MULTI_FACE_BBOX_COLORS;
   detections.forEach((d, i) => {
-    const color = multi ? MULTI_FACE_BBOX_COLORS[i % MULTI_FACE_BBOX_COLORS.length]! : '#22c55e';
+    const color = multi ? (palette[i % palette.length] ?? '#22c55e') : '#22c55e';
     drawBbox(ctx, d.bbox, color, `${Math.round(d.confidence * 100)}%`);
   });
 }

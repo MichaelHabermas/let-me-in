@@ -29,7 +29,7 @@ export function decide(input: PolicyDecideInput): PolicyDecision {
     return { decision: 'DENIED', userId: null, score, label: 'Unknown' };
   }
   if (d === 'GRANTED') {
-    return { decision: 'GRANTED', userId: verdict.userId!, score };
+    return { decision: 'GRANTED', userId: input.best.userId, score };
   }
-  return { decision: 'UNCERTAIN', userId: verdict.userId!, score };
+  return { decision: 'UNCERTAIN', userId: input.best.userId, score };
 }

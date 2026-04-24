@@ -65,7 +65,9 @@ export async function captureEnrollmentFace(
     );
     return null;
   }
-  const bbox = dets[0]!.bbox as Bbox;
+  const det = dets[0];
+  if (!det) return null;
+  const bbox = det.bbox as Bbox;
   const embedding = await embedFace(frame, bbox, d.embedder);
   const crop = squareCropWithMargin(frame, bbox);
   const referenceImageBlob = await imageDataToJpegBlob(crop, 0.85);

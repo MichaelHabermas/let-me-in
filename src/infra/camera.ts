@@ -148,7 +148,9 @@ function stopLoop(rt: CameraRuntime): void {
 function paintFrame(rt: CameraRuntime): void {
   const ctx = getCanvas2dContext(rt);
   drawVideoToCanvas(rt.videoEl, ctx, rt.canvasEl);
-  const t = rt.resolvedDeps!.now();
+  const resolved = rt.resolvedDeps;
+  if (!resolved) return;
+  const t = resolved.now();
   for (const cb of rt.frameListeners) cb(t);
 }
 

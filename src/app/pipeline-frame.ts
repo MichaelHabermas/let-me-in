@@ -104,8 +104,10 @@ export async function runDetectionPipelineFrame(
   if (isCoolingDown(opts, now)) return;
   setStatus(opts.statusEl, '');
   if (!opts.faceEmbedder) return;
+  const primary = dets[0];
+  if (!primary) return;
   const t0 = performance.now();
-  const emb = await embedFace(frame, dets[0]!.bbox, opts.faceEmbedder);
+  const emb = await embedFace(frame, primary.bbox, opts.faceEmbedder);
   const ms = performance.now() - t0;
   recordLastEmbedInferMs(ms);
   if (opts.logEmbeddingTimings) {

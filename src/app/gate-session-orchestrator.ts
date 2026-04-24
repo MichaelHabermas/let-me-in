@@ -28,14 +28,16 @@ function beginDetectorLoad(
 ): void {
   const promises: Promise<void>[] = [];
   if (deps.yoloDetector) {
+    const detector = deps.yoloDetector;
     state.loadState = 'pending';
-    promises.push(withMeasuredLoad('detector', () => deps.yoloDetector!.load()));
+    promises.push(withMeasuredLoad('detector', () => detector.load()));
   } else {
     state.loadState = 'none';
   }
   if (deps.faceEmbedder) {
+    const embedder = deps.faceEmbedder;
     state.embedderLoadState = 'pending';
-    promises.push(withMeasuredLoad('embedder', () => deps.faceEmbedder!.load()));
+    promises.push(withMeasuredLoad('embedder', () => embedder.load()));
   } else {
     state.embedderLoadState = 'none';
   }
@@ -67,21 +69,26 @@ async function withLiveAccessDeps(
   if (deps.evaluateDecision || !deps.persistence || !deps.databaseSeedFallback) {
     return deps;
   }
+  const persistence = deps.persistence;
   const uiStrings = deps.accessUiStrings ?? FALLBACK_GATE_ACCESS_UI_STRINGS;
-  const accessUi = elements.decisionEl && createGateAccessUiController(elements.decisionEl, uiStrings);
+  const accessUi =
+    elements.decisionEl && createGateAccessUiController(elements.decisionEl, uiStrings);
   const audioCues = createAccessAudioCues();
-  const evaluateDecision = await createAccessDecisionEvaluator(deps.persistence, deps.databaseSeedFallback, {
-    onDecision: (event) => {
-      accessUi?.present(event);
-      audioCues.play(event.policy.decision);
+  const evaluateDecision = await createAccessDecisionEvaluator(
+    deps.persistence,
+    deps.databaseSeedFallback,
+    {
+      onDecision: (event) => {
+        accessUi?.present(event);
+        audioCues.play(event.policy.decision);
+      },
     },
-  });
+  );
   return {
     ...deps,
     evaluateDecision,
     appendAccessLog:
-      deps.appendAccessLog ??
-      ((payload) => deps.persistence!.accessLogRepo.appendDecision(payload)),
+      deps.appendAccessLog ?? ((payload) => persistence.accessLogRepo.appendDecision(payload)),
   };
 }
 
