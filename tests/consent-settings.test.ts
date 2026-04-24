@@ -13,7 +13,7 @@ describe('consent settings', () => {
     const dbName = `consent-${crypto.randomUUID()}`;
     const persistence = createDexiePersistence(dbName);
     const rt = createTestGateRuntime();
-    await persistence.initDatabase(rt.getDatabaseSeedSettings());
+    await persistence.initDatabase(rt.databaseSeedSettings!);
 
     expect(await readConsentAccepted(persistence)).toBeNull();
     await writeConsentAccepted(persistence);

@@ -24,8 +24,6 @@ export type GatePreviewSessionCoreDeps = Pick<
 export type GateRuntime = GateUiRuntimeSlice & {
   databaseSeedSettings?: DatabaseSeedSettings;
   gatePreviewSessionCoreDeps?: GatePreviewSessionCoreDeps;
-  getDatabaseSeedSettings(): DatabaseSeedSettings;
-  getGatePreviewSessionCoreDeps(): GatePreviewSessionCoreDeps;
 };
 
 /** Single merge of UI slice + DB seed accessor — used by prod resolver and test harness. */
@@ -35,13 +33,13 @@ export function composeGateRuntime(
 ): GateRuntime {
   const databaseSeedSettings = getDatabaseSeedSettings();
   const gatePreviewSessionCoreDeps: GatePreviewSessionCoreDeps = {
-    getDefaultVideoConstraintsForCamera: () => ui.getDefaultVideoConstraintsForCamera(),
+    getDefaultVideoConstraintsForCamera: () => ui.defaultVideoConstraintsForCamera,
     getCameraUserFacingMessage: (code) => ui.getCameraUserFacingMessage(code),
     logEmbeddingTimings: ui.devLogEmbeddingTimings,
-    detectorLoadingMessage: ui.getDetectorLoadingMessage(),
-    detectorLoadFailedMessage: ui.getDetectorLoadFailedMessage(),
-    noFaceMessage: ui.getNoFaceMessage(),
-    multiFaceMessage: ui.getMultiFaceMessage(),
+    detectorLoadingMessage: ui.detectorLoadingMessage,
+    detectorLoadFailedMessage: ui.detectorLoadFailedMessage,
+    noFaceMessage: ui.noFaceMessage,
+    multiFaceMessage: ui.multiFaceMessage,
     cooldownMs: databaseSeedSettings.cooldownMs,
   };
 
@@ -49,8 +47,6 @@ export function composeGateRuntime(
     ...ui,
     databaseSeedSettings,
     gatePreviewSessionCoreDeps,
-    getDatabaseSeedSettings: () => databaseSeedSettings,
-    getGatePreviewSessionCoreDeps: () => gatePreviewSessionCoreDeps,
   };
 }
 

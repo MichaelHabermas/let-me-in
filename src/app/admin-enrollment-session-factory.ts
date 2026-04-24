@@ -23,8 +23,8 @@ function enrollmentControllerBase(
     frameCanvas: dom.frameCanvas,
     overlayCanvas: dom.overlayCanvas,
     statusEl: dom.statusEl,
-    getNoFaceMessage: () => rt.getNoFaceMessage(),
-    getMultiFaceMessage: () => rt.getMultiFaceMessage(),
+    getNoFaceMessage: () => rt.noFaceMessage,
+    getMultiFaceMessage: () => rt.multiFaceMessage,
     persistence,
     onStateChange,
   };
@@ -49,7 +49,7 @@ export function createAdminEnrollmentSessionController(params: {
     : createEnrollmentController({
         ...base,
         camera: createCamera(dom.video, dom.frameCanvas, {
-          defaultConstraints: rt.getDefaultVideoConstraintsForCamera(),
+          defaultConstraints: rt.defaultVideoConstraintsForCamera,
         }),
         detector: createYoloDetector(getDetectorRuntimeSettings()),
         embedder: createFaceEmbedder(getEmbedderRuntimeSettings()),

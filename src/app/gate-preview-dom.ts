@@ -21,8 +21,8 @@ export function createGateToolbar(rt: GateRuntime): {
   const toolbar = document.createElement('div');
   toolbar.className = 'gate-toolbar';
 
-  const startLabel = rt.getCameraStartLabel();
-  const stopLabel = rt.getCameraStopLabel();
+  const startLabel = rt.cameraStartLabel;
+  const stopLabel = rt.cameraStopLabel;
 
   const cameraToggleBtn = document.createElement('button');
   cameraToggleBtn.type = 'button';

@@ -85,7 +85,7 @@ describe('createGateUiRuntimeSlice', () => {
     expect(rt.orgTagline).toBe('Test org tagline.');
     expect(rt.gatePageTitle).toBe('TestOrg — Entry');
     expect(rt.previewCanvasWidth).toBe(640);
-    expect(rt.getDefaultVideoConstraintsForCamera().facingMode).toBe('environment');
+    expect(rt.defaultVideoConstraintsForCamera.facingMode).toBe('environment');
   });
 
   it('maps camera error codes to strings', () => {
@@ -96,8 +96,8 @@ describe('createGateUiRuntimeSlice', () => {
 
   it('exposes detector status strings', () => {
     const rt = createGateUiRuntimeSlice(uiCfg, false);
-    expect(rt.getDetectorLoadingMessage()).toBe('det-loading');
-    expect(rt.getDetectorLoadFailedMessage()).toBe('det-fail');
+    expect(rt.detectorLoadingMessage).toBe('det-loading');
+    expect(rt.detectorLoadFailedMessage).toBe('det-fail');
   });
 });
 

@@ -14,10 +14,10 @@ export function createAdminEnrollmentRosterController(params: {
   let revokeRosterUrls = () => {};
 
   const refresh = async () => {
-    await persistence.initDatabase(rt.getDatabaseSeedSettings());
+    await persistence.initDatabase(rt.databaseSeedSettings!);
     revokeRosterUrls();
     const users = await persistence.usersRepo.toArray();
-    const copy = rt.getAdminUiStrings();
+    const copy = rt.adminUiStrings;
     revokeRosterUrls = renderAdminUserRoster(dom.rosterTbody, users, copy, {
       onEdit: (user) => beginEdit(user),
       onDelete: (user) => {

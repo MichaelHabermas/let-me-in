@@ -52,21 +52,21 @@ export type GateUiRuntimeSlice = {
   previewCanvasHeight: number;
   showFpsOverlay: boolean;
   devLogEmbeddingTimings: boolean;
-  getDefaultVideoConstraintsForCamera(): {
+  defaultVideoConstraintsForCamera: {
     idealWidth: number;
     idealHeight: number;
     facingMode: string;
   };
   getCameraUserFacingMessage(code: CameraErrorCode): string;
-  getCameraStartLabel(): string;
-  getCameraStopLabel(): string;
-  getDetectorLoadingMessage(): string;
-  getDetectorLoadFailedMessage(): string;
-  getNoFaceMessage(): string;
-  getMultiFaceMessage(): string;
-  getAdminUiStrings(): AdminUiStrings;
-  getGateAccessUiStrings(): GateAccessUiStrings;
-  getConsentModalStrings(): ConsentModalStrings;
+  cameraStartLabel: string;
+  cameraStopLabel: string;
+  detectorLoadingMessage: string;
+  detectorLoadFailedMessage: string;
+  noFaceMessage: string;
+  multiFaceMessage: string;
+  adminUiStrings: AdminUiStrings;
+  gateAccessUiStrings: GateAccessUiStrings;
+  consentModalStrings: ConsentModalStrings;
 };
 
 /**
@@ -134,6 +134,7 @@ export function createGateUiRuntimeSlice(
   isDev: boolean,
 ): GateUiRuntimeSlice {
   const orgName = cfg.org.name;
+  const s = cfg.ui.strings;
   return {
     orgName,
     orgTagline: cfg.org.tagline,
@@ -144,67 +145,45 @@ export function createGateUiRuntimeSlice(
     previewCanvasHeight: cfg.camera.idealHeight,
     showFpsOverlay: isDev,
     devLogEmbeddingTimings: cfg.devLogEmbeddingTimings,
-    getDefaultVideoConstraintsForCamera() {
-      return {
-        idealWidth: cfg.camera.idealWidth,
-        idealHeight: cfg.camera.idealHeight,
-        facingMode: cfg.camera.defaultFacingMode,
-      };
+    defaultVideoConstraintsForCamera: {
+      idealWidth: cfg.camera.idealWidth,
+      idealHeight: cfg.camera.idealHeight,
+      facingMode: cfg.camera.defaultFacingMode,
     },
     getCameraUserFacingMessage(code: CameraErrorCode): string {
       return cameraMessage(cfg, code);
     },
-    getCameraStartLabel(): string {
-      return cfg.ui.strings.cameraStart;
+    cameraStartLabel: s.cameraStart,
+    cameraStopLabel: s.cameraStop,
+    detectorLoadingMessage: s.detectorLoading,
+    detectorLoadFailedMessage: s.detectorLoadFailed,
+    noFaceMessage: s.noFace,
+    multiFaceMessage: s.multiFace,
+    adminUiStrings: adminStringsFromConfig(cfg),
+    gateAccessUiStrings: {
+      formatGranted(name, similarityPct) {
+        return s.accessGrantedBanner
+          .replaceAll('{name}', name)
+          .replaceAll('{similarity}', String(similarityPct));
+      },
+      formatDenied(similarityPct) {
+        return s.accessDeniedBanner
+          .replaceAll('{unknown}', s.unknown)
+          .replaceAll('{similarity}', String(similarityPct));
+      },
+      tryAgain: s.accessTryAgain,
     },
-    getCameraStopLabel(): string {
-      return cfg.ui.strings.cameraStop;
-    },
-    getDetectorLoadingMessage(): string {
-      return cfg.ui.strings.detectorLoading;
-    },
-    getDetectorLoadFailedMessage(): string {
-      return cfg.ui.strings.detectorLoadFailed;
-    },
-    getNoFaceMessage(): string {
-      return cfg.ui.strings.noFace;
-    },
-    getMultiFaceMessage(): string {
-      return cfg.ui.strings.multiFace;
-    },
-    getAdminUiStrings(): AdminUiStrings {
-      return adminStringsFromConfig(cfg);
-    },
-    getGateAccessUiStrings(): GateAccessUiStrings {
-      const s = cfg.ui.strings;
-      return {
-        formatGranted(name, similarityPct) {
-          return s.accessGrantedBanner
-            .replaceAll('{name}', name)
-            .replaceAll('{similarity}', String(similarityPct));
-        },
-        formatDenied(similarityPct) {
-          return s.accessDeniedBanner
-            .replaceAll('{unknown}', s.unknown)
-            .replaceAll('{similarity}', String(similarityPct));
-        },
-        tryAgain: s.accessTryAgain,
-      };
-    },
-    getConsentModalStrings(): ConsentModalStrings {
-      const s = cfg.ui.strings;
-      return {
-        title: s.consentTitle,
-        intro: s.consentIntro,
-        bullets: [
-          s.consentBulletPurpose,
-          s.consentBulletStored,
-          s.consentBulletRetention,
-          s.consentBulletRefuse,
-        ],
-        accept: s.consentAccept,
-        decline: s.consentDecline,
-      };
+    consentModalStrings: {
+      title: s.consentTitle,
+      intro: s.consentIntro,
+      bullets: [
+        s.consentBulletPurpose,
+        s.consentBulletStored,
+        s.consentBulletRetention,
+        s.consentBulletRefuse,
+      ],
+      accept: s.consentAccept,
+      decline: s.consentDecline,
     },
   };
 }

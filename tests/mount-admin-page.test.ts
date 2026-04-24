@@ -4,7 +4,7 @@ import Dexie from 'dexie';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAdminAuth } from '../src/app/auth';
-import { mountAdminPage } from '../src/app/mount-admin-page';
+import { mountAdminView } from '../src/app/mount-admin-shell';
 import { createDexiePersistence } from '../src/infra/persistence';
 import { createTestGateRuntime } from './support/create-test-gate-runtime';
 import { stubCanvas2dContext } from './support/stub-canvas-2d-context';
@@ -51,7 +51,7 @@ async function waitForRosterRows(expected: number): Promise<void> {
   throw new Error(`Timed out waiting for ${expected} roster rows`);
 }
 
-describe('mountAdminPage', () => {
+describe('mountAdminView', () => {
   beforeEach(async () => {
     await currentPersistence?.resetIndexedDbClientForTests();
     currentPersistence = null;
@@ -75,7 +75,7 @@ describe('mountAdminPage', () => {
       nowMs: () => 1_700_000_000_000,
       admin: { user: 'u', pass: 'p' },
     });
-    mountAdminPage({
+    mountAdminView({
       rt: createTestGateRuntime(),
       persistence: createTestPersistence(),
       auth,
@@ -95,8 +95,8 @@ describe('mountAdminPage', () => {
     expect(auth.login('u', 'p')).toBe(true);
 
     const persistence = createTestPersistence();
-    await persistence.initDatabase(createTestGateRuntime().getDatabaseSeedSettings());
-    mountAdminPage({
+    await persistence.initDatabase(createTestGateRuntime().databaseSeedSettings!);
+    mountAdminView({
       rt: createTestGateRuntime(),
       persistence,
       auth,
@@ -116,7 +116,7 @@ describe('mountAdminPage', () => {
     expect(auth.login('u', 'p')).toBe(true);
 
     const persistence = createTestPersistence();
-    await persistence.initDatabase(createTestGateRuntime().getDatabaseSeedSettings());
+    await persistence.initDatabase(createTestGateRuntime().databaseSeedSettings!);
     const emb = new Float32Array(512).fill(0.02);
     for (let i = 0; i < 3; i += 1) {
       await persistence.usersRepo.put({
@@ -129,7 +129,7 @@ describe('mountAdminPage', () => {
       });
     }
 
-    mountAdminPage({
+    mountAdminView({
       rt: createTestGateRuntime(),
       persistence,
       auth,
@@ -148,8 +148,8 @@ describe('mountAdminPage', () => {
     expect(auth.login('u', 'p')).toBe(true);
 
     const persistence = createTestPersistence();
-    await persistence.initDatabase(createTestGateRuntime().getDatabaseSeedSettings());
-    mountAdminPage({
+    await persistence.initDatabase(createTestGateRuntime().databaseSeedSettings!);
+    mountAdminView({
       rt: createTestGateRuntime(),
       persistence,
       auth,

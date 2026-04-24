@@ -61,7 +61,7 @@ function maybeBootstrapConsent(
     persistence,
     cameraToggleBtn,
     shell: main,
-    strings: rt.getConsentModalStrings(),
+    strings: rt.consentModalStrings,
   });
 }
 
@@ -76,8 +76,8 @@ function buildSessionDeps(
     createCamera: createCam,
     yoloDetector,
     faceEmbedder,
-    ...(rt.gatePreviewSessionCoreDeps ?? rt.getGatePreviewSessionCoreDeps()),
-    accessUiStrings: rt.getGateAccessUiStrings(),
+    ...rt.gatePreviewSessionCoreDeps,
+    accessUiStrings: rt.gateAccessUiStrings,
     ...sessionDepsExtras,
   };
 }
@@ -144,7 +144,7 @@ export function mountGateView(options?: MountGateViewOptions): void {
       ...(options?.hostDepsOverrides ?? {}),
       sessionDepsExtras: {
         persistence: getDefaultPersistence(),
-        databaseSeedFallback: rt.getDatabaseSeedSettings(),
+        databaseSeedFallback: rt.databaseSeedSettings,
       },
     }),
   );

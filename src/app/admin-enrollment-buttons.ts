@@ -10,8 +10,8 @@ export function syncAdminEnrollmentButtons(
   const state = ctrl.getState();
   const camOn = ctrl.isCameraRunning();
   const showStart = state === 'idle' || (state === 'editing' && !camOn);
-  const startLabel = rt.getAdminUiStrings().enrollStartCamera;
-  const stopLabel = rt.getCameraStopLabel();
+  const startLabel = rt.adminUiStrings.enrollStartCamera;
+  const stopLabel = rt.cameraStopLabel;
   if (showStart) {
     dom.cameraToggleBtn.textContent = startLabel;
     dom.cameraToggleBtn.setAttribute('aria-label', startLabel);

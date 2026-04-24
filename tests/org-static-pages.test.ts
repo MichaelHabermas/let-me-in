@@ -4,97 +4,17 @@ import { describe, expect, it } from 'vitest';
 
 import type { GateRuntime } from '../src/app/runtime-settings';
 import { mountOrgBrandedStaticPage } from '../src/ui/org-static-pages';
+import { createTestGateRuntime } from './support/create-test-gate-runtime';
 
 function fakeRuntime(): GateRuntime {
+  const base = createTestGateRuntime();
   return {
+    ...base,
     orgName: 'Acme',
     orgTagline: '',
     gatePageTitle: 'Acme — Entry',
     adminPageTitle: 'Acme — Admin panel',
     logPageTitle: 'Acme — Log page',
-    previewCanvasWidth: 1,
-    previewCanvasHeight: 1,
-    showFpsOverlay: false,
-    devLogEmbeddingTimings: false,
-    getDatabaseSeedSettings: () => ({
-      thresholds: { strong: 1, weak: 1, unknown: 1, margin: 1 },
-      cooldownMs: 0,
-    }),
-    getGatePreviewSessionCoreDeps() {
-      return {
-        getDefaultVideoConstraintsForCamera: () => ({
-          idealWidth: 1,
-          idealHeight: 1,
-          facingMode: 'user',
-        }),
-        getCameraUserFacingMessage: () => '',
-        logEmbeddingTimings: false,
-        detectorLoadingMessage: '',
-        detectorLoadFailedMessage: '',
-        noFaceMessage: 'No face',
-        multiFaceMessage: 'Multiple faces',
-        cooldownMs: 0,
-      };
-    },
-    getDefaultVideoConstraintsForCamera: () => ({
-      idealWidth: 1,
-      idealHeight: 1,
-      facingMode: 'user',
-    }),
-    getCameraUserFacingMessage: () => '',
-    getCameraStartLabel: () => '',
-    getCameraStopLabel: () => '',
-    getDetectorLoadingMessage: () => '',
-    getDetectorLoadFailedMessage: () => '',
-    getNoFaceMessage: () => 'No face',
-    getMultiFaceMessage: () => 'Multiple faces',
-    getAdminUiStrings: () => ({
-      loginHeading: '',
-      loginUsername: '',
-      loginPassword: '',
-      loginSubmit: '',
-      loginError: '',
-      logout: '',
-      enrollTitle: '',
-      enrollStartCamera: '',
-      enrollCapture: '',
-      enrollRetake: '',
-      enrollSave: '',
-      enrollNameLabel: '',
-      enrollRoleLabel: '',
-      enrollRolePlaceholder: '',
-      enrollRoleRequired: '',
-      enrollRoleLegacySuffix: '',
-      enrollSuccess: '',
-      enrollNameRequired: '',
-      rosterTitle: '',
-      rosterColPhoto: '',
-      rosterColName: '',
-      rosterColRole: '',
-      rosterColCreated: '',
-      rosterColActions: '',
-      rosterEdit: '',
-      rosterDelete: '',
-      rosterThumbnailAlt: '',
-      rosterBulkImport: '',
-      rosterImportPick: '',
-      rosterImportConfirmDuplicates: '',
-      rosterImportProgress: '',
-      rosterImportDone: '',
-      rosterDeleteConfirm: '',
-    }),
-    getGateAccessUiStrings: () => ({
-      formatGranted: (n, p) => `${n} ${p}`,
-      formatDenied: (p) => `x ${p}`,
-      tryAgain: 'try',
-    }),
-    getConsentModalStrings: () => ({
-      title: 't',
-      intro: 'i',
-      bullets: ['a', 'b'],
-      accept: 'ok',
-      decline: 'no',
-    }),
   };
 }
 

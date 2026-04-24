@@ -10,6 +10,25 @@ import type { FaceEmbedder } from '../src/infra/embedder-ort';
 
 const sampleBlob = new Blob(['x'], { type: 'image/png' });
 
+function createOverlayCtx(
+  overrides: Partial<CanvasRenderingContext2D> = {},
+): CanvasRenderingContext2D {
+  return {
+    clearRect: vi.fn(),
+    save: vi.fn(),
+    restore: vi.fn(),
+    strokeStyle: '',
+    lineWidth: 0,
+    strokeRect: vi.fn(),
+    font: '',
+    fillStyle: '',
+    fillRect: vi.fn(),
+    measureText: vi.fn(() => ({ width: 20 })),
+    fillText: vi.fn(),
+    ...overrides,
+  } as unknown as CanvasRenderingContext2D;
+}
+
 function evalGranted() {
   return {
     policy: { decision: 'GRANTED' as const, userId: 'u1', score: 0.9 },
@@ -59,19 +78,7 @@ describe('createDetectionPipeline', () => {
       ]),
     } as unknown as YoloDetector;
 
-    const overlayCtx = {
-      clearRect,
-      save: vi.fn(),
-      restore: vi.fn(),
-      strokeStyle: '',
-      lineWidth: 0,
-      strokeRect: vi.fn(),
-      font: '',
-      fillStyle: '',
-      fillRect: vi.fn(),
-      measureText: vi.fn(() => ({ width: 20 })),
-      fillText: vi.fn(),
-    } as unknown as CanvasRenderingContext2D;
+    const overlayCtx = createOverlayCtx({ clearRect });
 
     const stop = createDetectionPipeline({
       camera,
@@ -114,19 +121,7 @@ describe('createDetectionPipeline', () => {
       dispose: vi.fn(),
     };
 
-    const overlayCtx = {
-      clearRect,
-      save: vi.fn(),
-      restore: vi.fn(),
-      strokeStyle: '',
-      lineWidth: 0,
-      strokeRect: vi.fn(),
-      font: '',
-      fillStyle: '',
-      fillRect: vi.fn(),
-      measureText: vi.fn(() => ({ width: 20 })),
-      fillText: vi.fn(),
-    } as unknown as CanvasRenderingContext2D;
+    const overlayCtx = createOverlayCtx({ clearRect });
 
     createDetectionPipeline({
       camera,
@@ -163,19 +158,7 @@ describe('createDetectionPipeline', () => {
       infer: vi.fn().mockResolvedValue([]),
     } as unknown as YoloDetector;
     const evaluateDecision = vi.fn();
-    const overlayCtx = {
-      clearRect: vi.fn(),
-      save: vi.fn(),
-      restore: vi.fn(),
-      strokeStyle: '',
-      lineWidth: 0,
-      strokeRect: vi.fn(),
-      font: '',
-      fillStyle: '',
-      fillRect: vi.fn(),
-      measureText: vi.fn(() => ({ width: 20 })),
-      fillText: vi.fn(),
-    } as unknown as CanvasRenderingContext2D;
+    const overlayCtx = createOverlayCtx();
 
     createDetectionPipeline({
       camera,
@@ -226,19 +209,7 @@ describe('createDetectionPipeline', () => {
       infer: vi.fn(),
       dispose: vi.fn(),
     };
-    const overlayCtx = {
-      clearRect: vi.fn(),
-      save: vi.fn(),
-      restore: vi.fn(),
-      strokeStyle: '',
-      lineWidth: 0,
-      strokeRect: vi.fn(),
-      font: '',
-      fillStyle: '',
-      fillRect: vi.fn(),
-      measureText: vi.fn(() => ({ width: 20 })),
-      fillText: vi.fn(),
-    } as unknown as CanvasRenderingContext2D;
+    const overlayCtx = createOverlayCtx();
 
     createDetectionPipeline({
       camera,
@@ -284,19 +255,7 @@ describe('createDetectionPipeline', () => {
       dispose: vi.fn(),
     };
     const evaluateDecision = vi.fn(() => evalGranted());
-    const overlayCtx = {
-      clearRect: vi.fn(),
-      save: vi.fn(),
-      restore: vi.fn(),
-      strokeStyle: '',
-      lineWidth: 0,
-      strokeRect: vi.fn(),
-      font: '',
-      fillStyle: '',
-      fillRect: vi.fn(),
-      measureText: vi.fn(() => ({ width: 20 })),
-      fillText: vi.fn(),
-    } as unknown as CanvasRenderingContext2D;
+    const overlayCtx = createOverlayCtx();
 
     createDetectionPipeline({
       camera,
@@ -351,19 +310,7 @@ describe('createDetectionPipeline', () => {
       dispose: vi.fn(),
     };
     const evaluateDecision = vi.fn(() => evalDenied());
-    const overlayCtx = {
-      clearRect: vi.fn(),
-      save: vi.fn(),
-      restore: vi.fn(),
-      strokeStyle: '',
-      lineWidth: 0,
-      strokeRect: vi.fn(),
-      font: '',
-      fillStyle: '',
-      fillRect: vi.fn(),
-      measureText: vi.fn(() => ({ width: 20 })),
-      fillText: vi.fn(),
-    } as unknown as CanvasRenderingContext2D;
+    const overlayCtx = createOverlayCtx();
 
     createDetectionPipeline({
       camera,
@@ -418,19 +365,7 @@ describe('createDetectionPipeline', () => {
       dispose: vi.fn(),
     };
     const evaluateDecision = vi.fn(() => evalUncertain());
-    const overlayCtx = {
-      clearRect: vi.fn(),
-      save: vi.fn(),
-      restore: vi.fn(),
-      strokeStyle: '',
-      lineWidth: 0,
-      strokeRect: vi.fn(),
-      font: '',
-      fillStyle: '',
-      fillRect: vi.fn(),
-      measureText: vi.fn(() => ({ width: 20 })),
-      fillText: vi.fn(),
-    } as unknown as CanvasRenderingContext2D;
+    const overlayCtx = createOverlayCtx();
 
     createDetectionPipeline({
       camera,
@@ -478,19 +413,7 @@ describe('createDetectionPipeline', () => {
       infer: vi.fn().mockResolvedValue(new Float32Array(512).fill(3)),
       dispose: vi.fn(),
     };
-    const overlayCtx = {
-      clearRect: vi.fn(),
-      save: vi.fn(),
-      restore: vi.fn(),
-      strokeStyle: '',
-      lineWidth: 0,
-      strokeRect: vi.fn(),
-      font: '',
-      fillStyle: '',
-      fillRect: vi.fn(),
-      measureText: vi.fn(() => ({ width: 20 })),
-      fillText: vi.fn(),
-    } as unknown as CanvasRenderingContext2D;
+    const overlayCtx = createOverlayCtx();
 
     createDetectionPipeline({
       camera,
@@ -531,19 +454,7 @@ describe('createDetectionPipeline', () => {
       infer: vi.fn().mockResolvedValue(new Float32Array(512).fill(3)),
       dispose: vi.fn(),
     };
-    const overlayCtx = {
-      clearRect: vi.fn(),
-      save: vi.fn(),
-      restore: vi.fn(),
-      strokeStyle: '',
-      lineWidth: 0,
-      strokeRect: vi.fn(),
-      font: '',
-      fillStyle: '',
-      fillRect: vi.fn(),
-      measureText: vi.fn(() => ({ width: 20 })),
-      fillText: vi.fn(),
-    } as unknown as CanvasRenderingContext2D;
+    const overlayCtx = createOverlayCtx();
 
     createDetectionPipeline({
       camera,

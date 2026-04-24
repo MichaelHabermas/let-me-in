@@ -110,7 +110,7 @@ describe('mountGateIntoHost', () => {
     const dbName = `gate-mount-live-${crypto.randomUUID()}`;
     const persistence = createDexiePersistence(dbName);
     const rt = createTestGateRuntime();
-    const seed = rt.getDatabaseSeedSettings();
+    const seed = rt.databaseSeedSettings!;
     await persistence.initDatabase(seed);
 
     const raw = new Float32Array(512).map((_, i) => (i < 8 ? (i + 1) * 0.1 : 0));

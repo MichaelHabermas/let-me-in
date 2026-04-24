@@ -13,7 +13,7 @@ describe('mountLogPageIntoApp', () => {
     const dbName = `log-page-${crypto.randomUUID()}`;
     const persistence = createDexiePersistence(dbName);
     const rt = createTestGateRuntime();
-    await persistence.initDatabase(rt.getDatabaseSeedSettings());
+    await persistence.initDatabase(rt.databaseSeedSettings!);
 
     await persistence.usersRepo.put({
       id: 'u1',
@@ -53,7 +53,7 @@ describe('mountLogPageIntoApp', () => {
     const dbName = `log-page-f-${crypto.randomUUID()}`;
     const persistence = createDexiePersistence(dbName);
     const rt = createTestGateRuntime();
-    await persistence.initDatabase(rt.getDatabaseSeedSettings());
+    await persistence.initDatabase(rt.databaseSeedSettings!);
     await persistence.usersRepo.put({
       id: 'u1',
       name: 'One',
@@ -99,7 +99,7 @@ describe('mountLogPageIntoApp', () => {
     const dbName = `log-page-s-${crypto.randomUUID()}`;
     const persistence = createDexiePersistence(dbName);
     const rt = createTestGateRuntime();
-    await persistence.initDatabase(rt.getDatabaseSeedSettings());
+    await persistence.initDatabase(rt.databaseSeedSettings!);
     await persistence.usersRepo.put({
       id: 'u1',
       name: 'One',
@@ -147,7 +147,7 @@ describe('mountLogPageIntoApp', () => {
     const dbName = `log-page-csv-${crypto.randomUUID()}`;
     const persistence = createDexiePersistence(dbName);
     const rt = createTestGateRuntime();
-    await persistence.initDatabase(rt.getDatabaseSeedSettings());
+    await persistence.initDatabase(rt.databaseSeedSettings!);
     await persistence.usersRepo.put({
       id: 'u1',
       name: 'One',

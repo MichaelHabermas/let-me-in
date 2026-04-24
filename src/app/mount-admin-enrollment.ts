@@ -1,13 +1,13 @@
 import type { AdminAuth } from './auth';
 import { syncAdminEnrollmentButtons } from './admin-enrollment-buttons';
-import { bindAdminEnrollmentImportController } from './admin-enrollment-import-controller';
 import { fillEnrollmentRoleSelect } from './admin-enrollment-role-select';
-import { createAdminEnrollmentRosterController } from './admin-enrollment-roster-controller';
 import { createAdminEnrollmentSessionController } from './admin-enrollment-session-factory';
 import { createAdminEnrollmentDom, type AdminEnrollmentDom } from './admin-enrollment-dom';
 import type { EnrollmentController } from './enroll';
 import type { User } from '../domain/types';
 import type { DexiePersistence } from '../infra/persistence';
+import { renderAdminUserRoster } from './admin-user-roster';
+import { runBulkImport } from './bulk-import';
 import type { GateRuntime } from './runtime-settings';
 
 export type MountAdminEnrollmentOptions = {
@@ -28,7 +28,7 @@ function bindEnrollmentSaveClick(
 ): void {
   dom.saveBtn.addEventListener('click', () => {
     const name = dom.nameInput.value.trim();
-    const ui = rt.getAdminUiStrings();
+    const ui = rt.adminUiStrings;
     if (!name) {
       dom.statusEl.textContent = ui.enrollNameRequired;
       return;
@@ -85,6 +85,80 @@ function bindEnrollmentUi(
   bindEnrollmentSaveClick(dom, ctrl, rt, syncButtons, refreshRoster);
 }
 
+function createRosterController(params: {
+  dom: AdminEnrollmentDom;
+  rt: GateRuntime;
+  persistence: DexiePersistence;
+  beginEdit: (user: User) => void;
+}): { refresh: () => Promise<void>; dispose: () => void } {
+  const { dom, rt, persistence, beginEdit } = params;
+  let revokeRosterUrls = () => {};
+  const refresh = async () => {
+    await persistence.initDatabase(rt.databaseSeedSettings!);
+    revokeRosterUrls();
+    const users = await persistence.usersRepo.toArray();
+    const copy = rt.adminUiStrings;
+    revokeRosterUrls = renderAdminUserRoster(dom.rosterTbody, users, copy, {
+      onEdit: (user) => beginEdit(user),
+      onDelete: (user) => {
+        if (!window.confirm(copy.rosterDeleteConfirm)) return;
+        void persistence.usersRepo.deleteWithAnonymization(user.id).then(async () => {
+          await refresh();
+        });
+      },
+    });
+  };
+  return { refresh, dispose: () => revokeRosterUrls() };
+}
+
+function bindImportController(params: {
+  dom: AdminEnrollmentDom;
+  rt: GateRuntime;
+  persistence: DexiePersistence;
+  refreshRoster: () => Promise<void>;
+  useStubEnrollment: boolean;
+}): () => void {
+  const { dom, rt, persistence, refreshRoster, useStubEnrollment } = params;
+  const onImportPick = () => dom.importFileInput.click();
+  dom.importButton.addEventListener('click', onImportPick);
+  const onImportFileChange = () => {
+    const file = dom.importFileInput.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = typeof reader.result === 'string' ? reader.result : '';
+      void (async () => {
+        dom.importStatusEl.textContent = '';
+        const copy = rt.adminUiStrings;
+        const res = await runBulkImport(persistence, text, {
+          useStubEnrollment,
+          onProgress(current, total) {
+            dom.importStatusEl.textContent = copy.rosterImportProgress
+              .replaceAll('{current}', String(current))
+              .replaceAll('{total}', String(total));
+          },
+          confirmDuplicateNames() {
+            return Promise.resolve(window.confirm(copy.rosterImportConfirmDuplicates));
+          },
+        });
+        if (!res.proceededAfterDuplicateConfirm) {
+          dom.importFileInput.value = '';
+          return;
+        }
+        dom.importStatusEl.textContent = copy.rosterImportDone;
+        dom.importFileInput.value = '';
+        await refreshRoster();
+      })();
+    };
+    reader.readAsText(file);
+  };
+  dom.importFileInput.addEventListener('change', onImportFileChange);
+  return () => {
+    dom.importButton.removeEventListener('click', onImportPick);
+    dom.importFileInput.removeEventListener('change', onImportFileChange);
+  };
+}
+
 /** Authenticated admin shell: roster + import + enrollment panel. */
 export function mountAuthenticatedAdminEnrollment(opts: MountAdminEnrollmentOptions): () => void {
   const { root, rt, persistence, auth, rerender, useStubEnrollment = false } = opts;
@@ -97,7 +171,7 @@ export function mountAuthenticatedAdminEnrollment(opts: MountAdminEnrollmentOpti
   const syncButtons = () => syncAdminEnrollmentButtons(dom, ctrl, rt);
 
   const beginEdit = (user: User) => {
-    const copy = rt.getAdminUiStrings();
+    const copy = rt.adminUiStrings;
     dom.nameInput.value = user.name;
     fillEnrollmentRoleSelect(dom.roleSelect, user.role, {
       enrollRolePlaceholder: copy.enrollRolePlaceholder,
@@ -106,7 +180,7 @@ export function mountAuthenticatedAdminEnrollment(opts: MountAdminEnrollmentOpti
     ctrl.beginEditFromUser(user);
     syncButtons();
   };
-  const roster = createAdminEnrollmentRosterController({ dom, rt, persistence, beginEdit });
+  const roster = createRosterController({ dom, rt, persistence, beginEdit });
 
   dom.logoutBtn.addEventListener('click', () => {
     auth.logout();
@@ -123,7 +197,7 @@ export function mountAuthenticatedAdminEnrollment(opts: MountAdminEnrollmentOpti
 
   syncButtons();
   bindEnrollmentUi(dom, ctrl, rt, syncButtons, roster.refresh);
-  const disposeImport = bindAdminEnrollmentImportController({
+  const disposeImport = bindImportController({
     dom,
     rt,
     persistence,
