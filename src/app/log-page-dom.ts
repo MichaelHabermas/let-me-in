@@ -83,9 +83,7 @@ export function buildLogToolbar(unknown: string, exportLabel: string): LogToolba
 }
 /* eslint-enable max-lines-per-function */
 
-export function buildLogTable(
-  onHeaderClick: (key: LogSortKey) => void,
-): {
+export function buildLogTable(onHeaderClick: (key: LogSortKey) => void): {
   table: HTMLTableElement;
   tbody: HTMLTableSectionElement;
 } {

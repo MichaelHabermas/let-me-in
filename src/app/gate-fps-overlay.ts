@@ -1,6 +1,10 @@
 import type { Camera } from './camera';
 
-export function maybeMountFpsOverlay(camera: Camera, host: HTMLElement, enabled: boolean): () => void {
+export function maybeMountFpsOverlay(
+  camera: Camera,
+  host: HTMLElement,
+  enabled: boolean,
+): () => void {
   if (!enabled) return () => {};
 
   const fpsEl = document.createElement('div');

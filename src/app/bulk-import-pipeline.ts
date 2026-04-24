@@ -18,7 +18,10 @@ type ImportDetector = {
   dispose(): Promise<void>;
 };
 
-function makeImportPipeline(useStubEnrollment: boolean): { detector: ImportDetector; embedder: FaceEmbedder } {
+function makeImportPipeline(useStubEnrollment: boolean): {
+  detector: ImportDetector;
+  embedder: FaceEmbedder;
+} {
   if (useStubEnrollment) {
     return {
       detector: createE2eEnrollmentDetector(),
@@ -39,7 +42,9 @@ async function importOneRow(
   useStubEnrollment: boolean,
 ): Promise<BulkImportRowResult> {
   try {
-    const frame = useStubEnrollment ? greyStubImportFrame(320, 240) : await base64ToImageData(row.imageBase64);
+    const frame = useStubEnrollment
+      ? greyStubImportFrame(320, 240)
+      : await base64ToImageData(row.imageBase64);
     const dets = await detector.infer(frame);
     if (dets.length !== 1) {
       return {

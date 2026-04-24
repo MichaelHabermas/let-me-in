@@ -16,14 +16,19 @@ export async function withLiveAccessDeps(
   }
 
   const uiStrings = deps.accessUiStrings ?? FALLBACK_GATE_ACCESS_UI_STRINGS;
-  const accessUi = elements.decisionEl && createGateAccessUiController(elements.decisionEl, uiStrings);
+  const accessUi =
+    elements.decisionEl && createGateAccessUiController(elements.decisionEl, uiStrings);
   const audioCues = createAccessAudioCues();
-  const evaluateDecision = await loadLiveAccessDecisionFn(deps.persistence, deps.databaseSeedFallback, {
-    onDecision: (ev) => {
-      accessUi?.present(ev);
-      audioCues.play(ev.policy.decision);
+  const evaluateDecision = await loadLiveAccessDecisionFn(
+    deps.persistence,
+    deps.databaseSeedFallback,
+    {
+      onDecision: (ev) => {
+        accessUi?.present(ev);
+        audioCues.play(ev.policy.decision);
+      },
     },
-  });
+  );
   const appendAccessLog: AppendAccessLogFn | undefined =
     deps.appendAccessLog ?? ((payload) => deps.persistence!.accessLogRepo.appendDecision(payload));
   return { ...deps, evaluateDecision, appendAccessLog };
