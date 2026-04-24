@@ -18,14 +18,16 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:scenarios": "playwright test --project=scenarios",
+    "tests": "pnpm test && pnpm test:scenarios",
     "bench:detection": "node tests/accuracy/bench-detection.js",
     "bench:e2e": "node tests/accuracy/bench-e2e.js",
     "bench:cold-load": "node tests/accuracy/bench-cold-load.js",
+    "bench:all": "pnpm run bench:detection && pnpm run bench:e2e && pnpm run bench:cold-load",
     "verify:submission": "node scripts/verify-submission.mjs",
     "seed:users": "vitest run --config vitest.seed.config.ts",
     "sync:netlify": "node scripts/sync-netlify-redirects.mjs",
     "verify:netlify": "node scripts/sync-netlify-redirects.mjs --check",
-    "sweep": "pnpm run typecheck && pnpm run lint && pnpm run format && pnpm test",
+    "sweep": "pnpm run typecheck && pnpm run lint && pnpm run format && pnpm run tests",
     "construct": "pnpm run sweep && pnpm run build"
   },
   "dependencies": {

@@ -37,12 +37,25 @@ export async function enrollOneStubUser(page: Page, name = 'Scenario User'): Pro
 
 export async function acceptGateConsent(page: Page): Promise<void> {
   await page.goto('/');
+  const toggle = page.getByTestId('gate-camera-toggle');
+  await toggle.waitFor({ state: 'visible' });
   const consentBtn = page.getByRole('button', { name: /understand/i });
-  if (await consentBtn.isVisible().catch(() => false)) {
-    await consentBtn.click();
-  }
-  await page.getByTestId('gate-camera-toggle').waitFor({ state: 'visible' });
-  await expect(page.getByTestId('gate-camera-toggle')).toBeEnabled({ timeout: 15_000 });
+  let consentClicked = false;
+  // Consent modal mounts after async IndexedDB read — poll until toggle is released
+  // (cold first load used to miss a single immediate isVisible check).
+  await expect
+    .poll(
+      async () => {
+        if (await toggle.isEnabled()) return true;
+        if (!consentClicked && (await consentBtn.isVisible().catch(() => false))) {
+          await consentBtn.click();
+          consentClicked = true;
+        }
+        return await toggle.isEnabled();
+      },
+      { timeout: 15_000 },
+    )
+    .toBe(true);
 }
 
 export async function startGateCamera(page: Page): Promise<void> {
