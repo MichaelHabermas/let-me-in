@@ -82,7 +82,7 @@ See **[docs/DEPLOY.md](docs/DEPLOY.md)** for admin credential env vars and rotat
 - `[netlify.toml](netlify.toml)` — build command and publish directory.
 - `[public/_headers](public/_headers)` — long cache for `/models/`* and `*.onnx`.
 - Canonical site (from PRD): `https://let-me-in-gatekeeper.netlify.app` — after deploy, verify headers with  
-`curl -I https://let-me-in-gatekeeper.netlify.app/models/yolov9t.onnx`  
+`curl -I https://let-me-in-gatekeeper.netlify.app/models/yolov8n-face.onnx`  
 (expect `Cache-Control: public, max-age=3600`).
 
 ## IndexedDB

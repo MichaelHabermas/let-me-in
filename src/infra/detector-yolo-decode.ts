@@ -1,17 +1,20 @@
 /**
- * YOLO output decode + NMS (no ORT). Safe for Web Worker.
+ * YOLOv8n-face output decode + NMS (no ORT). Safe for Web Worker.
+ * Model head: [1, 5, 8400] = cx, cy, w, h, face class logit; input `images` 640×640.
  */
 
 import type { Detection, LetterboxMeta } from './detector-core-types';
+import {
+  DETECTOR_NUM_ANCHORS,
+  DETECTOR_OUTPUT_CHANNELS,
+  FACE_CLASS_ID,
+} from './detector-core-types';
 import { f32At } from './typed-index';
 
-const PERSON_CLASS = 0;
 const CONF_THRESHOLD = 0.35;
-const TOP_CLASS_MARGIN = 0.08;
 const NMS_IOU = 0.45;
-const HEAD_BAND = 1 / 3;
-/** Skip COCO “person” boxes that are extreme slivers (often background false positives). */
-const MAX_PERSON_ASPECT = 4;
+/** Reject person-shaped slivers; face boxes are usually not extreme bars. */
+const MAX_FACE_ASPECT = 3;
 
 type BoxModel = { x1: number; y1: number; x2: number; y2: number; score: number; classId: number };
 
@@ -68,88 +71,64 @@ function nms(boxes: BoxModel[], iouThresh: number): BoxModel[] {
   return keep;
 }
 
-function applyHeadBand(box: BoxModel): BoxModel {
-  const h = box.y2 - box.y1;
-  const ny2 = box.y1 + h * HEAD_BAND;
-  return { ...box, y2: ny2 };
-}
-
-function personBoxAspectOk(cx: number, cy: number, w: number, h: number): boolean {
+function faceBoxShapeOk(w: number, h: number): boolean {
   const bw = Math.abs(w);
   const bh = Math.abs(h);
   if (bw < 1e-3 || bh < 1e-3) return false;
   const ar = bw / bh;
   const inv = bh / bw;
-  return ar <= MAX_PERSON_ASPECT && inv <= MAX_PERSON_ASPECT;
+  return ar <= MAX_FACE_ASPECT && inv <= MAX_FACE_ASPECT;
 }
 
-function decodePersonBoxForAnchor(
+function decodeFaceBoxForAnchor(
   predictions: Float32Array,
   meta: LetterboxMeta,
   i: number,
   numAnchors: number,
-  numClasses: number,
 ): BoxModel | null {
   const cx = f32At(predictions, i);
   const cy = f32At(predictions, numAnchors + i);
   const w = f32At(predictions, 2 * numAnchors + i);
   const h = f32At(predictions, 3 * numAnchors + i);
-
-  if (!personBoxAspectOk(cx, cy, w, h)) return null;
-
-  let bestC = 0;
-  let bestScore = -Infinity;
-  let secondScore = -Infinity;
-  for (let c = 0; c < numClasses; c++) {
-    const raw = f32At(predictions, (4 + c) * numAnchors + i);
-    const s = classProbability(raw);
-    if (s > bestScore) {
-      secondScore = bestScore;
-      bestScore = s;
-      bestC = c;
-    } else if (s > secondScore) {
-      secondScore = s;
-    }
-  }
-
-  if (bestC !== PERSON_CLASS || bestScore < CONF_THRESHOLD) return null;
-  if (bestScore - secondScore < TOP_CLASS_MARGIN) return null;
-
+  if (!faceBoxShapeOk(w, h)) return null;
+  const raw = f32At(predictions, (4 + FACE_CLASS_ID) * numAnchors + i);
+  const bestScore = classProbability(raw);
+  if (bestScore < CONF_THRESHOLD) return null;
   const x1 = cx - w / 2;
   const y1 = cy - h / 2;
   const x2 = cx + w / 2;
   const y2 = cy + h / 2;
-
-  const person: BoxModel = { x1, y1, x2, y2, score: bestScore, classId: PERSON_CLASS };
-  const banded = applyHeadBand(person);
-  const [sx1, sy1, sx2, sy2] = modelToSource(banded.x1, banded.y1, banded.x2, banded.y2, meta);
+  const face: BoxModel = { x1, y1, x2, y2, score: bestScore, classId: FACE_CLASS_ID };
+  const [sx1, sy1, sx2, sy2] = modelToSource(face.x1, face.y1, face.x2, face.y2, meta);
   return {
     x1: sx1,
     y1: sy1,
     x2: sx2,
     y2: sy2,
     score: bestScore,
-    classId: PERSON_CLASS,
+    classId: FACE_CLASS_ID,
   };
 }
 
+/**
+ * Decodes a YOLOv8 single-class face head `float32 [5, 8400]` in row order (5×8400) — same
+ * memory layout as ONNX `[1,5,8400]`.
+ */
 export function decodeYoloPredictions(predictions: Float32Array, meta: LetterboxMeta): Detection[] {
-  const numAnchors = 8400;
-  const numClasses = 80;
+  const numAnchors = DETECTOR_NUM_ANCHORS;
+  if (predictions.length < numAnchors * DETECTOR_OUTPUT_CHANNELS) {
+    throw new Error(
+      `detector head too short: length ${predictions.length}, need ${numAnchors * DETECTOR_OUTPUT_CHANNELS}`,
+    );
+  }
   const boxes: BoxModel[] = [];
-
   for (let i = 0; i < numAnchors; i++) {
-    const box = decodePersonBoxForAnchor(predictions, meta, i, numAnchors, numClasses);
+    const box = decodeFaceBoxForAnchor(predictions, meta, i, numAnchors);
     if (box) boxes.push(box);
   }
-
   const kept = nms(boxes, NMS_IOU);
   return kept.map((b) => {
     const bbox: [number, number, number, number] = [b.x1, b.y1, b.x2, b.y2];
-    return {
-      bbox,
-      confidence: b.score,
-      classId: b.classId,
-    };
+    return { bbox, confidence: b.score, classId: b.classId };
   });
 }

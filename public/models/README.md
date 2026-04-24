@@ -1,15 +1,17 @@
 # Bundled ONNX models
 
-## `yolov9t.onnx`
+## `yolov8n-face.onnx`
 
-- **Source:** [Hugging Face — Kalray/yolov9](https://huggingface.co/Kalray/yolov9) (`yolov9t.onnx`, `resolve/main`).
-- **Approximate size:** ~8.33 MiB (FP32 COCO YOLOv9-tiny).
-- **SHA-256:** `619a8a29990018fc6faf7f7a7bdafa19994f3ee1d312223b1eda9a5d00edf3ba`
+- **Source:** [Hugging Face — deepghs/yolo-face](https://huggingface.co/deepghs/yolo-face) (`yolov8n-face/model.onnx`, `resolve/main`) — WIDER-Style face detection, YOLOv8-nano, single **face** class.
+- **License / terms:** use subject to the Hugging Face model card and original dataset and third-party model licenses; suitable for the demo/assignment; verify for production.
+- **Approximate size:** ~12.0 MiB (12 139 175 bytes FP32 on disk in this build).
+- **I/O (onnxruntime-web / ORT):** input name **`images`**, `float32` NCHW **`[1, 3, 640, 640]`** normalized to **[0,1]**; output name **`output0`**, `float32` **`[1, 5, 8400]`** = four bbox channels (cx, cy, w, h) + one class (face) per anchor; **NMS in JS** ([`src/infra/detector-yolo-decode.ts`](../src/infra/detector-yolo-decode.ts)) per browser deployment.
+- **SHA-256:** `fd27189bfe5750a017648445700473459a6d02e7c3b0a3bfd8a54af77dd3b046`
 
 Verify locally:
 
 ```bash
-shasum -a 256 public/models/yolov9t.onnx
+shasum -a 256 public/models/yolov8n-face.onnx
 ```
 
 ## `w600k_mbf.onnx`

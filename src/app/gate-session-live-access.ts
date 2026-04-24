@@ -1,7 +1,4 @@
-import {
-  createAccessDecisionEvaluator,
-  type LiveAccessDecisionUi,
-} from './access-decision-engine';
+import { createAccessDecisionEvaluator, type LiveAccessDecisionUi } from './access-decision-engine';
 import { createAccessAudioCues } from './audio';
 import {
   createGateAccessUiController,

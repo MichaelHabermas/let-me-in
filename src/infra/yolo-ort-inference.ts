@@ -23,11 +23,13 @@ export async function runYoloDetectorInference(
     DETECTOR_INPUT_SIZE,
     DETECTOR_INPUT_SIZE,
   ]);
+  const outName = session.outputNames[0];
+  if (!outName) throw new Error('detector model has no outputs');
   const outputs = await session.run({ images: tensor });
-  const pred = outputs.predictions as ort.Tensor;
+  const pred = outputs[outName] as ort.Tensor;
   const data = pred.data as Float32Array;
-  if (pred.dims[0] !== 1 || pred.dims[1] !== 84 || pred.dims[2] !== 8400) {
-    throw new Error(`Unexpected predictions shape: ${JSON.stringify(pred.dims)}`);
+  if (pred.dims[0] !== 1 || pred.dims[1] !== 5 || pred.dims[2] !== 8400) {
+    throw new Error(`Unexpected YOLOv8-face head shape: ${JSON.stringify(pred.dims)}`);
   }
   return decodeYoloPredictions(data, meta);
 }

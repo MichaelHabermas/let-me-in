@@ -7,7 +7,7 @@
 - [`docs/PRD.md`](PRD.md) remains the execution PRD for shipped epics **E1–E10**.
 - **PRD-2** closes gaps between the running product + repo artifacts and **literal** `SPECS.txt` requirements, with measurable evidence and submission completeness.
 - Authority order (unchanged): **`SPECS.txt` > `PRD.md` > `PRE-WORK.md`**. On conflict, **`SPECS.txt` wins**; PRD-2 may supersede older PRD wording where PRD intentionally deferred a SPEC item.
-- For PRD-2 scope, **Open Question Q1** below supersedes [`docs/PRD.md`](PRD.md) §6 Open Question #4 (detector narrative) until E13 is complete or waived.
+- For PRD-2 scope, **Open Question Q1** superseded the historical **PRD.md** §6 Open Question #4 narrative during closure; **E13** (Path A: `yolov8n-face.onnx` + JS NMS) is the shipped detector. **Path B** remains only as a documented `WAIVED` + human-approval path.
 
 ---
 
@@ -74,7 +74,7 @@ Each row maps to exactly one **Closing Epic**. Detailed work lives under **§5**
 
 | Area | SPECS reference | Gap | Target | Closing Epic |
 | --- | --- | --- | --- | --- |
-| Detector semantics | Face Detection (~L72–L76); Deep dive (~L154–L182) | COCO person + head heuristic vs face-specialized | **Path A (default):** face-class or face-specialized ONNX + decode/NMS aligned; OR **Path B:** `WAIVED` after documented Path A attempt + two-stage + copy | **E13** |
+| Detector semantics | Face Detection (~L72–L76); Deep dive (~L154–L182) | COCO person + head heuristic vs face-specialized | **Path A (shipped):** `yolov8n-face.onnx` (YOLOv8n, single face class) + decode/NMS; OR **Path B:** `WAIVED` only if E13 `BLOCKER` + human approval | **E13** `DONE` |
 | Model load UX | Deep dive (~L163–L164) | Text status only | Determinate bar where `Content-Length` exists; indeterminate + stage labels otherwise; graceful failure + retry | **E11** |
 | Mobile cameras | Webcam (~L72) | `facingMode` from config only | Gate + Admin: device picker or flip; persist in `settings` | **E12** — DONE |
 | Preview latency | Test 1 (~L127–L127) | Not asserted in CI/docs | Document + measure in [`docs/BENCHMARKS.md`](BENCHMARKS.md); tune path if missed | **E16** |
@@ -264,7 +264,7 @@ Each row maps to exactly one **Closing Epic**. Detailed work lives under **§5**
 
 ---
 
-### Epic E13: Literal face detection (Path A default) — [ ]
+### Epic E13: Literal face detection (Path A default) — [x]
 
 **Goal:** Align running detector with SPECS **face** detection narrative (bounding boxes on **faces**), using **Path A** per §4 Q1.
 
@@ -272,53 +272,53 @@ Each row maps to exactly one **Closing Epic**. Detailed work lives under **§5**
 
 **Epic DoD:**
 
-- [ ] ONNX + decode path documented in [`public/models/README.md`](../public/models/README.md).
-- [ ] [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) states model I/O and why it satisfies SPECS face detection section.
-- [ ] Automated tests cover decode output shape / at least one golden vector or snapshot contract.
-- [ ] All E13 Tasks `- [x]` **or** §2 detector row `WAIVED` with Path B rationale.
+- [x] ONNX + decode path documented in [`public/models/README.md`](../public/models/README.md).
+- [x] [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) states model I/O and why it satisfies SPECS face detection section.
+- [x] Automated tests cover decode output shape / at least one golden vector or snapshot contract.
+- [x] All E13 Tasks `- [x]` **or** §2 detector row `WAIVED` with Path B rationale.
 
-#### User Story E13.S1: As the system, I run a face-appropriate detector in the browser — [ ]
+#### User Story E13.S1: As the system, I run a face-appropriate detector in the browser — [x]
 
-##### Feature E13.S1.F1: Model artifact and configuration — [ ]
+##### Feature E13.S1.F1: Model artifact and configuration — [x]
 
 **Files:** [`src/config.ts`](../src/config.ts), `public/models/*`, [`public/models/README.md`](../public/models/README.md).
 
-###### Task E13.S1.F1.T1: Select and vendor face-specialized ONNX; update `modelUrls.detector` — [ ]
+###### Task E13.S1.F1.T1: Select and vendor face-specialized ONNX; update `modelUrls.detector` — [x]
 
 - **Preconditions:** E11 complete (Epic-level)
 - **Steps:** Choose model consistent with SPECS; record license/size; add to `public/models` or documented CDN path per project rules.
 - **Acceptance test:** `pnpm run build` includes model or fetch URL valid on deploy; README lists input size and task.
 - **SPEC cite:** L72–L76, L154–L166.
 
-##### Feature E13.S1.F2: Decode and NMS aligned to new outputs — [ ]
+##### Feature E13.S1.F2: Decode and NMS aligned to new outputs — [x]
 
 **Files:** [`src/infra/detector-yolo-decode.ts`](../src/infra/detector-yolo-decode.ts), [`src/infra/detector-core-types.ts`](../src/infra/detector-core-types.ts), tests under [`tests/`](../tests/).
 
-###### Task E13.S1.F2.T1: Implement decode + NMS for chosen head — [ ]
+###### Task E13.S1.F2.T1: Implement decode + NMS for chosen head — [x]
 
 - **Preconditions:** E13.S1.F1.T1 done
 - **Steps:** Map tensors to pixel bboxes + scores; filter to face-relevant classes if multi-class; unit-test golden output.
 - **Acceptance test:** Vitest passes on fixed tensor input with expected boxes.
 - **SPEC cite:** L74–L76.
 
-##### Feature E13.S1.F3: Pipeline integration — [ ]
+##### Feature E13.S1.F3: Pipeline integration — [x]
 
 **Files:** [`src/app/detection-pipeline/`](../src/app/detection-pipeline/), [`src/app/pipeline.ts`](../src/app/pipeline.ts) if still orchestrating.
 
-###### Task E13.S1.F3.T1: End-to-end frame → bbox contract for gate and enrollment — [ ]
+###### Task E13.S1.F3.T1: End-to-end frame → bbox contract for gate and enrollment — [x]
 
 - **Preconditions:** E13.S1.F2.T1 done
 - **Steps:** Wire preprocess input size to new model; ensure crop/embed path receives face ROI per policy.
 - **Acceptance test:** Existing pipeline tests updated green; stub E2E still passes if applicable.
 - **SPEC cite:** L178–L187.
 
-#### User Story E13.S2: As an auditor, I can read accurate detector documentation — [ ]
+#### User Story E13.S2: As an auditor, I can read accurate detector documentation — [x]
 
-##### Feature E13.S2.F1: Architecture and model docs — [ ]
+##### Feature E13.S2.F1: Architecture and model docs — [x]
 
 **Files:** [`docs/ARCHITECTURE.md`](ARCHITECTURE.md), [`public/models/README.md`](../public/models/README.md).
 
-###### Task E13.S2.F1.T1: Update ARCHITECTURE detector section to match SPECS wording — [ ]
+###### Task E13.S2.F1.T1: Update ARCHITECTURE detector section to match SPECS wording — [x]
 
 - **Preconditions:** E13.S1.F3.T1 done
 - **Steps:** Replace COCO/person narrative with actual architecture; note quantization and ORT EPs.
@@ -763,7 +763,7 @@ Update the `(x/y tasks)` counts when Tasks flip to `- [x]`.
 | --- | --- | --- |
 | E11 | Model load progress + graceful failure | - [x] (4/4 tasks) |
 | E12 | Front/rear camera selection | - [x] (3/3 tasks) |
-| E13 | Literal face detection (Path A) | - [ ] (0/4 tasks) |
+| E13 | Literal face detection (Path A) | - [x] (4/4 tasks) |
 | E14 | Decision UI + threshold semantics | - [ ] (0/4 tasks) |
 | E15 | Multi-face overlay | - [ ] (0/2 tasks) |
 | E16 | Measured compliance | - [ ] (0/9 tasks) |

@@ -29,33 +29,28 @@ describe('preprocessToChwFloat (E3.S1.F2.T2)', () => {
   });
 });
 
-describe('decodeYoloPredictions (E3.S1.F2.T4)', () => {
-  it('returns no boxes when all class logits tie near zero (ambiguous anchors)', () => {
+describe('decodeYoloPredictions (E3 / E13 YOLOv8n-face [1,5,8400])', () => {
+  it('returns no boxes when face class logit is low for every anchor', () => {
     const meta = computeLetterboxMeta(1280, 720);
-    const buf = new Float32Array(84 * 8400);
+    const buf = new Float32Array(5 * 8400);
     for (let j = 0; j < 8400; j++) {
-      for (let c = 0; c < 80; c++) buf[(4 + c) * 8400 + j] = 0;
       buf[0 * 8400 + j] = 100;
       buf[1 * 8400 + j] = 100;
       buf[2 * 8400 + j] = 20;
       buf[3 * 8400 + j] = 20;
+      buf[4 * 8400 + j] = -10;
     }
     expect(decodeYoloPredictions(buf, meta).length).toBe(0);
   });
 
-  it('returns one person head-band box in source space for synthetic anchor', () => {
+  it('returns one face box in source space for synthetic high-confidence anchor', () => {
     const meta = computeLetterboxMeta(1280, 720);
-    const buf = new Float32Array(84 * 8400);
+    const buf = new Float32Array(5 * 8400);
     for (let j = 0; j < 8400; j++) {
-      for (let c = 0; c < 80; c++) {
-        buf[(4 + c) * 8400 + j] = -10;
-      }
-      buf[(4 + 1) * 8400 + j] = 6;
+      buf[4 * 8400 + j] = -10;
     }
-
     const i = 4200;
-    buf[(4 + 0) * 8400 + i] = 10;
-    buf[(4 + 1) * 8400 + i] = -10;
+    buf[4 * 8400 + i] = 10;
     buf[0 * 8400 + i] = 320;
     buf[1 * 8400 + i] = 320;
     buf[2 * 8400 + i] = 200;
@@ -70,7 +65,6 @@ describe('decodeYoloPredictions (E3.S1.F2.T4)', () => {
     expect(y1).toBeGreaterThanOrEqual(0);
     expect(x2).toBeLessThanOrEqual(1280);
     expect(y2).toBeLessThanOrEqual(720);
-    expect(y2 - y1).toBeLessThan(x2 - x1);
   });
 });
 
@@ -82,10 +76,10 @@ describe('createYoloDetector integration (E3.S1.F2.T3)', () => {
   });
 
   it(
-    'loads yolov9t and infer returns finite bboxes',
+    'loads yolov8n-face and infer returns finite bboxes',
     { timeout: 120_000 },
     async () => {
-      const modelPath = path.join(repoRoot, 'public/models/yolov9t.onnx');
+      const modelPath = path.join(repoRoot, 'public/models/yolov8n-face.onnx');
       const modelBytes = new Uint8Array(readFileSync(modelPath));
       const det = createYoloDetector(
         {

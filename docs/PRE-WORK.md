@@ -6,19 +6,21 @@
 
 **Repo note:** `docs/PRE-SEARCH.md`, `docs/PRE-PRD.md`, and the `spikes/` tree were **removed from the working tree** after this synthesis. **Durable conclusions live here**; raw tables, repro commands, and the Epic 9 playbook live in **git history** if you need to recover them.
 
-**Override rule:** If anything here conflicts with `docs/SPECS.txt`, **`SPECS.txt` wins**. Treat conflicts as documentation bugs in this file, not as relaxable requirements.
+**Override rule:** If anything here conflicts with `docs/SPECS.txt`, `**SPECS.txt` wins**. Treat conflicts as documentation bugs in this file, not as relaxable requirements.
 
 ---
 
 ## Source hierarchy
 
-| Priority | Source | Role |
-| ---: | --- | --- |
-| 1 | `docs/SPECS.txt` | Immutable authority: MVP, pipeline, enrollment/logging, tests 1–8, performance floors, stretch list, AI cost categories, submission hooks. |
-| 2 | `docs/PRE-WORK.md` (this file) | Normalized project brief: `[HARD FLOOR]` / `[LOCKED]` / `[PROVEN]` / `[OPEN]` / `[PRD MUST COVER]`. |
-| 3 | Git history (optional) | Former `PRE-SEARCH`, `PRE-PRD`, and `spikes/**` only if you need verbatim logs, repro steps, or the archived accuracy playbook. |
 
-**Conflict rule:** **`SPECS.txt`** overrides this file. For anything ambiguous here, prefer the **most recent intentional edit** to `PRE-WORK.md` over stale git snapshots.
+| Priority | Source                         | Role                                                                                                                                       |
+| -------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1        | `docs/SPECS.txt`               | Immutable authority: MVP, pipeline, enrollment/logging, tests 1–8, performance floors, stretch list, AI cost categories, submission hooks. |
+| 2        | `docs/PRE-WORK.md` (this file) | Normalized project brief: `[HARD FLOOR]` / `[LOCKED]` / `[PROVEN]` / `[OPEN]` / `[PRD MUST COVER]`.                                        |
+| 3        | Git history (optional)         | Former `PRE-SEARCH`, `PRE-PRD`, and `spikes/`** only if you need verbatim logs, repro steps, or the archived accuracy playbook.            |
+
+
+**Conflict rule:** `**SPECS.txt`** overrides this file. For anything ambiguous here, prefer the **most recent intentional edit** to `PRE-WORK.md` over stale git snapshots.
 
 ---
 
@@ -26,21 +28,23 @@
 
 Use this when mapping prose in older notes to the **current** tree (supersedes pre-refactor filenames in archived spikes or mental models that put the gate only under `src/ui/`).
 
-| Concern | Where it lives |
-| --- | --- |
-| HTML entrypoints calling bootstrap | `src/main.ts`, `src/admin.ts`, `src/log.ts` — each uses `void bootstrapApp({ mount, persistence? })` from `src/app/bootstrap-app.ts`. |
-| HTTPS check + IndexedDB init + mount | `src/app/bootstrap-app.ts` (inject `persistence` in tests via `createDexiePersistence` from `src/infra/persistence.ts`). |
-| Gate page DOM + camera preview + YOLO overlay | `src/app/mount-gate.ts` + `src/app/gate-session.ts` (`wireGatePreviewSession`, optional `yoloDetector` + `#detector-overlay`) + `src/app/pipeline.ts` + `src/app/bbox-overlay.ts` + `src/app/gate-access-ui-controller.ts` + `src/app/gate-consent-bootstrap.ts` + `src/app/consent.ts` + `src/ui/components/decision-banner.ts` + `src/ui/components/side-by-side.ts` + `src/ui/components/consent.ts`. |
-| Model load progress UI (E11) | `src/app/model-load-status-ui.ts` + `src/app/parallel-model-load.ts` + `src/app/gate-session-detector-load.ts`; byte progress via `src/infra/fetch-model-bytes.ts` + `onLoadProgress` on `createYoloDetector` / `createFaceEmbedder`; worker `init-progress` in `src/infra/yolo-detector-worker-protocol.ts`. |
-| Face crop + InsightFace embedder ONNX | `src/app/crop.ts` (square margin crop, 112² resize) + `src/infra/embedder-ort.ts` (`createFaceEmbedder`, `toEmbedderTensor`) + `src/app/match.ts` (`l2normalize`) composed by `embedFace` in `src/app/pipeline.ts`. |
-| Org titles, camera copy, preview canvas size, DB seed snapshot, dev FPS flag | `src/app/gate-runtime.ts` (`resolveGateRuntime()`). |
-| Default IndexedDB port | `src/infra/persistence.ts` (`getDefaultPersistence`, repo facades, `createDexiePersistence` for isolation). |
-| `onnxruntime-web` import boundary | `src/infra/ort-session-factory.ts` (+ re-exports in `onnx-runtime.ts`); ESLint `no-restricted-imports` for `app/*` and `ui/*` only (`eslint.config.ts`). |
-| Pure threshold → decision helper | `src/domain/access-policy.ts` (`decideFromMatch`); app façade `src/app/policy.ts` (`decide`). |
-| Shared row / match types | `src/domain/types.ts`. |
-| Vite multi-page inputs, dev pretty URLs, Netlify redirect TOML canonical string | `multi-page.ts`; keep `netlify.toml` aligned with `pnpm sync:netlify` or `pnpm verify:netlify` (see `README.md`). |
-| Thin admin/log HTML shells | `src/admin.ts` mounts via `src/app/mount-admin-shell.ts` / `mountAdminView`; `src/log.ts` → `src/app/mount-log-page.ts`; `src/ui/page-shell.ts`. |
-| Admin roster + bulk import UI | `src/app/mount-admin-enrollment.ts` + `src/app/admin-enrollment-dom.ts` + `src/app/admin-user-roster.ts` + `src/app/bulk-import.ts` (parser in `bulk-import-parse.ts`). |
+
+| Concern                                                                         | Where it lives                                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| HTML entrypoints calling bootstrap                                              | `src/main.ts`, `src/admin.ts`, `src/log.ts` — each uses `void bootstrapApp({ mount, persistence? })` from `src/app/bootstrap-app.ts`.                                                                                                                                                                                                                                                                    |
+| HTTPS check + IndexedDB init + mount                                            | `src/app/bootstrap-app.ts` (inject `persistence` in tests via `createDexiePersistence` from `src/infra/persistence.ts`).                                                                                                                                                                                                                                                                                 |
+| Gate page DOM + camera preview + YOLO overlay                                   | `src/app/mount-gate.ts` + `src/app/gate-session.ts` (`wireGatePreviewSession`, optional `yoloDetector` + `#detector-overlay`) + `src/app/pipeline.ts` + `src/app/bbox-overlay.ts` + `src/app/gate-access-ui-controller.ts` + `src/app/gate-consent-bootstrap.ts` + `src/app/consent.ts` + `src/ui/components/decision-banner.ts` + `src/ui/components/side-by-side.ts` + `src/ui/components/consent.ts`. |
+| Model load progress UI (E11)                                                    | `src/app/model-load-status-ui.ts` + `src/app/parallel-model-load.ts` + `src/app/gate-session-detector-load.ts`; byte progress via `src/infra/fetch-model-bytes.ts` + `onLoadProgress` on `createYoloDetector` / `createFaceEmbedder`; worker `init-progress` in `src/infra/yolo-detector-worker-protocol.ts`.                                                                                            |
+| Face crop + InsightFace embedder ONNX                                           | `src/app/crop.ts` (square margin crop, 112² resize) + `src/infra/embedder-ort.ts` (`createFaceEmbedder`, `toEmbedderTensor`) + `src/app/match.ts` (`l2normalize`) composed by `embedFace` in `src/app/pipeline.ts`.                                                                                                                                                                                      |
+| Org titles, camera copy, preview canvas size, DB seed snapshot, dev FPS flag    | `src/app/gate-runtime.ts` (`resolveGateRuntime()`).                                                                                                                                                                                                                                                                                                                                                      |
+| Default IndexedDB port                                                          | `src/infra/persistence.ts` (`getDefaultPersistence`, repo facades, `createDexiePersistence` for isolation).                                                                                                                                                                                                                                                                                              |
+| `onnxruntime-web` import boundary                                               | `src/infra/ort-session-factory.ts` (+ re-exports in `onnx-runtime.ts`); ESLint `no-restricted-imports` for `app/*` and `ui/*` only (`eslint.config.ts`).                                                                                                                                                                                                                                                 |
+| Pure threshold → decision helper                                                | `src/domain/access-policy.ts` (`decideFromMatch`); app façade `src/app/policy.ts` (`decide`).                                                                                                                                                                                                                                                                                                            |
+| Shared row / match types                                                        | `src/domain/types.ts`.                                                                                                                                                                                                                                                                                                                                                                                   |
+| Vite multi-page inputs, dev pretty URLs, Netlify redirect TOML canonical string | `multi-page.ts`; keep `netlify.toml` aligned with `pnpm sync:netlify` or `pnpm verify:netlify` (see `README.md`).                                                                                                                                                                                                                                                                                        |
+| Thin admin/log HTML shells                                                      | `src/admin.ts` mounts via `src/app/mount-admin-shell.ts` / `mountAdminView`; `src/log.ts` → `src/app/mount-log-page.ts`; `src/ui/page-shell.ts`.                                                                                                                                                                                                                                                         |
+| Admin roster + bulk import UI                                                   | `src/app/mount-admin-enrollment.ts` + `src/app/admin-enrollment-dom.ts` + `src/app/admin-user-roster.ts` + `src/app/bulk-import.ts` (parser in `bulk-import-parse.ts`).                                                                                                                                                                                                                                  |
+
 
 **Authoritative layout:** `docs/PRD.md` §2.7 repository tree + `README.md` **Source layout (current)**.
 
@@ -78,7 +82,7 @@ Normalized checklist—**not** a full reprint of `SPECS.txt`.
 **Access / logging**
 
 - Decision UI: **GRANTED** (green) / **DENIED** (red) with matched name + confidence.
-- **Entry log:** every attempt — timestamp, matched user or **`Unknown`**, similarity score, decision.
+- **Entry log:** every attempt — timestamp, matched user or `**Unknown`**, similarity score, decision.
 - **Log viewer:** admin page — **sortable, filterable** table.
 - **Side-by-side** enrolled reference vs captured frame on match (human verification).
 - **Cooldown:** **≥ 3 seconds** between verification attempts.
@@ -89,7 +93,7 @@ Normalized checklist—**not** a full reprint of `SPECS.txt`.
 1. Chrome: webcam within **2 s** of granting permission.
 2. Admin enroll: capture face, name/role, save OK.
 3. Enrolled user: **GRANTED** + correct name within **3 s**.
-4. Unenrolled: **DENIED** + **`Unknown`**.
+4. Unenrolled: **DENIED** + `**Unknown`**.
 5. Printed photo of enrolled user: ideally detect/flag (anti-spoof **stretch** elsewhere).
 6. Two people in frame: handle gracefully — reject or prompt single-person.
 7. Refresh: enrolled users persist (IDB).
@@ -97,9 +101,9 @@ Normalized checklist—**not** a full reprint of `SPECS.txt`.
 
 **MVP / grading performance targets**
 
-- Detection: **&lt; 500 ms**/frame (modern laptop, Chrome).
-- End-to-end verification: **&lt; 3 s** frame capture → access decision.
-- Cold model load: **&lt; 8 s** initial page load.
+- Detection: **< 500 ms**/frame (modern laptop, Chrome).
+- End-to-end verification: **< 3 s** frame capture → access decision.
+- Cold model load: **< 8 s** initial page load.
 - Similarity accuracy: **≥ 85%** TPR at **≤ 5%** FPR on **≥ 20** faces.
 - Capacity: **≥ 50** enrolled users without degraded matching.
 - Preview: **≥ 15 FPS** while detection runs in background.
@@ -107,10 +111,10 @@ Normalized checklist—**not** a full reprint of `SPECS.txt`.
 **Deep-dive pipeline targets (optimization tier — do not conflate with MVP floors)**
 
 - ONNX file **≤ 25 MB** (INT8 preferred).
-- Detection: **&lt; 200 ms** (WebGL laptop), **&lt; 800 ms** (WASM CPU-only).
-- Embedding: **&lt; 150 ms**/cropped face.
-- Total pipeline detect+embed+match: **&lt; 2 s**.
-- Tab memory: **&lt; 500 MB** during active scanning.
+- Detection: **< 200 ms** (WebGL laptop), **< 800 ms** (WASM CPU-only).
+- Embedding: **< 150 ms**/cropped face.
+- Total pipeline detect+embed+match: **< 2 s**.
+- Tab memory: **< 500 MB** during active scanning.
 
 **Stretch**
 
@@ -142,14 +146,14 @@ Normalized checklist—**not** a full reprint of `SPECS.txt`.
 - **Matching geometry:** **Cosine** on **L2-normalized** embeddings.
 - **Displayed / thresholded score:** `similarity01 = (1 + cosine) / 2` ∈ [0,1] so band constants match the adopted evaluation table.
 - **Bands:** **strong** `similarity01 ≥ 0.85`; **weak** `[0.65, 0.85)`; **reject** `similarity01 < 0.65`; **Unknown** label applies to reject-band decisions.
-- **Weak band:** **`UNCERTAIN` — not access** (no “GRANTED with warning”).
+- **Weak band:** `**UNCERTAIN` — not access** (no “GRANTED with warning”).
 - **Strong GRANTED:** requires **margin `Δ ≥ 0.05`** vs runner-up **when** a runner-up exists (`secondScore` not null).
 - **Cooldown:** **3 seconds** between verification attempts (spec: enforce ≥ 3 s).
 - **UI:** **Side-by-side** reference vs live capture on match for human verification.
 - **Bulk JSON import:** **Required** for assignment parity—build after single-user enroll is stable.
-- **Admin credentials:** dev-only **`admin` / `admin`** acceptable **locally only**; **must not ship** on public demos; rotate for any public URL.
+- **Admin credentials:** dev-only `**admin` / `admin`** acceptable **locally only**; **must not ship** on public demos; rotate for any public URL.
 - **Demo/legal copy framing:** **Austin, Texas** educational demo posture (not Illinois BIPA primary); still disclose biometric sensitivity locally.
-- **Tooling spend default:** **`$0`** cap unless an exception is **explicitly logged** (e.g. `docs/AI_COST_LOG.md`) with reason.
+- **Tooling spend default:** `**$0`** cap unless an exception is **explicitly logged** (e.g. `docs/AI_COST_LOG.md`) with reason.
 
 ---
 
@@ -159,10 +163,10 @@ Normalized checklist—**not** a full reprint of `SPECS.txt`.
 
 **Detector / ORT gate zero — `[PROVEN]` (non-canonical EP/latency environment)**
 
-- **Artifact path:** Hugging Face **Kalray/yolov9** **`yolov9t.onnx`** — **COCO general-object** YOLOv9-tiny (~**8.33 MiB**, **FP32**), **not** a face-specialized head. Loads and runs under `onnxruntime-web@1.24.3` with `executionProviders: ['webgl','wasm']`, `graphOptimizationLevel: 'all'`. **Implementation rule:** `onnxruntime-web` is imported in `src/infra/ort-session-factory.ts` (and future embedder infra); `src/infra/onnx-runtime.ts` re-exports session helpers for a single discoverable seam; ESLint blocks `app/*` and `ui/*` from importing `onnxruntime-web` directly.
+- **Shipped artifact (E13, Path A):** Hugging Face **`deepghs/yolo-face`** — **`yolov8n-face.onnx`**, YOLOv8-nano **face** head (~**12.1 MiB** **FP32** on disk). Matches SPECS *Face Detection* (true face boxes). Same `onnxruntime-web@1.24.3` + `ort-session-factory` pattern as the embedder; `onnxruntime-web` stays confined to `src/infra/*`.
+- **I/O tensors (E13 / current):** input **`images`** `float32` **`[1,3,640,640]`** NCHW **[0,1]**; output **`output0`** `float32` **`[1,5,8400]`** (bbox + one face class per anchor); **decode + NMS in JS** (`src/infra/detector-yolo-decode.ts`); `classId` is always the face class (`0`). Optional **Web Worker** inference: `config.detectorUseWorker`.
 - **Reality check:** In probe environment, ORT **dropped WebGL** (`backend not found`); successful runs on **WASM**. **Do not claim WebGL detection** without MBP Chrome evidence.
-- **I/O tensors (this checkpoint):** input **`images`** `float32` **`[1,3,640,640]`** NCHW **[0,1]**; output **`predictions`** `float32` **`[1,84,8400]`**; toy pipeline later ran decode+NMS on this head.
-- **Latency (probe env):** single static `session.run` ~**190 ms**; live-frame median preprocess+infer **~182.9 ms** over **N=12** (warmup excluded).
+- **Latency (probe env, yolov9t COCO — superseded for product numbers):** single static `session.run` was ~**190 ms** on the old COCO model; re-measure **`yolov8n-face.onnx`** on MBP+Chrome in [`docs/BENCHMARKS.md`](BENCHMARKS.md) when the canonical detection row is next updated.
 
 **Webcam / preview — `[PROVEN]` (non-canonical)**
 
@@ -176,10 +180,10 @@ Normalized checklist—**not** a full reprint of `SPECS.txt`.
 
 **Embedder — `[PROVEN]` (model artifact canonical; latency non-canonical)**
 
-- **Chosen ONNX:** **`w600k_mbf.onnx`** (InsightFace MobileFaceNet family, buffalo_s / w600k), ~**12.99 MiB**.
-- **I/O:** input name **`input.1`**, shape **`[1,3,112,112]`** NCHW RGB `float32`; preprocess **`(pixel - 127.5) / 127.5`**; output name **`516`**, shape **`[1,512]`**; **L2-normalize in JS** before cosine.
+- **Chosen ONNX:** `**w600k_mbf.onnx`** (InsightFace MobileFaceNet family, buffalo_s / w600k), ~**12.99 MiB**.
+- **I/O:** input name `**input.1`**, shape `**[1,3,112,112]**` NCHW RGB `float32`; preprocess `**(pixel - 127.5) / 127.5**`; output name `**516**`, shape `**[1,512]**`; **L2-normalize in JS** before cosine.
 - **Sanity (probe):** same-identity vs cross-identity cosine ordering passed informal check (numeric table was in archived spike notes / git history).
-- **Latency (probe env, WASM-only path):** embed p50 ~**18.9 ms**, p90 ~**19.2 ms** over **n=22** (meets **&lt; 150 ms** deep-dive embed target in that environment).
+- **Latency (probe env, WASM-only path):** embed p50 ~**18.9 ms**, p90 ~**19.2 ms** over **n=22** (meets **< 150 ms** deep-dive embed target in that environment).
 
 **Matching / policy — `[PROVEN]` (reference behavior)**
 
@@ -189,7 +193,7 @@ Normalized checklist—**not** a full reprint of `SPECS.txt`.
 
 - Chain: detect (YOLO decode+NMS + **head-band heuristic on COCO person box**) → crop contract above → `w600k_mbf` → match bands.
 - **Scores (toy):** same-person `similarity01` ~**0.9228** (strong); stranger ~**0.4965** (reject).
-- **Timing (measured probe):** cold ORT sessions ~**375 ms**; steady-state total **~462 ms** (&lt;&lt; **3 s** MVP budget). Dominant cost: detection path.
+- **Timing (measured probe):** cold ORT sessions ~~**375 ms**; steady-state total **~~462 ms** (<< **3 s** MVP budget). Dominant cost: detection path.
 
 **50-user IndexedDB headroom — `[PROVEN]` (non-canonical browser)**
 
@@ -197,11 +201,11 @@ Normalized checklist—**not** a full reprint of `SPECS.txt`.
 
 **Netlify / deploy — `[PROVEN]` + canonical naming**
 
-- **HTTPS** deploy smoke OK; **`getUserMedia`** smoke verified on deployed origin (human + automated notes in archived epic 8 artifacts).
-- **Canonical Netlify site name:** **`let-me-in-gatekeeper`** → **`https://let-me-in-gatekeeper.netlify.app`** when created/renamed.
-- **Historical / interim deploy URL** existed as **`https://let-me-in-epic8-e2e-1776463762.netlify.app`** — replace bookmarks after rename (not a product interface).
+- **HTTPS** deploy smoke OK; `**getUserMedia`** smoke verified on deployed origin (human + automated notes in archived epic 8 artifacts).
+- **Canonical Netlify site name:** `**let-me-in-gatekeeper`** → `**https://let-me-in-gatekeeper.netlify.app**` when created/renamed.
+- **Historical / interim deploy URL** existed as `**https://let-me-in-epic8-e2e-1776463762.netlify.app`** — replace bookmarks after rename (not a product interface).
 - **Cold load (Playwright sample):** ONNX resource durations ~**330 ms** each (parallel wall smaller); logged **cold session create ~920 ms**; wall click→pipeline done ~**1592 ms** — **under 8 s** MVP cold budget in measured run.
-- **`_headers`:** `/models/*` **`Cache-Control: public, max-age=3600`** on the published static root used for the smoke deploy.
+- `**_headers`:** `/models/*` `**Cache-Control: public, max-age=3600`** on the published static root used for the smoke deploy.
 - **ORT scripts/WASM hosting default:** **jsDelivr** for MVP (documented owner decision in archived findings).
 
 **Epic 9 accuracy protocol — `[PROVEN]` process, `[OPEN]` measurement**
@@ -219,8 +223,8 @@ Normalized checklist—**not** a full reprint of `SPECS.txt`.
 
 - **Final detector story for shipped product:** ship **honest COCO/person-box shortcut** vs swap to **face-specific ONNX** (YOLOv8-face-class / face-YOLO export) vs **two-stage** ROI detector—include interview/defense narrative and revalidation scope if changing artifact.
 - **ORT asset hosting:** keep **jsDelivr** for `onnxruntime-web` vs **vendor same-origin** (policy / CSP / third-party risk).
-- **User deletion vs logs:** on **admin delete user**, whether **`accessLog` rows** are deleted, anonymized, or orphaned with raw IDs—pick one documented behavior.
-- **Exact UX strings:** finalized copy for **`Unknown`**, **`No face detected`**, **multi-face prompt** (spec gives intent; PRD owns wording).
+- **User deletion vs logs:** on **admin delete user**, whether `**accessLog` rows** are deleted, anonymized, or orphaned with raw IDs—pick one documented behavior.
+- **Exact UX strings:** finalized copy for `**Unknown`**, `**No face detected**`, **multi-face prompt** (spec gives intent; PRD owns wording).
 - **Which 3 stretch features** are committed (spec requires ≥ 3); default suggestion was confidence meter + audio + multi-angle enrollment—**confirm or replace** in PRD.
 - **Epic 9 execution:** formal **≥20-face** trial schedule, data handling/consent, and **threshold retune policy** (only with before/after confusion matrix—no silent edits); **import or rewrite playbook** after `spikes/` removal.
 - **Public admin credential rotation mechanism:** env-based / Netlify build-time secret / per-deploy password distribution—**must** be defined before public demos.
@@ -242,12 +246,14 @@ Normalized checklist—**not** a full reprint of `SPECS.txt`.
 
 ## Appendix: Source map (durable takeaways only)
 
-| Former source (removed) | Now |
-| --- | --- |
-| `docs/SPECS.txt` | Still authoritative; summarized under `[HARD FLOOR]`. |
-| `docs/PRE-SEARCH.md` | Distilled into `[LOCKED]` + `[OPEN]` + rationale implicit in `[PROVEN]` caveats. |
-| `docs/PRE-PRD.md` | Epic tables and handoff text distilled into this file; full text in git history. |
-| `spikes/**` | Evidence numbers and repro context merged into `[PROVEN]`; **Epic 9 playbook** and **verbose FINDINGS** — git history only unless copied into `PRD.md`. |
-| `docs/AI_COST_LOG.md` | **Still in repo**; append rows during implementation—referenced from `[LOCKED]` / `[HARD FLOOR]`. |
+
+| Former source (removed) | Now                                                                                                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/SPECS.txt`        | Still authoritative; summarized under `[HARD FLOOR]`.                                                                                                   |
+| `docs/PRE-SEARCH.md`    | Distilled into `[LOCKED]` + `[OPEN]` + rationale implicit in `[PROVEN]` caveats.                                                                        |
+| `docs/PRE-PRD.md`       | Epic tables and handoff text distilled into this file; full text in git history.                                                                        |
+| `spikes/`**             | Evidence numbers and repro context merged into `[PROVEN]`; **Epic 9 playbook** and **verbose FINDINGS** — git history only unless copied into `PRD.md`. |
+| `docs/AI_COST_LOG.md`   | **Still in repo**; append rows during implementation—referenced from `[LOCKED]` / `[HARD FLOOR]`.                                                       |
+
 
 **Intentionally excluded from this handoff (see original brief):** agent prompt templates, supervisor STOP gates, per-task spike checklists, long billing-portal walkthroughs, duplicate Appendix A questionnaire text, low-signal procedural spike instructions.

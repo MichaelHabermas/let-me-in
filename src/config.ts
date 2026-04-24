@@ -160,7 +160,8 @@ export const config: Config = {
   },
   cooldownMs: 3000,
   modelUrls: {
-    detector: '/models/yolov9t.onnx',
+    /** YOLOv8n single-class face, `images` + `output0` [1,5,8400] (E13). */
+    detector: '/models/yolov8n-face.onnx',
     embedder: '/models/w600k_mbf.onnx',
   },
   adminCredentialSource,

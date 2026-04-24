@@ -6,7 +6,7 @@
 flowchart LR
   subgraph client [Browser]
     Cam[Webcam / stub camera]
-    Det[YOLO ONNX detector]
+    Det[YOLOv8n face ONNX]
     Emb[InsightFace embedder ONNX]
     Match[Cosine match + policy]
     UI[Gate UI + log]
@@ -20,9 +20,23 @@ flowchart LR
 
 ## Pipeline stages
 
-1. **Detection:** `ImageData` → bounding boxes (`src/infra/detector-ort.ts`, worker optional).
+1. **Detection (face YOLO):** `ImageData` → **face** bounding boxes (`src/infra/detector-ort.ts`, worker optional). See [Face detection (E13)](#face-detection-e13) below.
 2. **Embedding:** square crop + 112² preprocess → 512-D L2-normalized vector (`src/app/crop.ts`, `src/infra/embedder-ort.ts`).
 3. **Matching:** brute-force cosine similarity01 vs enrolled rows; thresholds in `src/domain/access-policy.ts` via `src/app/policy.ts`.
+
+## Face detection (E13)
+
+The running artifact is **`yolov8n-face.onnx`** ([`deepghs/yolo-face` on Hugging Face](https://huggingface.co/deepghs/yolo-face) — WIDER-style face data, YOLOv8-nano, **single face class**). It replaces the earlier COCO “person + head band” proxy so **boxes are on faces**, matching **SPECS** *Face Detection* and the deep-dive *YOLO* pipeline narrative.
+
+| Item | Value |
+| --- | --- |
+| **Input** | Name `images`, `float32` NCHW `[1,3,640,640]`, pixel values in **[0,1]** (letterbox + scale in `src/infra/detector-yolo-preprocess.ts`). |
+| **Output** | Name `output0`, `float32` `[1,5,8400]`: per anchor, `cx, cy, w, h` in model space plus one **face** class logit. |
+| **Post-process** | Sigmoid on the class logit, confidence threshold, **NMS in JS** (`src/infra/detector-yolo-decode.ts`); `classId` is always `0` (face). |
+| **ORT** | Sessions from `src/infra/ort-session-factory.ts`; default execution provider order in `src/infra/ort-execution-defaults.ts` (e.g. WebGL when available, WASM fallback). Optional **Web Worker** path (`config.detectorUseWorker`) so ORT work does not block the camera `requestAnimationFrame` loop. |
+| **Model load UX** | Determinate progress and retry on failure (E11) — see gate bootstrap and `src/infra/fetch-model-bytes.ts`. |
+
+**FP32 graph:** this bundle uses full-precision weights; there is no INT8 path in the demo. Revisit benchmarks if a smaller or quantized face model is substituted.
 
 ## Storage (IndexedDB)
 

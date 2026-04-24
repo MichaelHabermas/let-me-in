@@ -14,6 +14,12 @@ export type YoloDetector = {
 
 export const DETECTOR_INPUT_SIZE = 640;
 
+/** YOLOv8n-face: `[1, 5, 8400]` = 4 values per box + 1 face class. */
+export const DETECTOR_NUM_ANCHORS = 8400;
+/** `4` bbox (cx, cy, w, h) + one class (face) */
+export const DETECTOR_OUTPUT_CHANNELS = 5;
+export const FACE_CLASS_ID = 0;
+
 export type LetterboxMeta = {
   ratio: number;
   padX: number;

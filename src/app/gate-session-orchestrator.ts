@@ -79,12 +79,7 @@ export function wireCameraControls(
 
       const overlay = elements.overlayCanvas;
       const embedderReady = !attachDeps.faceEmbedder || state.embedderLoadState === 'ready';
-      if (
-        attachDeps.yoloDetector &&
-        overlay &&
-        state.loadState === 'ready' &&
-        embedderReady
-      ) {
+      if (attachDeps.yoloDetector && overlay && state.loadState === 'ready' && embedderReady) {
         const overlayCtx = overlay.getContext('2d');
         if (overlayCtx) {
           state.stopPipeline?.();
