@@ -2,6 +2,11 @@
 /** E10.S3.F1.T3 — `navigationToDetectorReadyMs` after cold context + Start camera. */
 import { chromium } from '@playwright/test';
 
+import {
+  exitIfBenchStrictAndFailed,
+  printBenchStubFooter,
+  reportColdLoadBudget,
+} from './bench-budgets.ts';
 import { prepareGatePage } from './bench-gate-consent.ts';
 
 const baseURL = process.env.BASE_URL ?? 'http://localhost:5199';
@@ -18,3 +23,6 @@ await page.waitForFunction(
 const navMs = await page.evaluate(() => window.__gatekeeperMetrics?.navigationToDetectorReadyMs);
 await browser.close();
 console.log(JSON.stringify({ navigationToDetectorReadyMs: navMs }, null, 2));
+const ok = reportColdLoadBudget(navMs);
+printBenchStubFooter('cold-load');
+exitIfBenchStrictAndFailed('cold-load', ok);

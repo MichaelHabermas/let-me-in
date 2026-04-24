@@ -5,6 +5,11 @@
  */
 import { chromium } from '@playwright/test';
 
+import {
+  exitIfBenchStrictAndFailed,
+  printBenchStubFooter,
+  reportDetectionBudgets,
+} from './bench-budgets.ts';
 import { prepareGatePage } from './bench-gate-consent.ts';
 
 const baseURL = process.env.BASE_URL ?? 'http://localhost:5199';
@@ -33,14 +38,15 @@ await browser.close();
 
 if (values.length === 0) {
   console.error('No samples — start the gate camera with models or stub gate (E10).');
+  printBenchStubFooter('detection');
   process.exit(1);
 }
 
 values.sort((a, b) => a - b);
-console.log(
-  JSON.stringify(
-    { n: values.length, p50: percentile(values, 50), p90: percentile(values, 90), p99: percentile(values, 99) },
-    null,
-    2,
-  ),
-);
+const p50 = percentile(values, 50);
+const p90 = percentile(values, 90);
+const p99 = percentile(values, 99);
+console.log(JSON.stringify({ n: values.length, p50, p90, p99 }, null, 2));
+const ok = reportDetectionBudgets(p50, p90, p99);
+printBenchStubFooter('detection');
+exitIfBenchStrictAndFailed('detection', ok);

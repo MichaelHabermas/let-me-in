@@ -23,6 +23,13 @@ These `pnpm` scripts start **`bench:serve`** via **`start-server-and-test`**, wa
 
 `pnpm run bench:serve` alone starts only Vite on 5199 with that env (leave it running, then point `BASE_URL=http://localhost:5199` at the `pnpm exec tsx tests/accuracy/bench-*.js` files if you prefer not to use `start-server-and-test`).
 
+Each script prints **JSON on stdout** and, on **stderr** (see `tests/accuracy/bench-budgets.ts`):
+
+1. A **Quick check** line: **PASS** or **FAIL** vs the same budgets as the table below (detector p50 &lt; 500 ms, end-to-end wall &lt; 3000 ms, cold `navigationToDetectorReadyMs` &lt; 8000 ms).
+2. A **stub reminder** (port 5199 is not canonical MBP+Chrome evidence) and `BENCH_STRICT=1` to **exit with code 1** when a quick check fails (default: still exit 0 so stub CI does not flap).
+
+`2>/dev/null` drops stderr if you need **only** clean JSON.
+
 **Non-stub / real models:** start Vite yourself with `VITE_E2E_STUB_GATE` unset or not `true`, serve on 5199 (or set `BASE_URL`), then run the same `tsx` scripts; headless runs usually need a fake or real camera setup and may not match CI.
 
 ## Results table (fill on target hardware)

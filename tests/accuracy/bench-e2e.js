@@ -2,6 +2,7 @@
 /** E10.S3.F1.T2 — wall time from navigation + Start camera until first `lastAccessEvaluationMs`. */
 import { chromium } from '@playwright/test';
 
+import { exitIfBenchStrictAndFailed, printBenchStubFooter, reportE2eBudget } from './bench-budgets.ts';
 import { prepareGatePage } from './bench-gate-consent.ts';
 
 const baseURL = process.env.BASE_URL ?? 'http://localhost:5199';
@@ -19,3 +20,6 @@ const dt = Date.now() - t0;
 const m = await page.evaluate(() => window.__gatekeeperMetrics);
 await browser.close();
 console.log(JSON.stringify({ clickToFirstEvaluationWallMs: dt, metrics: m }, null, 2));
+const ok = reportE2eBudget(dt);
+printBenchStubFooter('e2e');
+exitIfBenchStrictAndFailed('e2e', ok);
