@@ -10,7 +10,7 @@ export type { BboxPixels, Decision, MatchResult, User, AccessLogRow } from '../d
 export type { DatabaseSeedSettings } from '../domain/database-seed';
 export type { SettingsRow } from './db-dexie';
 
-export type { DexiePersistence } from './db-dexie';
+export type { AccessLogStore, DexiePersistence, SettingsStore, UsersStore } from './db-dexie';
 
 let defaultPersistence: DexiePersistence | null = null;
 
@@ -49,3 +49,6 @@ export async function resetIndexedDbClientForTests(): Promise<void> {
 }
 
 export { createDexiePersistence } from './db-dexie';
+
+/** App features that only load users + settings for access decisions. */
+export type AccessDecisionDataStores = Pick<DexiePersistence, 'usersRepo' | 'settingsRepo'>;

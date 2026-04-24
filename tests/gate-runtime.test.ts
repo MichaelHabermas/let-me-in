@@ -146,5 +146,8 @@ describe('composeGateRuntime', () => {
     expect(full.databaseSeedSettings.cooldownMs).toBe(4200);
     expect(full.gatePreviewSessionCoreDeps.cooldownMs).toBe(4200);
     expect(full.gatePreviewSessionCoreDeps.noFaceMessage).toBe('nf');
+    expect(full.runtimeSlices.gate.pageTitle).toBe(full.gatePageTitle);
+    expect(full.runtimeSlices.admin.pageTitle).toBe(full.adminPageTitle);
+    expect(full.runtimeSlices.admin.ui).toBe(full.adminUiStrings);
   });
 });

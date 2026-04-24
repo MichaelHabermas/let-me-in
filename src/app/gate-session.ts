@@ -11,7 +11,8 @@ import { wireCameraControls } from './gate-session-orchestrator';
 import type { ModelLoadStatusController } from './model-load-status-ui';
 import type { AppendAccessLogFn } from './detection-pipeline';
 
-export type GatePreviewSessionDeps = {
+/** `createUserMedia` binding + per-brand camera error copy. */
+export type GateSessionCameraFactoryDeps = {
   createCamera: (
     video: HTMLVideoElement,
     canvas: HTMLCanvasElement,
@@ -19,10 +20,20 @@ export type GatePreviewSessionDeps = {
   ) => Camera;
   getDefaultVideoConstraintsForCamera: () => CreateCameraOptions['defaultConstraints'];
   getCameraUserFacingMessage: (code: CameraErrorCode) => string;
+};
+
+/** YOLO + embedder handles (optional) and dev timing logs. */
+export type GateSessionDetectorModelDeps = {
   yoloDetector?: YoloDetector;
   faceEmbedder?: FaceEmbedder;
   /** When true, logs `[gate] embed: …` from the detection pipeline (see `config.devLogEmbeddingTimings`). */
   logEmbeddingTimings?: boolean;
+};
+
+/**
+ * Copy for model-load UI, pipeline status, and camera device list — no access policy.
+ */
+export type GateSessionPipelineMessageDeps = {
   detectorLoadingMessage: string;
   detectorLoadFailedMessage: string;
   modelLoadStageDetectorLabel: string;
@@ -35,6 +46,10 @@ export type GatePreviewSessionDeps = {
   cameraDefaultDeviceOption: string;
   cameraSelectAriaLabel: string;
   formatUnnamedCamera: (indexOneBased: number) => string;
+};
+
+/** Optional live access, logging, and DB (composed at mount). */
+export type GateAccessOptionDeps = {
   evaluateDecision?: EvaluateGateAccessFn;
   appendAccessLog?: AppendAccessLogFn;
   accessUiStrings?: GateAccessUiStrings;
@@ -43,6 +58,11 @@ export type GatePreviewSessionDeps = {
   /** Defaults for settings rows when DB was only seeded minimally. */
   databaseSeedFallback?: DatabaseSeedSettings;
 };
+
+export type GatePreviewSessionDeps = GateSessionCameraFactoryDeps &
+  GateSessionDetectorModelDeps &
+  GateSessionPipelineMessageDeps &
+  GateAccessOptionDeps;
 
 export type GatePreviewElements = {
   cameraToggleBtn: HTMLButtonElement;

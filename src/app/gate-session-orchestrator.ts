@@ -1,18 +1,14 @@
 import type { Camera, CameraStartOptions } from './camera';
 import { startVideoCameraResilient } from './camera-resilient-start';
+import {
+  createCameraStartOptionsState,
+  refreshVideoInputDeviceListAfterStart,
+} from './camera-device-session';
 import { createCooldown } from './cooldown';
 import { createDetectionPipeline } from './detection-pipeline';
 import { readCameraPreference, writeCameraPreference } from './camera-preference-persistence';
-import { fillVideoDeviceSelect } from './gate-video-device-select-ui';
 import { syncCameraToggleUi } from './gate-camera-toggle-ui';
-import { GATE_CAMERA_PREFERENCE_KEY, type CameraPreference } from '../domain/camera-preference';
-import {
-  ensureVideoInputDeviceLabels,
-  getBrowserMediaDeviceAccess,
-  preferenceForTrackSettings,
-  resolveCameraStartOptions,
-  videoInputDevicesToList,
-} from '../infra/camera-devices';
+import { GATE_CAMERA_PREFERENCE_KEY } from '../domain/camera-preference';
 import type { GatePreviewElements, GatePreviewSessionDeps } from './gate-session';
 import { beginDetectorLoad, type DetectorGateState } from './gate-session-detector-load';
 import { withLiveAccessDeps } from './gate-session-live-access';
@@ -30,24 +26,20 @@ export function wireCameraControls(
   const loadingMsg = deps.detectorLoadingMessage;
   const failedMsg = deps.detectorLoadFailedMessage;
   const state: DetectorGateState = { loadState: 'none' };
-  let listPopulated = false;
-  let cachedPref: CameraPreference | undefined;
   const settingsRepo = deps.persistence?.settingsRepo;
   const prefRead =
     deviceSelect && settingsRepo
       ? readCameraPreference(settingsRepo, GATE_CAMERA_PREFERENCE_KEY)
       : null;
+  const startOpts = createCameraStartOptionsState({
+    getDefaultFacingMode: () => deps.getDefaultVideoConstraintsForCamera().facingMode,
+    getSelectValueTrimmed: () => deviceSelect?.value?.trim() ?? '',
+  });
 
   beginDetectorLoad(deps, camera, { statusEl, modelLoadUi }, state, loadingMsg, failedMsg);
 
   function getStartOptions(): CameraStartOptions {
-    const d = deps.getDefaultVideoConstraintsForCamera();
-    return resolveCameraStartOptions({
-      listPopulated,
-      selectValue: deviceSelect?.value?.trim() ?? '',
-      defaultFacingMode: d.facingMode,
-      loadedPreference: cachedPref,
-    });
+    return startOpts.getStartOptions();
   }
 
   const onStart = async () => {
@@ -62,43 +54,26 @@ export function wireCameraControls(
       }
       if (!elements.modelLoadUi) statusEl.textContent = '';
       if (prefRead) {
-        cachedPref = (await prefRead) ?? undefined;
+        startOpts.setLoadedPreference((await prefRead) ?? undefined);
       }
       const attachDeps = await withLiveAccessDeps(elements, deps);
       const d = deps.getDefaultVideoConstraintsForCamera();
       await startVideoCameraResilient(camera, getStartOptions, d.facingMode, async (fb) => {
-        if (settingsRepo) {
-          await writeCameraPreference(settingsRepo, GATE_CAMERA_PREFERENCE_KEY, { facingMode: fb });
-        }
-        cachedPref = { facingMode: fb };
-        listPopulated = false;
+        await startOpts.recoverFromStaleDevice(settingsRepo, GATE_CAMERA_PREFERENCE_KEY, fb);
       });
 
       if (deviceSelect) {
-        try {
-          const access = getBrowserMediaDeviceAccess();
-          if (access) {
-            const all = await ensureVideoInputDeviceLabels(access);
-            const items = videoInputDevicesToList(all, (i) => deps.formatUnnamedCamera(i + 1));
-            const active = camera.getTrackSettings()?.deviceId;
-            fillVideoDeviceSelect(
-              deviceSelect,
-              deps.cameraDefaultDeviceOption,
-              items,
-              active ?? null,
-            );
-            listPopulated = true;
-            if (settingsRepo) {
-              const t = camera.getTrackSettings();
-              await writeCameraPreference(
-                settingsRepo,
-                GATE_CAMERA_PREFERENCE_KEY,
-                preferenceForTrackSettings(t, d.facingMode),
-              );
-            }
-          }
-        } catch {
-          /* list fill is best-effort */
+        const listed = await refreshVideoInputDeviceListAfterStart({
+          camera,
+          deviceSelect,
+          settingsRepo,
+          preferenceKey: GATE_CAMERA_PREFERENCE_KEY,
+          defaultFacingForPreference: d.facingMode,
+          firstSelectOptionLabel: deps.cameraDefaultDeviceOption,
+          formatUnnamedForListIndex: (i) => deps.formatUnnamedCamera(i + 1),
+        });
+        if (listed) {
+          startOpts.setListPopulated(true);
         }
       }
 
@@ -153,12 +128,12 @@ export function wireCameraControls(
         void writeCameraPreference(settingsRepo, GATE_CAMERA_PREFERENCE_KEY, {
           facingMode: d.facingMode,
         });
-        cachedPref = { facingMode: d.facingMode };
+        startOpts.setLoadedPreference({ facingMode: d.facingMode });
       } else {
         void writeCameraPreference(settingsRepo, GATE_CAMERA_PREFERENCE_KEY, {
           deviceId: deviceSelect.value,
         });
-        cachedPref = { deviceId: deviceSelect.value };
+        startOpts.setLoadedPreference({ deviceId: deviceSelect.value });
       }
       if (camera.isRunning()) {
         state.stopPipeline?.();

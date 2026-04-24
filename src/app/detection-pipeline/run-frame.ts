@@ -59,7 +59,8 @@ async function evaluateAccessDecision(
   return evaluation;
 }
 
-async function appendAccessLogIfNeeded(
+/** Exposed for unit tests (GRANTED/DENIED vs UNCERTAIN). */
+export async function appendAccessLogIfNeeded(
   opts: FramePipelineOpts,
   evaluation: GateAccessEvaluation,
 ): Promise<void> {
@@ -72,6 +73,33 @@ async function appendAccessLogIfNeeded(
     decision: policy.decision,
     capturedFrameBlob: evaluation.capturedFrameBlob,
   });
+}
+
+type DetectorResult = Awaited<ReturnType<YoloDetector['infer']>>;
+
+/**
+ * Embed → access eval → cooldown mark → append (async tail of the frame).
+ * Cardinality + cooldown gates run synchronously in the caller so `infer` and
+ * status updates stay in the same microtask ordering as before the refactor.
+ */
+async function runEmbeddingAccessAndAppend(
+  opts: FramePipelineOpts,
+  frame: ImageData,
+  primary: NonNullable<DetectorResult[0]>,
+): Promise<void> {
+  if (!opts.faceEmbedder) return;
+  const t0 = performance.now();
+  const emb = await embedFace(frame, primary.bbox, opts.faceEmbedder);
+  const ms = performance.now() - t0;
+  recordLastEmbedInferMs(ms);
+  if (opts.logEmbeddingTimings) {
+    console.info(`[gate] embed: ${ms.toFixed(1)} ms, len: ${emb.length}`);
+  }
+  const evaluation = await evaluateAccessDecision(opts, emb, frame);
+  if (!evaluation) return;
+  const cd = policyDecisionForCooldown(evaluation.policy);
+  if (cd) opts.cooldown?.markAttempt(opts.getNowMs());
+  await appendAccessLogIfNeeded(opts, evaluation);
 }
 
 export async function runDetectionPipelineFrame(
@@ -96,25 +124,24 @@ export async function runDetectionPipelineFrame(
   }
 
   resetNoFaceDebouncer(noFaceState);
-  if (dets.length === 1) setStatus(opts.statusEl, '');
-
-  if (handleDetectionCardinality(opts, dets.length) === 'skip') return;
-  const now = opts.getNowMs();
-  if (isCoolingDown(opts, now)) return;
-  setStatus(opts.statusEl, '');
-  if (!opts.faceEmbedder) return;
-  const primary = dets[0];
-  if (!primary) return;
-  const t0 = performance.now();
-  const emb = await embedFace(frame, primary.bbox, opts.faceEmbedder);
-  const ms = performance.now() - t0;
-  recordLastEmbedInferMs(ms);
-  if (opts.logEmbeddingTimings) {
-    console.info(`[gate] embed: ${ms.toFixed(1)} ms, len: ${emb.length}`);
+  if (dets.length === 1) {
+    setStatus(opts.statusEl, '');
   }
-  const evaluation = await evaluateAccessDecision(opts, emb, frame);
-  if (!evaluation) return;
-  const cd = policyDecisionForCooldown(evaluation.policy);
-  if (cd) opts.cooldown?.markAttempt(opts.getNowMs());
-  await appendAccessLogIfNeeded(opts, evaluation);
+
+  if (handleDetectionCardinality(opts, dets.length) === 'skip') {
+    return;
+  }
+  const now = opts.getNowMs();
+  if (isCoolingDown(opts, now)) {
+    return;
+  }
+  setStatus(opts.statusEl, '');
+  if (!opts.faceEmbedder) {
+    return;
+  }
+  const primary = dets[0];
+  if (!primary) {
+    return;
+  }
+  await runEmbeddingAccessAndAppend(opts, frame, primary);
 }

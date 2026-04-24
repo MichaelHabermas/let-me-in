@@ -1,14 +1,9 @@
 import type { CameraPreference } from '../domain/camera-preference';
-import type { DexiePersistence, SettingsRow } from '../infra/persistence';
+import type { SettingsStore } from '../infra/persistence';
 
-export type SettingsReadPort = {
-  get(key: string): Promise<SettingsRow | undefined>;
-  put(row: SettingsRow): Promise<string>;
-};
+export type SettingsReadPort = Pick<SettingsStore, 'get' | 'put'>;
 
-export function normalizeSettingsRepo(
-  r: DexiePersistence['settingsRepo'] | undefined,
-): SettingsReadPort | undefined {
+export function normalizeSettingsRepo(r: SettingsStore | undefined): SettingsReadPort | undefined {
   return r;
 }
 

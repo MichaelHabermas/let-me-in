@@ -1,21 +1,17 @@
 import { getDetectorRuntimeSettings, getEmbedderRuntimeSettings } from '../config';
-import { ENROLL_CAMERA_PREFERENCE_KEY, type CameraPreference } from '../domain/camera-preference';
+import { ENROLL_CAMERA_PREFERENCE_KEY } from '../domain/camera-preference';
 import {
-  ensureVideoInputDeviceLabels,
-  getBrowserMediaDeviceAccess,
-  preferenceForTrackSettings,
-  resolveCameraStartOptions,
-  videoInputDevicesToList,
-} from '../infra/camera-devices';
+  createCameraStartOptionsState,
+  refreshVideoInputDeviceListAfterStart,
+} from './camera-device-session';
 import type { ModelLoadProgress } from '../infra/model-load-types';
 import type { DexiePersistence } from '../infra/persistence';
 import { createFaceEmbedder } from '../infra/embedder-ort';
 import { createYoloDetector } from '../infra/detector-ort';
 import { createDetectorEmbedderRuntime } from '../infra/inference-runtime';
-import { readCameraPreference, writeCameraPreference } from './camera-preference-persistence';
+import { readCameraPreference } from './camera-preference-persistence';
 import { createCamera } from './camera';
 import type { AdminEnrollmentCaptureMount } from './admin-enrollment-ports';
-import { fillVideoDeviceSelect } from './gate-video-device-select-ui';
 import { mountModelLoadStatusUi } from './model-load-status-ui';
 import { createEnrollmentController, type EnrollmentController } from './enroll';
 import {
@@ -44,6 +40,7 @@ function enrollmentControllerBase(
   };
 }
 
+/* eslint-disable max-lines-per-function -- mirrors gate mount: model load + ORT + device list wiring */
 function createAdminEnrollmentWithModelLoad(
   dom: AdminEnrollmentCaptureMount,
   rt: GateRuntime,
@@ -69,11 +66,13 @@ function createAdminEnrollmentWithModelLoad(
       }),
   });
   const dc = rt.defaultVideoConstraintsForCamera;
-  let listPopulated = false;
-  let cached: CameraPreference | undefined;
+  const startOpts = createCameraStartOptionsState({
+    getDefaultFacingMode: () => dc.facingMode,
+    getSelectValueTrimmed: () => dom.cameraDeviceSelect.value.trim(),
+  });
   void readCameraPreference(base.persistence.settingsRepo, ENROLL_CAMERA_PREFERENCE_KEY).then(
     (p) => {
-      cached = p;
+      startOpts.setLoadedPreference(p);
     },
   );
   return createEnrollmentController({
@@ -86,41 +85,31 @@ function createAdminEnrollmentWithModelLoad(
     embedder: ort.embedder,
     modelLoadUi,
     modelLoadFailedMessage: rt.detectorLoadFailedMessage,
-    getCameraStartOptions: () =>
-      resolveCameraStartOptions({
-        listPopulated,
-        selectValue: dom.cameraDeviceSelect.value.trim(),
-        defaultFacingMode: dc.facingMode,
-        loadedPreference: cached,
-      }),
+    getCameraStartOptions: () => startOpts.getStartOptions(),
     onAfterCameraStart: async (cam: Camera) => {
-      const access = getBrowserMediaDeviceAccess();
-      if (!access) return;
-      const all = await ensureVideoInputDeviceLabels(access);
-      const items = videoInputDevicesToList(all, (i) => rt.formatUnnamedCamera(i + 1));
-      const active = cam.getTrackSettings()?.deviceId;
-      fillVideoDeviceSelect(
-        dom.cameraDeviceSelect,
-        rt.adminUiStrings.cameraDefaultDeviceOption,
-        items,
-        active ?? null,
-      );
-      listPopulated = true;
-      await writeCameraPreference(
-        base.persistence.settingsRepo,
-        ENROLL_CAMERA_PREFERENCE_KEY,
-        preferenceForTrackSettings(cam.getTrackSettings(), dc.facingMode),
-      );
+      const ok = await refreshVideoInputDeviceListAfterStart({
+        camera: cam,
+        deviceSelect: dom.cameraDeviceSelect,
+        settingsRepo: base.persistence.settingsRepo,
+        preferenceKey: ENROLL_CAMERA_PREFERENCE_KEY,
+        defaultFacingForPreference: dc.facingMode,
+        firstSelectOptionLabel: rt.runtimeSlices.admin.ui.cameraDefaultDeviceOption,
+        formatUnnamedForListIndex: (i) => rt.formatUnnamedCamera(i + 1),
+      });
+      if (ok) {
+        startOpts.setListPopulated(true);
+      }
     },
     onRecoverStaleEnrollDevice: async (fb) => {
-      listPopulated = false;
-      cached = { facingMode: fb };
-      await writeCameraPreference(base.persistence.settingsRepo, ENROLL_CAMERA_PREFERENCE_KEY, {
-        facingMode: fb,
-      });
+      await startOpts.recoverFromStaleDevice(
+        base.persistence.settingsRepo,
+        ENROLL_CAMERA_PREFERENCE_KEY,
+        fb,
+      );
     },
   });
 }
+/* eslint-enable max-lines-per-function */
 
 export function createAdminEnrollmentSessionController(params: {
   dom: AdminEnrollmentCaptureMount;

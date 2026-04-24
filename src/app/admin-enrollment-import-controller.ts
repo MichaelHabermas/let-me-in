@@ -24,7 +24,7 @@ export function bindAdminEnrollmentImportController(params: {
       const text = typeof reader.result === 'string' ? reader.result : '';
       void (async () => {
         dom.importStatusEl.textContent = '';
-        const copy = rt.adminUiStrings;
+        const copy = rt.runtimeSlices.admin.ui;
         const res = await runBulkImport(persistence, text, {
           useStubEnrollment,
           onProgress(current, total) {

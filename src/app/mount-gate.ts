@@ -63,7 +63,7 @@ function maybeBootstrapConsent(
     persistence,
     cameraToggleBtn,
     shell: main,
-    strings: rt.consentModalStrings,
+    strings: rt.runtimeSlices.gate.consent,
   });
 }
 
@@ -79,7 +79,7 @@ function buildSessionDeps(
     yoloDetector,
     faceEmbedder,
     ...rt.gatePreviewSessionCoreDeps,
-    accessUiStrings: rt.gateAccessUiStrings,
+    accessUiStrings: rt.runtimeSlices.gate.accessUi,
     ...sessionDepsExtras,
   };
 }
@@ -91,7 +91,7 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
   const wireSession = deps.wireGatePreviewSession;
   const addBeforeUnload = deps.addBeforeUnload ?? true;
   const { sessionDepsExtras } = deps;
-  document.title = rt.gatePageTitle;
+  document.title = rt.runtimeSlices.gate.pageTitle;
   host.innerHTML = '';
 
   const {

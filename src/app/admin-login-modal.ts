@@ -58,7 +58,7 @@ export function mountAdminLoginModal(
   auth: AdminAuth,
   onSuccess: () => void,
 ): () => void {
-  const copy = rt.adminUiStrings;
+  const copy = rt.runtimeSlices.admin.ui;
   host.innerHTML = '';
 
   const backdrop = document.createElement('div');

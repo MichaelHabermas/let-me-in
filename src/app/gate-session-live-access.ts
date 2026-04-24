@@ -1,10 +1,36 @@
 import { createAccessAudioCues } from './audio';
+import type { LiveAccessDecisionUi } from './access-decision-engine';
 import {
   createGateAccessUiController,
   FALLBACK_GATE_ACCESS_UI_STRINGS,
+  type GateAccessUiStrings,
 } from './gate-access-ui-controller';
 import { createAccessDecisionEvaluator } from './access-decision-engine';
+import type { AppendAccessLogFn } from './detection-pipeline';
+import type { DexiePersistence } from '../infra/persistence';
 import type { GatePreviewElements, GatePreviewSessionDeps } from './gate-session';
+
+/**
+ * UI + sound side effects for each access decision (used as `LiveAccessDecisionUi` for the evaluator).
+ */
+export function createLiveAccessOnDecision(
+  decisionEl: GatePreviewElements['decisionEl'],
+  uiStrings: GateAccessUiStrings,
+): LiveAccessDecisionUi {
+  const accessUi = decisionEl && createGateAccessUiController(decisionEl, uiStrings);
+  const audioCues = createAccessAudioCues();
+  return {
+    onDecision: (event) => {
+      accessUi?.present(event);
+      audioCues.play(event.policy.decision);
+    },
+  };
+}
+
+/** Default pipeline hook: append GRANTED/DENIED lines through Dexie. */
+export function appendAccessLogFromPersistence(persistence: DexiePersistence): AppendAccessLogFn {
+  return (payload) => persistence.accessLogRepo.appendDecision(payload);
+}
 
 /**
  * When persistence + seed are present and no evaluator was injected, wires live
@@ -19,23 +45,15 @@ export async function withLiveAccessDeps(
   }
   const persistence = deps.persistence;
   const uiStrings = deps.accessUiStrings ?? FALLBACK_GATE_ACCESS_UI_STRINGS;
-  const accessUi =
-    elements.decisionEl && createGateAccessUiController(elements.decisionEl, uiStrings);
-  const audioCues = createAccessAudioCues();
+  const onDecision = createLiveAccessOnDecision(elements.decisionEl, uiStrings);
   const evaluateDecision = await createAccessDecisionEvaluator(
-    deps.persistence,
+    persistence,
     deps.databaseSeedFallback,
-    {
-      onDecision: (event) => {
-        accessUi?.present(event);
-        audioCues.play(event.policy.decision);
-      },
-    },
+    onDecision,
   );
   return {
     ...deps,
     evaluateDecision,
-    appendAccessLog:
-      deps.appendAccessLog ?? ((payload) => persistence.accessLogRepo.appendDecision(payload)),
+    appendAccessLog: deps.appendAccessLog ?? appendAccessLogFromPersistence(persistence),
   };
 }

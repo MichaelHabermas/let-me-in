@@ -5,31 +5,47 @@
 
 import { config } from '../config';
 import type { DatabaseSeedSettings } from '../domain/database-seed';
-import type { GatePreviewSessionDeps } from './gate-session';
-import { createGateUiRuntimeSlice, type GateUiRuntimeSlice } from './gate-ui-runtime';
+import type {
+  GateSessionCameraFactoryDeps,
+  GateSessionDetectorModelDeps,
+  GateSessionPipelineMessageDeps,
+} from './gate-session';
+import type { GateAccessUiStrings } from './gate-access-ui-controller';
+import {
+  createGateUiRuntimeSlice,
+  type AdminUiStrings,
+  type GateUiRuntimeSlice,
+  type LogPageStrings,
+} from './gate-ui-runtime';
 import { getDatabaseSeedSettingsFromConfig } from './gate-seed-settings';
+import type { ConsentModalStrings } from '../ui/components/consent';
 
-export type GatePreviewSessionCoreDeps = Pick<
-  GatePreviewSessionDeps,
-  | 'getDefaultVideoConstraintsForCamera'
-  | 'getCameraUserFacingMessage'
-  | 'logEmbeddingTimings'
-  | 'detectorLoadingMessage'
-  | 'detectorLoadFailedMessage'
-  | 'modelLoadStageDetectorLabel'
-  | 'modelLoadStageEmbedderLabel'
-  | 'modelLoadRetryLabel'
-  | 'noFaceMessage'
-  | 'multiFaceMessage'
-  | 'cooldownMs'
-  | 'cameraDefaultDeviceOption'
-  | 'cameraSelectAriaLabel'
-  | 'formatUnnamedCamera'
->;
+/**
+ * Shipped in `rt.gatePreviewSessionCoreDeps` — model-load + pipeline + camera list copy, without
+ * cameras/detector instances or access ports (those come from mount / extras).
+ */
+export type GatePreviewSessionCoreDeps = GateSessionPipelineMessageDeps &
+  Pick<
+    GateSessionCameraFactoryDeps,
+    'getDefaultVideoConstraintsForCamera' | 'getCameraUserFacingMessage'
+  > &
+  Pick<GateSessionDetectorModelDeps, 'logEmbeddingTimings'>;
+
+/** Grouped string surfaces (same object refs as on `GateUiRuntimeSlice` — for narrow dependency passing). */
+export type GateRuntimeSurfaceSlices = {
+  admin: { pageTitle: string; ui: AdminUiStrings };
+  gate: {
+    pageTitle: string;
+    accessUi: GateAccessUiStrings;
+    consent: ConsentModalStrings;
+  };
+  log: { pageTitle: string; strings: LogPageStrings };
+};
 
 export type GateRuntime = GateUiRuntimeSlice & {
   databaseSeedSettings: DatabaseSeedSettings;
   gatePreviewSessionCoreDeps: GatePreviewSessionCoreDeps;
+  runtimeSlices: GateRuntimeSurfaceSlices;
 };
 
 /** Single merge of UI slice + DB seed accessor — used by prod resolver and test harness. */
@@ -55,10 +71,21 @@ export function composeGateRuntime(
     formatUnnamedCamera: (i) => ui.formatUnnamedCamera(i),
   };
 
+  const runtimeSlices: GateRuntimeSurfaceSlices = {
+    admin: { pageTitle: ui.adminPageTitle, ui: ui.adminUiStrings },
+    gate: {
+      pageTitle: ui.gatePageTitle,
+      accessUi: ui.gateAccessUiStrings,
+      consent: ui.consentModalStrings,
+    },
+    log: { pageTitle: ui.logPageTitle, strings: ui.logPageStrings },
+  };
+
   return {
     ...ui,
     databaseSeedSettings,
     gatePreviewSessionCoreDeps,
+    runtimeSlices,
   };
 }
 

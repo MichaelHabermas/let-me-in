@@ -10,38 +10,44 @@ export interface SettingsRow {
 
 export type { DatabaseSeedSettings } from '../domain/database-seed';
 
+export interface UsersStore {
+  put(user: User): Promise<string>;
+  get(id: string): Promise<User | undefined>;
+  delete(id: string): Promise<void>;
+  /** Atomically nulls `userId` on matching log rows, then removes the user. */
+  deleteWithAnonymization(userId: string): Promise<void>;
+  toArray(): Promise<User[]>;
+}
+
+export interface AccessLogStore {
+  put(row: AccessLogRow): Promise<number>;
+  get(timestamp: number): Promise<AccessLogRow | undefined>;
+  delete(timestamp: number): Promise<void>;
+  toArray(): Promise<AccessLogRow[]>;
+  whereTimestampBetween(fromMs: number, toMs: number): Promise<AccessLogRow[]>;
+  appendDecision(payload: {
+    userId: string | null;
+    similarity01: number;
+    decision: Decision;
+    capturedFrameBlob: Blob;
+    /** When set (e.g. tests), used as the first candidate key; still bumps on collision. */
+    timestamp?: number;
+  }): Promise<void>;
+}
+
+export interface SettingsStore {
+  put(row: SettingsRow): Promise<string>;
+  get(key: string): Promise<SettingsRow | undefined>;
+  delete(key: string): Promise<void>;
+  toArray(): Promise<SettingsRow[]>;
+}
+
 export interface DexiePersistence {
   initDatabase(seed: DatabaseSeedSettings): Promise<void>;
   resetIndexedDbClientForTests(): Promise<void>;
-  usersRepo: {
-    put(user: User): Promise<string>;
-    get(id: string): Promise<User | undefined>;
-    delete(id: string): Promise<void>;
-    /** Atomically nulls `userId` on matching log rows, then removes the user. */
-    deleteWithAnonymization(userId: string): Promise<void>;
-    toArray(): Promise<User[]>;
-  };
-  accessLogRepo: {
-    put(row: AccessLogRow): Promise<number>;
-    get(timestamp: number): Promise<AccessLogRow | undefined>;
-    delete(timestamp: number): Promise<void>;
-    toArray(): Promise<AccessLogRow[]>;
-    whereTimestampBetween(fromMs: number, toMs: number): Promise<AccessLogRow[]>;
-    appendDecision(payload: {
-      userId: string | null;
-      similarity01: number;
-      decision: Decision;
-      capturedFrameBlob: Blob;
-      /** When set (e.g. tests), used as the first candidate key; still bumps on collision. */
-      timestamp?: number;
-    }): Promise<void>;
-  };
-  settingsRepo: {
-    put(row: SettingsRow): Promise<string>;
-    get(key: string): Promise<SettingsRow | undefined>;
-    delete(key: string): Promise<void>;
-    toArray(): Promise<SettingsRow[]>;
-  };
+  usersRepo: UsersStore;
+  accessLogRepo: AccessLogStore;
+  settingsRepo: SettingsStore;
 }
 
 class GatekeeperDB extends Dexie {

@@ -1,7 +1,7 @@
 import type { AccessThresholds } from '../domain/access-policy';
 import type { DatabaseSeedSettings } from '../domain/database-seed';
 import type { User } from '../domain/types';
-import type { DexiePersistence } from '../infra/persistence';
+import type { AccessDecisionDataStores } from '../infra/persistence';
 import type { GateAccessEvaluation, GateAccessEvaluationInput } from './gate-access-evaluation';
 import { imageDataToPngBlob } from './gate-access-evaluation';
 import { matchOne, type EnrolledEmbedding } from './match';
@@ -26,14 +26,14 @@ function displayNameForPolicy(usersById: Map<string, User>, policy: PolicyDecisi
  * and assembles the rich evaluation payload for UI + logging.
  */
 export async function createAccessDecisionEvaluator(
-  persistence: DexiePersistence,
+  dataStores: AccessDecisionDataStores,
   seedFallback: DatabaseSeedSettings,
   ui?: LiveAccessDecisionUi,
 ): Promise<(input: GateAccessEvaluationInput) => Promise<GateAccessEvaluation | null>> {
   return async (input) => {
     const [users, thrRow] = await Promise.all([
-      persistence.usersRepo.toArray(),
-      persistence.settingsRepo.get('thresholds'),
+      dataStores.usersRepo.toArray(),
+      dataStores.settingsRepo.get('thresholds'),
     ]);
     if (users.length === 0) return null;
 

@@ -160,16 +160,10 @@ export function createEnrollmentController(
           });
           if (gen !== loadGeneration) return;
           const dc = opts.defaultVideoConstraints;
-          const getOpts = () =>
-            opts.getCameraStartOptions?.() ?? { facingMode: dc.facingMode };
-          await startVideoCameraResilient(
-            opts.camera,
-            getOpts,
-            dc.facingMode,
-            async (fb) => {
-              await opts.onRecoverStaleEnrollDevice?.(fb);
-            },
-          );
+          const getOpts = () => opts.getCameraStartOptions?.() ?? { facingMode: dc.facingMode };
+          await startVideoCameraResilient(opts.camera, getOpts, dc.facingMode, async (fb) => {
+            await opts.onRecoverStaleEnrollDevice?.(fb);
+          });
           if (gen !== loadGeneration) return;
           await opts.onAfterCameraStart?.(opts.camera);
           if (gen !== loadGeneration) return;
