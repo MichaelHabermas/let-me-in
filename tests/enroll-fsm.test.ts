@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { transitionEnrollState, type EnrollState } from '../src/app/enroll-fsm';
+import { transitionEnrollState, type EnrollState } from '../src/app/enrollment/enroll-fsm';
 
 function walk(events: Parameters<typeof transitionEnrollState>[1][]): EnrollState {
   let s: EnrollState = 'idle';

@@ -3,7 +3,7 @@ import type { DexiePersistence, PersistenceProvider } from '../infra/persistence
 import { resolvePersistence } from '../infra/persistence';
 import { installGatekeeperMetricsOnWindow } from './gatekeeper-metrics';
 import { getHttpsStartupState as defaultGetHttpsStartupState } from './https-gate';
-import { resolveGateRuntime } from './runtime-settings';
+import { resolveGateRuntime } from './gate-runtime';
 
 export type HttpsStartupState = ReturnType<typeof defaultGetHttpsStartupState>;
 

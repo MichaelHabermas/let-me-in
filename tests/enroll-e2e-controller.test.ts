@@ -9,7 +9,7 @@ import {
   createE2eEnrollmentCamera,
   createE2eEnrollmentDetector,
   createE2eEnrollmentEmbedder,
-} from '../src/app/enroll-e2e-doubles';
+} from '../src/app/enrollment/enroll-e2e-doubles';
 import type { DatabaseSeedSettings } from '../src/domain/database-seed';
 import { createDexiePersistence } from '../src/infra/persistence';
 

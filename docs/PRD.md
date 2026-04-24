@@ -222,7 +222,7 @@ Rule: UI entrypoints call `app/*` composition roots (`mountGateView`, `mountAdmi
     log.ts                     # log viewer entry
     app/
       bootstrap-app.ts         # composition root: HTTPS check, persistence.initDatabase, mount
-      runtime-settings.ts      # config + env → page titles, camera strings, DB seed snapshot, dev FPS flag
+      gate-runtime.ts          # config + env → page titles, camera strings, DB seed snapshot, dev FPS flag
       mount-gate.ts            # gate DOM, overlay canvas, YOLO detector + wireGatePreviewSession
       gatekeeper-metrics.ts    # PRD §5.2 — performance marks + window.__gatekeeperMetrics
       gate-e2e-doubles.ts      # VITE_E2E_STUB_GATE detector/embedder + localStorage scenario switch
@@ -563,7 +563,7 @@ settings: { key (pk, string), value }
 - Open/Closed: adding a new camera-constraint (e.g., 4K) edits `config.ts` only.
 - Liskov: n/a.
 - Interface Segregation: `camera` exposes `start`, `stop`, `getFrame`, `onError` only.
-- Dependency Inversion: `mount-gate.ts` imports `createCamera` from `app/camera.ts` (policy re-export of `infra/camera.ts`); org strings and constraints resolve via `app/runtime-settings.ts` (config + env), not scattered `import.meta.env` in UI.
+- Dependency Inversion: `mount-gate.ts` imports `createCamera` from `app/camera.ts` (policy re-export of `infra/camera.ts`); org strings and constraints resolve via `app/gate-runtime.ts` (config + env), not scattered `import.meta.env` in UI.
 - DRY: all "please allow camera" copy lives in `config.ui.strings`.
 - Module boundaries respected.
 
@@ -652,7 +652,7 @@ camera.onError(cb) -> unsubscribe
 
 ###### Task E2.S1.F2.T2: Implement FPS counter overlay (dev only) — [x]
 
-- Files: `src/app/mount-gate.ts`, `src/app/runtime-settings.ts`
+- Files: `src/app/mount-gate.ts`, `src/app/gate-runtime.ts`
 - Preconditions: E2.S1.F2.T1 done
 - Steps:
   1. If `resolveGateRuntime().showFpsOverlay` (true when `import.meta.env.DEV`), show `<div id="fps">` updating via `onFrame` callback with rolling average.
@@ -1145,7 +1145,7 @@ stateDiagram-v2
 - OCP: adding a new enrollment field (e.g., `photoUrl`) edits the view + repo only.
 - LSP: n/a.
 - ISP: view receives `{ onSave, onCancel, camera }`.
-- DIP: admin UI imports camera via `app/camera.ts`; enrollment capture lives in `app/enroll-capture.ts` (reuses `embedFace`).
+- DIP: admin UI imports camera via `app/camera.ts`; enrollment capture lives in `app/enrollment/enroll-capture.ts` (reuses `embedFace`).
 - DRY: enrollment flow reuses `pipeline.embedFace`.
 - Module boundaries respected.
 
@@ -1221,7 +1221,7 @@ stateDiagram-v2
 
 ###### Task E6.S2.F1.T3: Save `User` record to IndexedDB — [x]
 
-- Files: `src/infra/db-dexie.ts` (schema unchanged), `src/app/enroll-save.ts` + `persistEnrolledUser`
+- Files: `src/infra/db-dexie.ts` (schema unchanged), `src/app/enrollment/enroll-save.ts` + `persistEnrolledUser`
 - Preconditions: E6.S2.F1.T2 done
 - Steps:
   1. Generate UUID for `id`.

@@ -1,4 +1,4 @@
-import type { GateRuntime } from './runtime-settings';
+import type { GateRuntime } from './gate-runtime';
 
 export type BaseGatePreviewElements = {
   previewWrap: HTMLElement;

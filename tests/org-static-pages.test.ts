@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { GateRuntime } from '../src/app/runtime-settings';
+import type { GateRuntime } from '../src/app/gate-runtime';
 import { mountOrgBrandedStaticPage } from '../src/ui/org-static-pages';
 import { createTestGateRuntime } from './support/create-test-gate-runtime';
 

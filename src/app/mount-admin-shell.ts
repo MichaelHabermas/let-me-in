@@ -7,7 +7,7 @@ import {
   type DexiePersistence,
   type PersistenceProvider,
 } from '../infra/persistence';
-import { resolveGateRuntime, type GateRuntime } from './runtime-settings';
+import { resolveGateRuntime, type GateRuntime } from './gate-runtime';
 
 export type MountAdminShellOptions = {
   rt?: GateRuntime;

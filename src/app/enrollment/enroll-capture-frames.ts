@@ -1,12 +1,12 @@
-import type { Camera } from './camera';
+import type { Camera } from '../camera';
 import { drawDetections, embedFace, handleDetectionCardinality } from './enroll-detection-bridge';
 import { imageDataToJpegBlob } from './enroll-image';
 import { persistEnrolledUser } from './enroll-save';
-import { squareCropWithMargin, type Bbox } from './crop';
-import type { Detection } from '../infra/detector-core';
-import type { FaceEmbedder } from '../infra/embedder-ort';
-import type { DexiePersistence } from '../infra/persistence';
-import { drawVideoToCanvas } from '../infra/camera';
+import { squareCropWithMargin, type Bbox } from '../crop';
+import type { Detection } from '../../infra/detector-core';
+import type { FaceEmbedder } from '../../infra/embedder-ort';
+import type { DexiePersistence } from '../../infra/persistence';
+import { drawVideoToCanvas } from '../../infra/camera';
 
 export type EnrollmentFrameDeps = {
   camera: Camera;

@@ -1,4 +1,4 @@
-import type { CooldownGate } from './cooldown';
+import type { CooldownGate } from '../cooldown';
 import {
   drawDetections,
   embedFace,
@@ -8,19 +8,18 @@ import {
   setStatus,
   tickNoFaceDebounced,
   type NoFaceDebouncer,
-} from './detection-pipeline-internals';
+} from './internals';
 import {
   recordLastAccessEvaluationMs,
   recordLastDetectorInferMs,
   recordLastEmbedInferMs,
-} from './gatekeeper-metrics';
-import type { Decision } from '../domain/types';
-import type { GateAccessEvaluation } from './gate-access-evaluation';
-import type { EvaluateGateAccessFn } from './gate-access-evaluation';
-import { policyDecisionForCooldown } from './gate-access-evaluation';
-import type { Camera } from './camera';
-import type { YoloDetector } from '../infra/detector-core';
-import type { FaceEmbedder } from '../infra/embedder-ort';
+} from '../gatekeeper-metrics';
+import type { Decision } from '../../domain/types';
+import type { EvaluateGateAccessFn, GateAccessEvaluation } from '../gate-access-evaluation';
+import { policyDecisionForCooldown } from '../gate-access-evaluation';
+import type { Camera } from '../camera';
+import type { YoloDetector } from '../../infra/detector-core';
+import type { FaceEmbedder } from '../../infra/embedder-ort';
 
 export type AppendAccessLogFn = (payload: {
   userId: string | null;

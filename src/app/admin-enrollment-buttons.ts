@@ -1,9 +1,9 @@
-import type { AdminEnrollmentDom } from './admin-enrollment-dom';
+import type { AdminEnrollmentCaptureMount } from './admin-enrollment-ports';
 import type { EnrollmentController } from './enroll';
-import type { GateRuntime } from './runtime-settings';
+import type { GateRuntime } from './gate-runtime';
 
 export function syncAdminEnrollmentButtons(
-  dom: AdminEnrollmentDom,
+  dom: AdminEnrollmentCaptureMount,
   ctrl: EnrollmentController,
   rt: GateRuntime,
 ): void {

@@ -1,5 +1,5 @@
 import { fillEnrollmentRoleSelect } from './admin-enrollment-role-select';
-import type { GateRuntime } from './runtime-settings';
+import type { GateRuntime } from './gate-runtime';
 
 export type AdminEnrollmentDom = {
   shell: HTMLElement;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { composeGateRuntime } from '../src/app/gate-runtime';
 import { createGateUiRuntimeSlice } from '../src/app/gate-ui-runtime';
 import { getDatabaseSeedSettingsFromConfig } from '../src/app/gate-seed-settings';
 import type { Config } from '../src/config';
@@ -121,5 +122,20 @@ describe('getDatabaseSeedSettingsFromConfig', () => {
         cooldownMs: 5000,
       }).thresholds,
     );
+  });
+});
+
+describe('composeGateRuntime', () => {
+  it('merges UI slice with database seed and preview session deps', () => {
+    const ui = createGateUiRuntimeSlice(uiCfg, false);
+    const full = composeGateRuntime(ui, () =>
+      getDatabaseSeedSettingsFromConfig({
+        thresholds: { strong: 0.9, weak: 0.7, unknown: 0.55, margin: 0.03 },
+        cooldownMs: 4200,
+      }),
+    );
+    expect(full.databaseSeedSettings.cooldownMs).toBe(4200);
+    expect(full.gatePreviewSessionCoreDeps.cooldownMs).toBe(4200);
+    expect(full.gatePreviewSessionCoreDeps.noFaceMessage).toBe('nf');
   });
 });

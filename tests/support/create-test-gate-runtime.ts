@@ -1,6 +1,6 @@
 import { createGateUiRuntimeSlice } from '../../src/app/gate-ui-runtime';
 import { getDatabaseSeedSettingsFromConfig } from '../../src/app/gate-seed-settings';
-import { composeGateRuntime, type GateRuntime } from '../../src/app/runtime-settings';
+import { composeGateRuntime, type GateRuntime } from '../../src/app/gate-runtime';
 import type { Config } from '../../src/config';
 
 const testGateUiConfig: Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'> = {

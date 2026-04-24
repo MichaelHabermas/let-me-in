@@ -6,7 +6,7 @@
 import type { Detection } from '../infra/detector-core';
 import type { YoloDetector } from '../infra/detector-core';
 import type { FaceEmbedder } from '../infra/embedder-ort';
-import { createE2eEnrollmentEmbedder } from './enroll-e2e-doubles';
+import { createE2eEnrollmentEmbedder } from './enrollment/enroll-e2e-doubles';
 
 export const E2E_GATE_SCENARIO_KEY = 'e2e_gate_scenario';
 

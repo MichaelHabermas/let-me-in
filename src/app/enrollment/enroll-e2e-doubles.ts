@@ -3,10 +3,10 @@
  * `VITE_E2E_STUB_ENROLL` is set — keeps a single `createEnrollmentController` path.
  */
 
-import type { Camera, ErrorCallback, FrameCallback, Unsubscribe } from '../infra/camera';
-import { makeCameraError } from '../infra/camera';
-import type { Detection } from '../infra/detector-core';
-import type { FaceEmbedder } from '../infra/embedder-ort';
+import type { Camera, ErrorCallback, FrameCallback, Unsubscribe } from '../../infra/camera';
+import { makeCameraError } from '../../infra/camera';
+import type { Detection } from '../../infra/detector-core';
+import type { FaceEmbedder } from '../../infra/embedder-ort';
 
 const E2E_EMBEDDING_UNIT = 1 / Math.sqrt(512);
 

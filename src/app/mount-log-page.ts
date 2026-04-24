@@ -8,8 +8,8 @@ import {
   buildLogToolbar,
   createUserNameMap,
 } from './log-page-dom';
-import type { GateRuntime } from './runtime-settings';
-import { resolveGateRuntime } from './runtime-settings';
+import type { GateRuntime } from './gate-runtime';
+import { resolveGateRuntime } from './gate-runtime';
 
 /**
  * Full access log: filters, sortable columns, all rows (no 20-row cap).

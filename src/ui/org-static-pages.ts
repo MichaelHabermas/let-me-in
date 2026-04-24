@@ -1,4 +1,4 @@
-import type { GateRuntime } from '../app/runtime-settings';
+import type { GateRuntime } from '../app/gate-runtime';
 import { mountStaticPage } from './page-shell';
 
 export type OrgStaticPageVariant = 'admin' | 'log';

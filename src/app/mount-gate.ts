@@ -9,8 +9,8 @@ import { createCamera } from './camera';
 import { buildGateDom } from './gate-preview-dom';
 import { bootstrapGateConsentIfNeeded } from './gate-consent-bootstrap';
 import { wireGatePreviewSession, type GatePreviewSessionDeps } from './gate-session';
-import type { GateRuntime } from './runtime-settings';
-import { resolveGateRuntime } from './runtime-settings';
+import type { GateRuntime } from './gate-runtime';
+import { resolveGateRuntime } from './gate-runtime';
 
 export type MountGateHostDeps = {
   rt: GateRuntime;

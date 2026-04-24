@@ -1,11 +1,11 @@
 import type { User } from '../domain/types';
 import type { DexiePersistence } from '../infra/persistence';
 import { renderAdminUserRoster } from './admin-user-roster';
-import type { AdminEnrollmentDom } from './admin-enrollment-dom';
-import type { GateRuntime } from './runtime-settings';
+import type { AdminEnrollmentRosterDomPort } from './admin-enrollment-ports';
+import type { GateRuntime } from './gate-runtime';
 
 export function createAdminEnrollmentRosterController(params: {
-  dom: AdminEnrollmentDom;
+  dom: AdminEnrollmentRosterDomPort;
   rt: GateRuntime;
   persistence: DexiePersistence;
   beginEdit: (user: User) => void;

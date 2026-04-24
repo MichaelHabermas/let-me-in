@@ -3,7 +3,7 @@
 import Dexie from 'dexie';
 import { describe, expect, it } from 'vitest';
 
-import { readConsentAccepted, writeConsentAccepted } from '../src/app/consent';
+import { readConsentAccepted, writeConsentAccepted } from '../src/app/gate-consent-settings';
 import { createDexiePersistence } from '../src/infra/persistence';
 
 import { createTestGateRuntime } from './support/create-test-gate-runtime';

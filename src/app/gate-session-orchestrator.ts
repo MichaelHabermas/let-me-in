@@ -1,96 +1,10 @@
 import type { Camera } from './camera';
 import { createCooldown } from './cooldown';
-import { maybeRecordNavigationToDetectorReady, withMeasuredLoad } from './gatekeeper-metrics';
 import { createDetectionPipeline } from './pipeline';
-import { createAccessAudioCues } from './audio';
-import {
-  createGateAccessUiController,
-  FALLBACK_GATE_ACCESS_UI_STRINGS,
-} from './gate-access-ui-controller';
-import { createAccessDecisionEvaluator } from './access-decision-engine';
 import { syncCameraToggleUi } from './gate-camera-toggle-ui';
 import type { GatePreviewElements, GatePreviewSessionDeps } from './gate-session';
-
-type DetectorGateState = {
-  loadState: 'none' | 'pending' | 'ready' | 'failed';
-  embedderLoadState?: 'none' | 'pending' | 'ready' | 'failed';
-  modelsSettled?: Promise<boolean>;
-  stopPipeline?: () => void;
-};
-
-function beginDetectorLoad(
-  deps: GatePreviewSessionDeps,
-  camera: Camera,
-  statusEl: HTMLElement,
-  state: DetectorGateState,
-  loadingMsg: string,
-  failedMsg: string,
-): void {
-  const promises: Promise<void>[] = [];
-  if (deps.yoloDetector) {
-    const detector = deps.yoloDetector;
-    state.loadState = 'pending';
-    promises.push(withMeasuredLoad('detector', () => detector.load()));
-  } else {
-    state.loadState = 'none';
-  }
-  if (deps.faceEmbedder) {
-    const embedder = deps.faceEmbedder;
-    state.embedderLoadState = 'pending';
-    promises.push(withMeasuredLoad('embedder', () => embedder.load()));
-  } else {
-    state.embedderLoadState = 'none';
-  }
-  if (promises.length === 0) return;
-
-  statusEl.textContent = loadingMsg;
-  state.modelsSettled = (async (): Promise<boolean> => {
-    try {
-      await Promise.all(promises);
-      if (deps.yoloDetector) state.loadState = 'ready';
-      if (deps.faceEmbedder) state.embedderLoadState = 'ready';
-      maybeRecordNavigationToDetectorReady();
-      if (!camera.isRunning()) statusEl.textContent = '';
-      return true;
-    } catch (error) {
-      console.error('[gate] model load failed', error);
-      if (deps.yoloDetector) state.loadState = 'failed';
-      if (deps.faceEmbedder) state.embedderLoadState = 'failed';
-      statusEl.textContent = failedMsg;
-      return false;
-    }
-  })();
-}
-
-async function withLiveAccessDeps(
-  elements: GatePreviewElements,
-  deps: GatePreviewSessionDeps,
-): Promise<GatePreviewSessionDeps> {
-  if (deps.evaluateDecision || !deps.persistence || !deps.databaseSeedFallback) {
-    return deps;
-  }
-  const persistence = deps.persistence;
-  const uiStrings = deps.accessUiStrings ?? FALLBACK_GATE_ACCESS_UI_STRINGS;
-  const accessUi =
-    elements.decisionEl && createGateAccessUiController(elements.decisionEl, uiStrings);
-  const audioCues = createAccessAudioCues();
-  const evaluateDecision = await createAccessDecisionEvaluator(
-    deps.persistence,
-    deps.databaseSeedFallback,
-    {
-      onDecision: (event) => {
-        accessUi?.present(event);
-        audioCues.play(event.policy.decision);
-      },
-    },
-  );
-  return {
-    ...deps,
-    evaluateDecision,
-    appendAccessLog:
-      deps.appendAccessLog ?? ((payload) => persistence.accessLogRepo.appendDecision(payload)),
-  };
-}
+import { beginDetectorLoad, type DetectorGateState } from './gate-session-detector-load';
+import { withLiveAccessDeps } from './gate-session-live-access';
 
 /**
  * Camera + model load + live access pipeline orchestration (deep module boundary).

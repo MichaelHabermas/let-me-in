@@ -4,11 +4,15 @@ import { syncAdminEnrollmentButtons } from './admin-enrollment-buttons';
 import { fillEnrollmentRoleSelect } from './admin-enrollment-role-select';
 import { createAdminEnrollmentRosterController } from './admin-enrollment-roster-controller';
 import { createAdminEnrollmentSessionController } from './admin-enrollment-session-factory';
-import { createAdminEnrollmentDom, type AdminEnrollmentDom } from './admin-enrollment-dom';
+import { createAdminEnrollmentDom } from './admin-enrollment-dom';
+import type {
+  AdminEnrollmentCaptureMount,
+  AdminEnrollmentSaveFormPort,
+} from './admin-enrollment-ports';
 import type { EnrollmentController } from './enroll';
 import type { User } from '../domain/types';
 import type { DexiePersistence } from '../infra/persistence';
-import type { GateRuntime } from './runtime-settings';
+import type { GateRuntime } from './gate-runtime';
 
 export type MountAdminEnrollmentOptions = {
   root: HTMLElement;
@@ -20,7 +24,7 @@ export type MountAdminEnrollmentOptions = {
 };
 
 function bindEnrollmentSaveClick(
-  dom: AdminEnrollmentDom,
+  dom: AdminEnrollmentSaveFormPort,
   ctrl: EnrollmentController,
   rt: GateRuntime,
   syncButtons: () => void,
@@ -62,7 +66,7 @@ function bindEnrollmentSaveClick(
 type EnrollmentControllerRef = { ctrl: EnrollmentController | null };
 
 function createEnrollmentSyncHandlers(
-  dom: AdminEnrollmentDom,
+  dom: AdminEnrollmentCaptureMount,
   rt: GateRuntime,
   enrollmentRef: EnrollmentControllerRef,
 ): { syncButtons: () => void; beginEdit: (user: User) => void } {
@@ -89,7 +93,7 @@ function createEnrollmentSyncHandlers(
 }
 
 function bindEnrollmentUi(
-  dom: AdminEnrollmentDom,
+  dom: AdminEnrollmentCaptureMount,
   ctrl: EnrollmentController,
   rt: GateRuntime,
   syncButtons: () => void,

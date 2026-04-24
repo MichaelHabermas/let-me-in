@@ -1,6 +1,6 @@
-import { formatAllowedRolesHint, resolveUserRole } from '../domain/user-roles';
-import type { User } from '../domain/types';
-import type { DexiePersistence } from '../infra/persistence';
+import { formatAllowedRolesHint, resolveUserRole } from '../../domain/user-roles';
+import type { User } from '../../domain/types';
+import type { DexiePersistence } from '../../infra/persistence';
 
 function normalizePersistedRole(
   role: string,

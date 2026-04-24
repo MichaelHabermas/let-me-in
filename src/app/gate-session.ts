@@ -7,7 +7,7 @@ import type { Camera, CreateCameraOptions } from './camera';
 import type { GateAccessUiStrings } from './gate-access-ui-controller';
 import type { EvaluateGateAccessFn } from './gate-access-evaluation';
 import { maybeMountFpsOverlay } from './gate-fps-overlay';
-import { wireCameraControls } from './gate-session-controller';
+import { wireCameraControls } from './gate-session-orchestrator';
 import type { AppendAccessLogFn } from './pipeline';
 
 export type GatePreviewSessionDeps = {

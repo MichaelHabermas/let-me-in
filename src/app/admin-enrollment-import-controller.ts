@@ -1,10 +1,10 @@
 import { runBulkImport } from './bulk-import';
-import type { AdminEnrollmentDom } from './admin-enrollment-dom';
-import type { GateRuntime } from './runtime-settings';
+import type { AdminEnrollmentImportDomPort } from './admin-enrollment-ports';
+import type { GateRuntime } from './gate-runtime';
 import type { DexiePersistence } from '../infra/persistence';
 
 export function bindAdminEnrollmentImportController(params: {
-  dom: AdminEnrollmentDom;
+  dom: AdminEnrollmentImportDomPort;
   rt: GateRuntime;
   persistence: DexiePersistence;
   refreshRoster: () => Promise<void>;

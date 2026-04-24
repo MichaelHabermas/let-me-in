@@ -1,9 +1,12 @@
-import { embedFace } from './enroll-detection-bridge';
+import { embedFace } from './enrollment/enroll-detection-bridge';
 import type { BulkImportRow } from './bulk-import-parse';
-import { imageDataToJpegBlob } from './enroll-image';
-import { persistEnrolledUser } from './enroll-save';
+import { imageDataToJpegBlob } from './enrollment/enroll-image';
+import { persistEnrolledUser } from './enrollment/enroll-save';
 import { squareCropWithMargin, type Bbox } from './crop';
-import { createE2eEnrollmentDetector, createE2eEnrollmentEmbedder } from './enroll-e2e-doubles';
+import {
+  createE2eEnrollmentDetector,
+  createE2eEnrollmentEmbedder,
+} from './enrollment/enroll-e2e-doubles';
 import { getDetectorRuntimeSettings, getEmbedderRuntimeSettings } from '../config';
 import type { Detection } from '../infra/detector-core';
 import { createFaceEmbedder, type FaceEmbedder } from '../infra/embedder-ort';

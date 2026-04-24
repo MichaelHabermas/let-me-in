@@ -18,7 +18,7 @@ Frames and embeddings stay on the device—better privacy and simpler hosting (m
 2. Compare it (cosine similarity) to enrolled vectors in IndexedDB.
 3. `[decideFromMatch](src/domain/access-policy.ts)` maps the best score and margin vs. the runner-up to **GRANTED**, **UNCERTAIN**, or **DENIED** using configurable thresholds.
 
-The gate UI reflects that verdict. **GRANTED** and **DENIED** outcomes are written to the local access log (`[pipeline-frame.ts](src/app/pipeline-frame.ts)`, `[gate-live-access.ts](src/app/gate-live-access.ts)`).
+The gate UI reflects that verdict. **GRANTED** and **DENIED** outcomes are written to the local access log from the detection pipeline frame handler and the access decision path (`[detection-pipeline/run-frame.ts](src/app/detection-pipeline/run-frame.ts)`, `[access-decision-engine.ts](src/app/access-decision-engine.ts)`).
 
 ## Prerequisites
 
@@ -64,7 +64,7 @@ Open:
 - **Entries:** `[src/main.ts](src/main.ts)`, `[src/admin.ts](src/admin.ts)`, `[src/log.ts](src/log.ts)` each call `[bootstrapApp({ mount })](src/app/bootstrap-app.ts)` (optional `persistence` for tests).
 - **Gate page:** `[src/app/mount-gate.ts](src/app/mount-gate.ts)` builds DOM and wires the camera preview via `[src/app/gate-session.ts](src/app/gate-session.ts)`.
 - **Admin / enrollment:** `[src/app/mount-admin-shell.ts](src/app/mount-admin-shell.ts)` + `[src/app/mount-admin-enrollment.ts](src/app/mount-admin-enrollment.ts)` — login modal, camera enrollment, IndexedDB save. E2E uses `VITE_E2E_STUB_ENROLL=true` (see Playwright `webServer` env in `[playwright.config.ts](playwright.config.ts)`).
-- **Runtime copy / seed:** `[src/app/runtime-settings.ts](src/app/runtime-settings.ts)` centralizes config- and env-derived values (page titles, camera strings, preview canvas size, dev FPS overlay).
+- **Runtime copy / seed:** `[src/app/gate-runtime.ts](src/app/gate-runtime.ts)` centralizes config- and env-derived values (page titles, camera strings, preview canvas size, dev FPS overlay).
 - **Deploy routes:** `[multi-page.ts](multi-page.ts)` feeds Vite and `netlify.toml` (keep in sync with `pnpm sync:netlify` or `pnpm verify:netlify`).
 
 ## Configuration
@@ -84,7 +84,7 @@ See **[docs/DEPLOY.md](docs/DEPLOY.md)** for admin credential env vars and rotat
 
 ## IndexedDB
 
-The app uses database name `**gatekeeper`** with stores `users`, `accessLog`, and `settings` (Dexie). After first load, `settings` is seeded with default threshold and cooldown snapshots supplied at bootstrap from `[resolveGateRuntime().databaseSeedSettings](src/app/runtime-settings.ts)` (same numbers as `[src/config.ts](src/config.ts)`; `[src/infra/persistence.ts](src/infra/persistence.ts)` does not import `config` directly).
+The app uses database name `**gatekeeper`** with stores `users`, `accessLog`, and `settings` (Dexie). After first load, `settings` is seeded with default threshold and cooldown snapshots supplied at bootstrap from `[resolveGateRuntime().databaseSeedSettings](src/app/gate-runtime.ts)` (same numbers as `[src/config.ts](src/config.ts)`; `[src/infra/persistence.ts](src/infra/persistence.ts)` does not import `config` directly).
 
 ## Validation checklist (Epic E1)
 

@@ -1,4 +1,4 @@
-import type { Camera } from './camera';
+import type { Camera } from '../camera';
 import type { EnrollState } from './enroll-fsm';
 import { transitionEnrollState } from './enroll-fsm';
 import {
@@ -8,10 +8,10 @@ import {
   saveEnrollmentUser,
   type EnrollmentFrameDeps,
 } from './enroll-capture-frames';
-import type { Detection } from '../infra/detector-core';
-import type { FaceEmbedder } from '../infra/embedder-ort';
-import type { DexiePersistence } from '../infra/persistence';
-import type { User } from '../domain/types';
+import type { Detection } from '../../infra/detector-core';
+import type { FaceEmbedder } from '../../infra/embedder-ort';
+import type { DexiePersistence } from '../../infra/persistence';
+import type { User } from '../../domain/types';
 
 export type EnrollmentControllerOptions = {
   camera: Camera;

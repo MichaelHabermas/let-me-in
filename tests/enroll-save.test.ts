@@ -1,7 +1,7 @@
 import Dexie from 'dexie';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { persistEnrolledUser } from '../src/app/enroll-save';
+import { persistEnrolledUser } from '../src/app/enrollment/enroll-save';
 import type { DatabaseSeedSettings } from '../src/infra/persistence';
 import { createDexiePersistence } from '../src/infra/persistence';
 

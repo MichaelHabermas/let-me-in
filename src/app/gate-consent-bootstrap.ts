@@ -1,5 +1,5 @@
 import type { DexiePersistence } from '../infra/persistence';
-import { readConsentAccepted, writeConsentAccepted } from './consent';
+import { readConsentAccepted, writeConsentAccepted } from './gate-consent-settings';
 import type { ConsentModalStrings } from '../ui/components/consent';
 import { mountConsentModal } from '../ui/components/consent';
 

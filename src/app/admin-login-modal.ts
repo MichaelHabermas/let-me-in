@@ -1,6 +1,6 @@
 import type { AdminAuth } from './auth';
 import type { AdminUiStrings } from './gate-ui-runtime';
-import type { GateRuntime } from './runtime-settings';
+import type { GateRuntime } from './gate-runtime';
 
 function buildAdminLoginForm(copy: AdminUiStrings): {
   form: HTMLFormElement;

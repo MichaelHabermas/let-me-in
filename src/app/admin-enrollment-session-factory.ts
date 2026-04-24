@@ -4,17 +4,17 @@ import { createFaceEmbedder } from '../infra/embedder-ort';
 import { createYoloDetector } from '../infra/detector-ort';
 import { createDetectorEmbedderRuntime } from '../infra/inference-runtime';
 import { createCamera } from './camera';
-import type { AdminEnrollmentDom } from './admin-enrollment-dom';
+import type { AdminEnrollmentCaptureMount } from './admin-enrollment-ports';
 import { createEnrollmentController, type EnrollmentController } from './enroll';
 import {
   createE2eEnrollmentCamera,
   createE2eEnrollmentDetector,
   createE2eEnrollmentEmbedder,
-} from './enroll-e2e-doubles';
-import type { GateRuntime } from './runtime-settings';
+} from './enrollment/enroll-e2e-doubles';
+import type { GateRuntime } from './gate-runtime';
 
 function enrollmentControllerBase(
-  dom: AdminEnrollmentDom,
+  dom: AdminEnrollmentCaptureMount,
   rt: GateRuntime,
   persistence: DexiePersistence,
   onStateChange: () => void,
@@ -32,7 +32,7 @@ function enrollmentControllerBase(
 }
 
 export function createAdminEnrollmentSessionController(params: {
-  dom: AdminEnrollmentDom;
+  dom: AdminEnrollmentCaptureMount;
   rt: GateRuntime;
   persistence: DexiePersistence;
   useStubEnrollment: boolean;
