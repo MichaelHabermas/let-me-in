@@ -8,6 +8,9 @@ import { makeCameraError } from '../src/infra/camera';
 import {
   testDetectorLoadFailedMessage,
   testDetectorLoadingMessage,
+  testModelLoadRetry,
+  testModelLoadStageDetector,
+  testModelLoadStageEmbedder,
 } from './fixtures/gate-copy';
 import { createVitestCameraStub } from './support/fake-camera';
 
@@ -61,6 +64,9 @@ describe('wireGatePreviewSession', () => {
       getCameraUserFacingMessage: () => '',
       detectorLoadingMessage: testDetectorLoadingMessage,
       detectorLoadFailedMessage: testDetectorLoadFailedMessage,
+      modelLoadStageDetectorLabel: testModelLoadStageDetector,
+      modelLoadStageEmbedderLabel: testModelLoadStageEmbedder,
+      modelLoadRetryLabel: testModelLoadRetry,
       noFaceMessage: 'No face',
       multiFaceMessage: 'Multiple faces',
       cooldownMs: 3000,
@@ -108,6 +114,9 @@ describe('wireGatePreviewSession', () => {
         code === 'permission-denied' ? 'Camera blocked' : 'other',
       detectorLoadingMessage: testDetectorLoadingMessage,
       detectorLoadFailedMessage: testDetectorLoadFailedMessage,
+      modelLoadStageDetectorLabel: testModelLoadStageDetector,
+      modelLoadStageEmbedderLabel: testModelLoadStageEmbedder,
+      modelLoadRetryLabel: testModelLoadRetry,
       noFaceMessage: 'No face',
       multiFaceMessage: 'Multiple faces',
       cooldownMs: 3000,
@@ -148,6 +157,9 @@ describe('wireGatePreviewSession', () => {
         yoloDetector,
         detectorLoadingMessage: testDetectorLoadingMessage,
         detectorLoadFailedMessage: testDetectorLoadFailedMessage,
+        modelLoadStageDetectorLabel: testModelLoadStageDetector,
+        modelLoadStageEmbedderLabel: testModelLoadStageEmbedder,
+        modelLoadRetryLabel: testModelLoadRetry,
         noFaceMessage: 'No face',
         multiFaceMessage: 'Multiple faces',
         cooldownMs: 3000,

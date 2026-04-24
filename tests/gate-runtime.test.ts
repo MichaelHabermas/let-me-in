@@ -24,6 +24,9 @@ const uiCfg: Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'> = 
       cameraStop: 'stop',
       detectorLoading: 'det-loading',
       detectorLoadFailed: 'det-fail',
+      modelLoadStageDetector: 'det-stage',
+      modelLoadStageEmbedder: 'emb-stage',
+      modelLoadRetry: 'retry',
       adminLoginHeading: 'h',
       adminLoginUsername: 'u',
       adminLoginPassword: 'p',
@@ -99,6 +102,9 @@ describe('createGateUiRuntimeSlice', () => {
     const rt = createGateUiRuntimeSlice(uiCfg, false);
     expect(rt.detectorLoadingMessage).toBe('det-loading');
     expect(rt.detectorLoadFailedMessage).toBe('det-fail');
+    expect(rt.modelLoadStageDetectorLabel).toBe('det-stage');
+    expect(rt.modelLoadStageEmbedderLabel).toBe('emb-stage');
+    expect(rt.modelLoadRetryLabel).toBe('retry');
   });
 
   it('exposes log page strings for mounts', () => {

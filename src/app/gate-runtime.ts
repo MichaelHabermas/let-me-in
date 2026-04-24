@@ -16,6 +16,9 @@ export type GatePreviewSessionCoreDeps = Pick<
   | 'logEmbeddingTimings'
   | 'detectorLoadingMessage'
   | 'detectorLoadFailedMessage'
+  | 'modelLoadStageDetectorLabel'
+  | 'modelLoadStageEmbedderLabel'
+  | 'modelLoadRetryLabel'
   | 'noFaceMessage'
   | 'multiFaceMessage'
   | 'cooldownMs'
@@ -38,6 +41,9 @@ export function composeGateRuntime(
     logEmbeddingTimings: ui.devLogEmbeddingTimings,
     detectorLoadingMessage: ui.detectorLoadingMessage,
     detectorLoadFailedMessage: ui.detectorLoadFailedMessage,
+    modelLoadStageDetectorLabel: ui.modelLoadStageDetectorLabel,
+    modelLoadStageEmbedderLabel: ui.modelLoadStageEmbedderLabel,
+    modelLoadRetryLabel: ui.modelLoadRetryLabel,
     noFaceMessage: ui.noFaceMessage,
     multiFaceMessage: ui.multiFaceMessage,
     cooldownMs: databaseSeedSettings.cooldownMs,

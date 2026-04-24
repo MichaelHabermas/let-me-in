@@ -1,18 +1,23 @@
 import type { DetectorRuntimeSettings } from '../config';
 import type { YoloDetector } from './detector-core';
 import { createYoloWorkerDetector } from './detector-worker-client';
+import { fetchModelBytesWithProgress } from './fetch-model-bytes';
+import type { ModelLoadProgress } from './model-load-types';
 import { createOrtSession, type OrtSessionBundle } from './ort-session-factory';
 import { runYoloDetectorInference } from './yolo-ort-inference';
 
+/* eslint-disable max-lines-per-function -- ORT load + infer + dispose on one surface */
 function createYoloMainThreadDetector(
   settings: DetectorRuntimeSettings,
   options?: {
     modelUrl?: string;
     modelBytes?: Uint8Array;
+    onLoadProgress?: (p: ModelLoadProgress) => void;
   },
 ): YoloDetector {
   const modelUrl = options?.modelUrl ?? settings.detectorModelUrl;
   const modelSource = options?.modelBytes ?? modelUrl;
+  const onLoadProgress = options?.onLoadProgress;
   let bundle: OrtSessionBundle | null = null;
   /** Same non-reentrancy guarantee as the worker-backed detector. */
   let inferChain: Promise<unknown> = Promise.resolve();
@@ -20,6 +25,17 @@ function createYoloMainThreadDetector(
   return {
     async load() {
       if (bundle) return;
+      if (typeof modelSource === 'string' && onLoadProgress) {
+        const bytes = await fetchModelBytesWithProgress(modelSource, ({ loaded, total }) =>
+          onLoadProgress({ stage: 'detector', loaded, total: total ?? undefined }),
+        );
+        bundle = await createOrtSession(
+          bytes,
+          settings.preferredExecutionProviders,
+          settings.ortWasmBase,
+        );
+        return;
+      }
       bundle = await createOrtSession(
         modelSource,
         settings.preferredExecutionProviders,
@@ -50,10 +66,12 @@ function createYoloMainThreadDetector(
     },
   };
 }
+/* eslint-enable max-lines-per-function */
 
 export type CreateYoloDetectorOptions = {
   modelUrl?: string;
   modelBytes?: Uint8Array;
+  onLoadProgress?: (p: ModelLoadProgress) => void;
   /** Disable worker path (debug). Ignored when `modelBytes` is set (tests always use main thread). */
   runOnMainThread?: boolean;
 };
@@ -76,6 +94,7 @@ export function createYoloDetector(
     return createYoloWorkerDetector({
       modelUrl: options?.modelUrl ?? settings.detectorModelUrl,
       ortWasmBase: settings.ortWasmBase,
+      onLoadProgress: options?.onLoadProgress,
     });
   }
   return createYoloMainThreadDetector(settings, options);

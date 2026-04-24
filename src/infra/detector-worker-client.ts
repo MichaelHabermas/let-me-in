@@ -1,9 +1,11 @@
+import type { ModelLoadProgress } from './model-load-types';
 import type { YoloDetector } from './detector-core';
 import {
   YOLO_WORKER_MSG,
   type YoloHostToWorkerInfer,
   type YoloHostToWorkerInit,
   type YoloHostToWorkerMessage,
+  type YoloWorkerToHostInitProgress,
   type YoloWorkerToHostMessage,
   isYoloWorkerToHostMessage,
 } from './yolo-detector-worker-protocol';
@@ -11,6 +13,7 @@ import {
 export type YoloWorkerDetectorOptions = {
   modelUrl: string;
   ortWasmBase: string;
+  onLoadProgress?: (p: ModelLoadProgress) => void;
 };
 
 type PendingMessageSlot = {
@@ -47,8 +50,30 @@ function postToWorker(
   });
 }
 
-function wireWorkerRpc(state: WorkerRpcState): void {
+function isInitProgress(data: unknown): data is YoloWorkerToHostInitProgress {
+  if (!data || typeof data !== 'object') return false;
+  const m = data as { type?: string; id?: number; loaded?: number; total?: unknown };
+  return (
+    m.type === YOLO_WORKER_MSG.initProgress &&
+    typeof m.id === 'number' &&
+    typeof m.loaded === 'number' &&
+    (m.total === null || typeof m.total === 'number')
+  );
+}
+
+function wireWorkerRpc(
+  state: WorkerRpcState,
+  onLoadProgress?: (p: ModelLoadProgress) => void,
+): void {
   state.worker.onmessage = (ev: MessageEvent) => {
+    if (isInitProgress(ev.data)) {
+      onLoadProgress?.({
+        stage: 'detector',
+        loaded: ev.data.loaded,
+        total: ev.data.total ?? undefined,
+      });
+      return;
+    }
     if (!isYoloWorkerToHostMessage(ev.data)) return;
     const slot = state.pending.get(ev.data.id);
     if (!slot) return;
@@ -143,6 +168,6 @@ export function createYoloWorkerDetector(opts: YoloWorkerDetectorOptions): YoloD
     /** ORT session.run is not re-entrant; RAF overlay + capture can overlap without this queue. */
     inferChain: Promise.resolve(),
   };
-  wireWorkerRpc(state);
+  wireWorkerRpc(state, opts.onLoadProgress);
   return createDetectorApi(opts, state, runtime);
 }

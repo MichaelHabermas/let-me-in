@@ -10,6 +10,8 @@ export type BaseGatePreviewElements = {
 export interface BuiltGateDom extends BaseGatePreviewElements {
   main: HTMLElement;
   cameraToggleBtn: HTMLButtonElement;
+  /** E11: empty host; caller runs `mountModelLoadStatusUi`. */
+  modelLoadRoot: HTMLElement;
   statusEl: HTMLElement;
   decisionEl: HTMLElement;
 }
@@ -127,10 +129,14 @@ function createGateHeader(rt: GateRuntime): {
 
 function createGateLiveBar(statusEl: HTMLElement): {
   liveBar: HTMLElement;
+  modelLoadRoot: HTMLElement;
   decisionEl: HTMLElement;
 } {
   const liveBar = document.createElement('section');
   liveBar.className = 'gate-livebar';
+
+  const modelLoadRoot = document.createElement('div');
+  modelLoadRoot.className = 'gate-livebar__model-load-host';
 
   const decisionLabel = document.createElement('span');
   decisionLabel.className = 'gate-livebar__label';
@@ -143,10 +149,11 @@ function createGateLiveBar(statusEl: HTMLElement): {
   decision.setAttribute('aria-live', 'polite');
   decision.textContent = '—';
 
+  liveBar.appendChild(modelLoadRoot);
   liveBar.appendChild(statusEl);
   liveBar.appendChild(decisionLabel);
   liveBar.appendChild(decision);
-  return { liveBar, decisionEl: decision };
+  return { liveBar, modelLoadRoot, decisionEl: decision };
 }
 
 export function buildGateDom(rt: GateRuntime): BuiltGateDom {
@@ -157,7 +164,7 @@ export function buildGateDom(rt: GateRuntime): BuiltGateDom {
   shell.className = 'gate-shell';
   const { header, cameraToggleBtn, statusEl } = createGateHeader(rt);
   const { previewWrap, video, canvas, overlayCanvas } = createGatePreview(rt);
-  const { liveBar, decisionEl } = createGateLiveBar(statusEl);
+  const { liveBar, modelLoadRoot, decisionEl } = createGateLiveBar(statusEl);
 
   shell.appendChild(header);
   shell.appendChild(previewWrap);
@@ -167,6 +174,7 @@ export function buildGateDom(rt: GateRuntime): BuiltGateDom {
   return {
     main,
     cameraToggleBtn,
+    modelLoadRoot,
     statusEl,
     previewWrap,
     video,

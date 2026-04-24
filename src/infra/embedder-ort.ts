@@ -6,6 +6,8 @@ import * as ort from 'onnxruntime-web/all';
 
 import type { EmbedderRuntimeSettings } from '../config';
 import { EMBEDDER_INPUT_SIZE } from './embedder-preprocess';
+import { fetchModelBytesWithProgress } from './fetch-model-bytes';
+import type { ModelLoadProgress } from './model-load-types';
 import { createOrtSession, type OrtSessionBundle } from './ort-session-factory';
 
 export { EMBEDDER_INPUT_SIZE, toEmbedderTensor } from './embedder-preprocess';
@@ -25,19 +27,33 @@ export type FaceEmbedder = {
 export type CreateFaceEmbedderOptions = {
   modelUrl?: string;
   modelBytes?: Uint8Array;
+  onLoadProgress?: (p: ModelLoadProgress) => void;
 };
 
+/* eslint-disable max-lines-per-function -- single factory returning load/infer/dispose */
 export function createFaceEmbedder(
   settings: EmbedderRuntimeSettings,
   options?: CreateFaceEmbedderOptions,
 ): FaceEmbedder {
   const modelUrl = options?.modelUrl ?? settings.embedderModelUrl;
   const modelSource = options?.modelBytes ?? modelUrl;
+  const onLoadProgress = options?.onLoadProgress;
   let bundle: OrtSessionBundle | null = null;
 
   return {
     async load() {
       if (bundle) return;
+      if (typeof modelSource === 'string' && onLoadProgress) {
+        const bytes = await fetchModelBytesWithProgress(modelSource, ({ loaded, total }) =>
+          onLoadProgress({ stage: 'embedder', loaded, total: total ?? undefined }),
+        );
+        bundle = await createOrtSession(
+          bytes,
+          settings.preferredExecutionProviders,
+          settings.ortWasmBase,
+        );
+        return;
+      }
       bundle = await createOrtSession(
         modelSource,
         settings.preferredExecutionProviders,
@@ -78,3 +94,4 @@ export function createFaceEmbedder(
     },
   };
 }
+/* eslint-enable max-lines-per-function */

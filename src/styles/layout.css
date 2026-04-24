@@ -347,6 +347,121 @@ body {
   text-transform: uppercase;
 }
 
+.gate-livebar__model-load-host {
+  flex: 1 1 12rem;
+  min-width: 0;
+  max-width: 22rem;
+}
+
+.admin-enroll__model-load-host {
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+/* E11 — shared model load progress (gate + admin) */
+.model-load {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.model-load__row {
+  display: grid;
+  grid-template-columns: minmax(4.5rem, auto) 1fr auto;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.model-load__row-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.model-load__track {
+  position: relative;
+  height: 0.5rem;
+  border-radius: var(--radius-sm);
+  background: rgb(30 41 59 / 0.9);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.model-load__fill {
+  height: 100%;
+  width: var(--model-load-fill-pct, 0%);
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  transition: width 0.15s ease-out;
+}
+
+.model-load__track--indeterminate .model-load__fill {
+  width: 35%;
+  animation: model-load-shimmer 1.2s ease-in-out infinite;
+}
+
+.model-load__indeterminate {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(148 163 184 / 0.25), transparent);
+  animation: model-load-shimmer 1.2s ease-in-out infinite;
+}
+
+.model-load__track:not(.model-load__track--indeterminate) .model-load__indeterminate {
+  display: none;
+}
+
+.model-load__bytes {
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.model-load__error {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-1);
+}
+
+.model-load__error-msg {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #fecaca;
+  line-height: 1.4;
+}
+
+.model-load__retry {
+  align-self: flex-start;
+}
+
+@keyframes model-load-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .model-load__track--indeterminate .model-load__fill,
+  .model-load__indeterminate {
+    animation: none;
+  }
+
+  .model-load__fill {
+    transition: none;
+  }
+}
+
 .gate-decision {
   display: flex;
   flex-direction: column;

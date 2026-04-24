@@ -7,6 +7,7 @@ import type { DexiePersistence, PersistenceProvider } from '../infra/persistence
 import type { Camera, CreateCameraOptions } from './camera';
 import { createCamera } from './camera';
 import { buildGateDom } from './gate-preview-dom';
+import { mountModelLoadStatusUi } from './model-load-status-ui';
 import { bootstrapGateConsentIfNeeded } from './gate-consent-bootstrap';
 import { wireGatePreviewSession, type GatePreviewSessionDeps } from './gate-session';
 import type { GateRuntime } from './gate-runtime';
@@ -83,23 +84,49 @@ function buildSessionDeps(
   };
 }
 
+/* eslint-disable max-lines-per-function -- composition root: DOM, model UI, session wiring */
 export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): () => void {
   const { rt } = deps;
   const createCam = deps.createCamera;
   const wireSession = deps.wireGatePreviewSession;
-  const createDet =
-    deps.createYoloDetector ?? (() => createYoloDetector(getDetectorRuntimeSettings()));
-  const createEmb =
-    deps.createFaceEmbedder ?? (() => createFaceEmbedder(getEmbedderRuntimeSettings()));
   const addBeforeUnload = deps.addBeforeUnload ?? true;
   const { sessionDepsExtras } = deps;
   document.title = rt.gatePageTitle;
   host.innerHTML = '';
 
-  const { main, cameraToggleBtn, statusEl, previewWrap, video, canvas, overlayCanvas, decisionEl } =
-    buildGateDom(rt);
+  const {
+    main,
+    cameraToggleBtn,
+    modelLoadRoot,
+    statusEl,
+    previewWrap,
+    video,
+    canvas,
+    overlayCanvas,
+    decisionEl,
+  } = buildGateDom(rt);
   host.appendChild(main);
   maybeBootstrapConsent(sessionDepsExtras?.persistence, cameraToggleBtn, main, rt);
+  const modelLoadUi = mountModelLoadStatusUi(modelLoadRoot, {
+    strings: {
+      stageDetector: rt.modelLoadStageDetectorLabel,
+      stageEmbedder: rt.modelLoadStageEmbedderLabel,
+      retryLabel: rt.modelLoadRetryLabel,
+    },
+    testIdPrefix: 'gate',
+  });
+  const createDet =
+    deps.createYoloDetector ??
+    (() =>
+      createYoloDetector(getDetectorRuntimeSettings(), {
+        onLoadProgress: (p) => modelLoadUi.onProgress(p),
+      }));
+  const createEmb =
+    deps.createFaceEmbedder ??
+    (() =>
+      createFaceEmbedder(getEmbedderRuntimeSettings(), {
+        onLoadProgress: (p) => modelLoadUi.onProgress(p),
+      }));
   const yoloDetector = createDet();
   const faceEmbedder = createEmb();
   const sessionDeps = buildSessionDeps(
@@ -113,6 +140,7 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
     {
       cameraToggleBtn,
       statusEl,
+      modelLoadUi,
       previewWrap,
       video,
       canvas,
@@ -129,6 +157,7 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
 
   return teardown;
 }
+/* eslint-enable max-lines-per-function */
 
 export type MountGateViewOptions = {
   hostDepsOverrides?: Partial<Omit<MountGateHostDeps, 'rt'>>;

@@ -15,23 +15,23 @@ export function wireCameraControls(
   elements: GatePreviewElements,
   deps: GatePreviewSessionDeps,
 ): () => void {
-  const { cameraToggleBtn, statusEl } = elements;
+  const { cameraToggleBtn, statusEl, modelLoadUi } = elements;
   const loadingMsg = deps.detectorLoadingMessage;
   const failedMsg = deps.detectorLoadFailedMessage;
   const state: DetectorGateState = { loadState: 'none' };
-  beginDetectorLoad(deps, camera, statusEl, state, loadingMsg, failedMsg);
+  beginDetectorLoad(deps, camera, { statusEl, modelLoadUi }, state, loadingMsg, failedMsg);
 
   const onStart = async () => {
     syncCameraToggleUi(cameraToggleBtn, 'loading');
     try {
-      if (state.modelsSettled) {
+      if (state.modelsSettled && !elements.modelLoadUi) {
         statusEl.textContent = loadingMsg;
       }
       if ((await state.modelsSettled) === false) {
         syncCameraToggleUi(cameraToggleBtn, 'idle');
         return;
       }
-      statusEl.textContent = '';
+      if (!elements.modelLoadUi) statusEl.textContent = '';
       const attachDeps = await withLiveAccessDeps(elements, deps);
       await camera.start();
       if (

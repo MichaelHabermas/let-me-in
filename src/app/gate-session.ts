@@ -8,6 +8,7 @@ import type { GateAccessUiStrings } from './gate-access-ui-controller';
 import type { EvaluateGateAccessFn } from './gate-access-evaluation';
 import { maybeMountFpsOverlay } from './gate-fps-overlay';
 import { wireCameraControls } from './gate-session-orchestrator';
+import type { ModelLoadStatusController } from './model-load-status-ui';
 import type { AppendAccessLogFn } from './detection-pipeline';
 
 export type GatePreviewSessionDeps = {
@@ -24,6 +25,9 @@ export type GatePreviewSessionDeps = {
   logEmbeddingTimings?: boolean;
   detectorLoadingMessage: string;
   detectorLoadFailedMessage: string;
+  modelLoadStageDetectorLabel: string;
+  modelLoadStageEmbedderLabel: string;
+  modelLoadRetryLabel: string;
   noFaceMessage: string;
   multiFaceMessage: string;
   cooldownMs: number;
@@ -39,6 +43,8 @@ export type GatePreviewSessionDeps = {
 export type GatePreviewElements = {
   cameraToggleBtn: HTMLButtonElement;
   statusEl: HTMLElement;
+  /** E11 progress + retry; optional for unit tests. */
+  modelLoadUi?: ModelLoadStatusController;
   previewWrap: HTMLElement;
   video: HTMLVideoElement;
   canvas: HTMLCanvasElement;

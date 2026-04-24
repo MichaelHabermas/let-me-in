@@ -69,6 +69,9 @@ export type GateUiRuntimeSlice = {
   cameraStopLabel: string;
   detectorLoadingMessage: string;
   detectorLoadFailedMessage: string;
+  modelLoadStageDetectorLabel: string;
+  modelLoadStageEmbedderLabel: string;
+  modelLoadRetryLabel: string;
   noFaceMessage: string;
   multiFaceMessage: string;
   adminUiStrings: AdminUiStrings;
@@ -168,6 +171,9 @@ export function createGateUiRuntimeSlice(
     cameraStopLabel: s.cameraStop,
     detectorLoadingMessage: s.detectorLoading,
     detectorLoadFailedMessage: s.detectorLoadFailed,
+    modelLoadStageDetectorLabel: s.modelLoadStageDetector,
+    modelLoadStageEmbedderLabel: s.modelLoadStageEmbedder,
+    modelLoadRetryLabel: s.modelLoadRetry,
     noFaceMessage: s.noFace,
     multiFaceMessage: s.multiFace,
     adminUiStrings: adminStringsFromConfig(cfg),

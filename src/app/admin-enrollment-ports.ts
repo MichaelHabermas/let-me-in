@@ -12,6 +12,7 @@ export type AdminEnrollmentCaptureMount = Pick<
   | 'video'
   | 'frameCanvas'
   | 'overlayCanvas'
+  | 'modelLoadRoot'
   | 'statusEl'
   | 'cameraToggleBtn'
   | 'capBtn'

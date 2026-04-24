@@ -65,6 +65,9 @@ export interface Config {
       cameraStop: string;
       detectorLoading: string;
       detectorLoadFailed: string;
+      modelLoadStageDetector: string;
+      modelLoadStageEmbedder: string;
+      modelLoadRetry: string;
       adminLoginHeading: string;
       adminLoginUsername: string;
       adminLoginPassword: string;
@@ -173,7 +176,11 @@ export const config: Config = {
       cameraStart: 'Start camera',
       cameraStop: 'Stop camera',
       detectorLoading: 'Loading face detector…',
-      detectorLoadFailed: 'Face detector could not load. Check your connection and refresh.',
+      detectorLoadFailed:
+        'Models could not load. Check your connection and use Retry, or reload the page.',
+      modelLoadStageDetector: 'Detector',
+      modelLoadStageEmbedder: 'Embedder',
+      modelLoadRetry: 'Retry',
       adminLoginHeading: 'Admin sign-in',
       adminLoginUsername: 'Username',
       adminLoginPassword: 'Password',

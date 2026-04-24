@@ -125,7 +125,7 @@ Each row maps to exactly one **Closing Epic**. Detailed work lives under **§5**
 
 ## 5. Epics E11–E20
 
-### Epic E11: Model load progress and graceful failure — [ ]
+### Epic E11: Model load progress and graceful failure — [x]
 
 **Goal:** Meet SPECS deep-dive model loading: **visible progress** (not text-only) and **graceful** failure with retry for detector + embedder on the gate (and admin parity where models load).
 
@@ -133,25 +133,25 @@ Each row maps to exactly one **Closing Epic**. Detailed work lives under **§5**
 
 **Epic DoD:**
 
-- [ ] Gate shows a **progress bar** (determinate when length known, else indeterminate + stage label) during detector and embedder load.
-- [ ] Failed load shows clear error + **retry** without full page reload.
-- [ ] Admin enrollment path that loads both models reflects the same UX pattern.
-- [ ] All E11 Tasks `- [x]`.
+- [x] Gate shows a **progress bar** (determinate when length known, else indeterminate + stage label) during detector and embedder load.
+- [x] Failed load shows clear error + **retry** without full page reload.
+- [x] Admin enrollment path that loads both models reflects the same UX pattern.
+- [x] All E11 Tasks `- [x]`.
 
-#### User Story E11.S1: As a visitor, I see model download/load progress on the gate — [ ]
+#### User Story E11.S1: As a visitor, I see model download/load progress on the gate — [x]
 
 **Acceptance criteria:**
 
 - Given gate boot, when models fetch/load, then a progress bar (or staged indeterminate bar) is visible in the gate status region.
 - Given a failed network or ORT error, when load fails, then the user sees a friendly message and can retry.
 
-##### Feature E11.S1.F1: Progress UI in gate status region — [ ]
+##### Feature E11.S1.F1: Progress UI in gate status region — [x]
 
 **Description:** Replace or augment plain `textContent` status with a **bar** + optional byte fraction.  
 **Interfaces/contracts:** Progress reporting callback or events from load wrappers; DOM under existing gate status container.  
 **Files:** [`src/app/gate-session-detector-load.ts`](../src/app/gate-session-detector-load.ts), [`src/app/gate-session-orchestrator.ts`](../src/app/gate-session-orchestrator.ts), gate HTML/CSS under [`src/styles/`](../src/styles/) or gate mount.
 
-###### Task E11.S1.F1.T1: Add determinate/indeterminate progress bar markup and styles — [ ]
+###### Task E11.S1.F1.T1: Add determinate/indeterminate progress bar markup and styles — [x]
 
 - **Files:** gate mount template or orchestrator DOM hooks, `src/styles/*` (banner/gate section).
 - **Preconditions:** none
@@ -161,7 +161,7 @@ Each row maps to exactly one **Closing Epic**. Detailed work lives under **§5**
 - **Acceptance test:** With throttled network (DevTools), loading state shows an animated or widening bar before models become ready.
 - **SPEC cite:** SPECS.txt deep dive “Display a loading progress bar” (~L163).
 
-###### Task E11.S1.F1.T2: Wire `beginDetectorLoad` to update bar from load lifecycle — [ ]
+###### Task E11.S1.F1.T2: Wire `beginDetectorLoad` to update bar from load lifecycle — [x]
 
 - **Files:** [`src/app/gate-session-detector-load.ts`](../src/app/gate-session-detector-load.ts), [`src/app/gatekeeper-metrics.ts`](../src/app/gatekeeper-metrics.ts) (if extending `withMeasuredLoad`), [`src/infra/ort-session-factory.ts`](../src/infra/ort-session-factory.ts), [`src/infra/embedder-ort.ts`](../src/infra/embedder-ort.ts) as needed.
 - **Preconditions:** E11.S1.F1.T1 done
@@ -171,12 +171,12 @@ Each row maps to exactly one **Closing Epic**. Detailed work lives under **§5**
 - **Acceptance test:** Console mock: progress callbacks update bar; both stages observable when both models load.
 - **SPEC cite:** ~L163–L164.
 
-##### Feature E11.S1.F2: Failed load UX with retry — [ ]
+##### Feature E11.S1.F2: Failed load UX with retry — [x]
 
 **Description:** On rejection, keep user in recoverable state with explicit retry.  
 **Files:** [`src/app/gate-session-detector-load.ts`](../src/app/gate-session-detector-load.ts), [`src/app/gate-session-orchestrator.ts`](../src/app/gate-session-orchestrator.ts).
 
-###### Task E11.S1.F2.T1: Add retry control and idempotent reload — [ ]
+###### Task E11.S1.F2.T1: Add retry control and idempotent reload — [x]
 
 - **Files:** same as Feature description.
 - **Preconditions:** E11.S1.F1.T2 done
@@ -186,17 +186,17 @@ Each row maps to exactly one **Closing Epic**. Detailed work lives under **§5**
 - **Acceptance test:** Simulate `fetch` rejection; retry succeeds on second attempt (mock).
 - **SPEC cite:** “Handle model download failures gracefully” (~L164).
 
-#### User Story E11.S2: As an admin, I see consistent model load progress during enrollment — [ ]
+#### User Story E11.S2: As an admin, I see consistent model load progress during enrollment — [x]
 
 **Acceptance criteria:**
 
 - Given admin capture flow loading models, when loads run, then progress matches gate semantics (bar + stages).
 
-##### Feature E11.S2.F1: Enrollment capture load UX parity — [ ]
+##### Feature E11.S2.F1: Enrollment capture load UX parity — [x]
 
 **Files:** [`src/app/enrollment/enroll-capture.ts`](../src/app/enrollment/enroll-capture.ts), related enrollment UI mount.
 
-###### Task E11.S2.F1.T1: Reuse or extract shared progress helper for enroll path — [ ]
+###### Task E11.S2.F1.T1: Reuse or extract shared progress helper for enroll path — [x]
 
 - **Files:** enroll capture + shared module if extracted from gate.
 - **Preconditions:** E11.S1.F2.T1 done
@@ -761,7 +761,7 @@ Update the `(x/y tasks)` counts when Tasks flip to `- [x]`.
 
 | Epic | Title | Progress |
 | --- | --- | --- |
-| E11 | Model load progress + graceful failure | - [ ] (0/4 tasks) |
+| E11 | Model load progress + graceful failure | - [x] (4/4 tasks) |
 | E12 | Front/rear camera selection | - [ ] (0/3 tasks) |
 | E13 | Literal face detection (Path A) | - [ ] (0/4 tasks) |
 | E14 | Decision UI + threshold semantics | - [ ] (0/4 tasks) |

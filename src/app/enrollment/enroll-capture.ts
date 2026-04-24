@@ -12,6 +12,8 @@ import type { Detection } from '../../infra/detector-core';
 import type { FaceEmbedder } from '../../infra/embedder-ort';
 import type { DexiePersistence } from '../../infra/persistence';
 import type { User } from '../../domain/types';
+import type { ModelLoadStatusController } from '../model-load-status-ui';
+import { loadDetectorAndEmbedderParallel } from '../parallel-model-load';
 
 export type EnrollmentControllerOptions = {
   camera: Camera;
@@ -29,6 +31,9 @@ export type EnrollmentControllerOptions = {
   getMultiFaceMessage: () => string;
   persistence: DexiePersistence;
   onStateChange?: (s: EnrollState) => void;
+  modelLoadUi?: ModelLoadStatusController;
+  /** Shown with Retry when `modelLoadUi` is set. */
+  modelLoadFailedMessage?: string;
 };
 
 export type EnrollmentController = {
@@ -76,6 +81,7 @@ export function createEnrollmentController(
   let pendingReferenceBlob: Blob | null = null;
   let editingUserId: string | null = null;
   let unsubFrame: (() => void) | null = null;
+  let loadGeneration = 0;
 
   function emit() {
     opts.onStateChange?.(state);
@@ -125,16 +131,8 @@ export function createEnrollmentController(
     async startSession() {
       if (state !== 'idle' && state !== 'editing') return;
       apply({ type: 'start_camera' });
-      try {
-        await Promise.all([opts.detector.load(), opts.embedder.load()]);
-        await opts.camera.start();
-        paintEnrollmentPreview(frameDeps);
-        apply({ type: 'ready_detecting' });
-        unsubFrame = opts.camera.onFrame(() => {
-          runOverlayInference();
-        });
-      } catch (e) {
-        console.error('[enrollment] start failed', e);
+
+      const resetAfterLoadFailure = () => {
         pendingEmbedding = null;
         pendingReferenceBlob = null;
         editingUserId = null;
@@ -143,11 +141,55 @@ export function createEnrollmentController(
         opts.camera.stop();
         oc.clearRect(0, 0, opts.overlayCanvas.width, opts.overlayCanvas.height);
         setState('idle');
-        throw e;
+      };
+
+      const runAttempt = async (): Promise<void> => {
+        loadGeneration += 1;
+        const gen = loadGeneration;
+        try {
+          await loadDetectorAndEmbedderParallel({
+            detector: opts.detector,
+            embedder: opts.embedder,
+            modelLoadUi: opts.modelLoadUi,
+          });
+          if (gen !== loadGeneration) return;
+          await opts.camera.start();
+          if (gen !== loadGeneration) return;
+          paintEnrollmentPreview(frameDeps);
+          apply({ type: 'ready_detecting' });
+          unsubFrame = opts.camera.onFrame(() => {
+            runOverlayInference();
+          });
+        } catch (e) {
+          if (gen !== loadGeneration) return;
+          console.error('[enrollment] start failed', e);
+          resetAfterLoadFailure();
+          const modelLoadUi = opts.modelLoadUi;
+          const modelLoadFailed = opts.modelLoadFailedMessage;
+          if (modelLoadUi && modelLoadFailed) {
+            modelLoadUi.showError(modelLoadFailed);
+            modelLoadUi.setRetryHandler(() => {
+              modelLoadUi.clearError();
+              if (state !== 'idle' && state !== 'editing') return;
+              apply({ type: 'start_camera' });
+              void runAttempt().catch(() => {});
+            });
+            return;
+          }
+          throw e;
+        }
+      };
+
+      try {
+        await runAttempt();
+      } catch {
+        /* thrown only when no modelLoadUi */
       }
     },
 
     stopSession() {
+      loadGeneration += 1;
+      opts.modelLoadUi?.hide();
       unsubFrame?.();
       unsubFrame = null;
       opts.camera.stop();

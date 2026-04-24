@@ -14,6 +14,7 @@ export type AdminEnrollmentDom = {
   video: HTMLVideoElement;
   frameCanvas: HTMLCanvasElement;
   overlayCanvas: HTMLCanvasElement;
+  modelLoadRoot: HTMLElement;
   statusEl: HTMLElement;
   nameInput: HTMLInputElement;
   roleSelect: HTMLSelectElement;
@@ -119,6 +120,7 @@ function buildPreviewColumn(rt: GateRuntime): {
   video: HTMLVideoElement;
   frameCanvas: HTMLCanvasElement;
   overlayCanvas: HTMLCanvasElement;
+  modelLoadRoot: HTMLElement;
   statusEl: HTMLElement;
 } {
   const column = document.createElement('div');
@@ -142,11 +144,13 @@ function buildPreviewColumn(rt: GateRuntime): {
   overlayCanvas.height = rt.previewCanvasHeight;
 
   previewWrap.append(video, frameCanvas, overlayCanvas);
+  const modelLoadRoot = document.createElement('div');
+  modelLoadRoot.className = 'admin-enroll__model-load-host';
   const statusEl = document.createElement('p');
   statusEl.className = 'admin-enroll__status';
   statusEl.setAttribute('data-testid', 'enroll-status');
-  column.append(previewWrap, statusEl);
-  return { column, video, frameCanvas, overlayCanvas, statusEl };
+  column.append(previewWrap, modelLoadRoot, statusEl);
+  return { column, video, frameCanvas, overlayCanvas, modelLoadRoot, statusEl };
 }
 
 function buildNameFields(rt: GateRuntime): {
@@ -295,6 +299,7 @@ export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
     video: preview.video,
     frameCanvas: preview.frameCanvas,
     overlayCanvas: preview.overlayCanvas,
+    modelLoadRoot: preview.modelLoadRoot,
     statusEl: preview.statusEl,
     nameInput: form.nameInput,
     roleSelect: form.roleSelect,

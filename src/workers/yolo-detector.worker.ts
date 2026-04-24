@@ -2,6 +2,7 @@
 
 /** ORT + WASM paths are configured inside this worker only (isolated from the main thread). */
 
+import { fetchModelBytesWithProgress } from '../infra/fetch-model-bytes';
 import { ORT_EP_ORDER_BROWSER } from '../infra/ort-execution-defaults';
 import {
   configureOrtWasmAssets,
@@ -20,7 +21,15 @@ async function handleInitMessage(msg: {
 }): Promise<void> {
   try {
     configureOrtWasmAssets(msg.ortWasmBase);
-    bundle = await createOrtSession(msg.modelUrl, [...ORT_EP_ORDER_BROWSER]);
+    const bytes = await fetchModelBytesWithProgress(msg.modelUrl, (p) => {
+      self.postMessage({
+        type: YOLO_WORKER_MSG.initProgress,
+        id: msg.id,
+        loaded: p.loaded,
+        total: p.total,
+      });
+    });
+    bundle = await createOrtSession(bytes, [...ORT_EP_ORDER_BROWSER], msg.ortWasmBase);
     self.postMessage({ type: YOLO_WORKER_MSG.initOk, id: msg.id });
   } catch (e) {
     self.postMessage({

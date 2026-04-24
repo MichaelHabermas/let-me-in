@@ -1,10 +1,12 @@
 import { getDetectorRuntimeSettings, getEmbedderRuntimeSettings } from '../config';
+import type { ModelLoadProgress } from '../infra/model-load-types';
 import type { DexiePersistence } from '../infra/persistence';
 import { createFaceEmbedder } from '../infra/embedder-ort';
 import { createYoloDetector } from '../infra/detector-ort';
 import { createDetectorEmbedderRuntime } from '../infra/inference-runtime';
 import { createCamera } from './camera';
 import type { AdminEnrollmentCaptureMount } from './admin-enrollment-ports';
+import { mountModelLoadStatusUi } from './model-load-status-ui';
 import { createEnrollmentController, type EnrollmentController } from './enroll';
 import {
   createE2eEnrollmentCamera,
@@ -31,6 +33,42 @@ function enrollmentControllerBase(
   };
 }
 
+function createAdminEnrollmentWithModelLoad(
+  dom: AdminEnrollmentCaptureMount,
+  rt: GateRuntime,
+  base: ReturnType<typeof enrollmentControllerBase>,
+): EnrollmentController {
+  const modelLoadUi = mountModelLoadStatusUi(dom.modelLoadRoot, {
+    strings: {
+      stageDetector: rt.modelLoadStageDetectorLabel,
+      stageEmbedder: rt.modelLoadStageEmbedderLabel,
+      retryLabel: rt.modelLoadRetryLabel,
+    },
+    testIdPrefix: 'enroll',
+  });
+  const onProgress = (p: ModelLoadProgress) => modelLoadUi.onProgress(p);
+  const ort = createDetectorEmbedderRuntime({
+    createDetector: () =>
+      createYoloDetector(getDetectorRuntimeSettings(), {
+        onLoadProgress: onProgress,
+      }),
+    createEmbedder: () =>
+      createFaceEmbedder(getEmbedderRuntimeSettings(), {
+        onLoadProgress: onProgress,
+      }),
+  });
+  return createEnrollmentController({
+    ...base,
+    camera: createCamera(dom.video, dom.frameCanvas, {
+      defaultConstraints: rt.defaultVideoConstraintsForCamera,
+    }),
+    detector: ort.detector,
+    embedder: ort.embedder,
+    modelLoadUi,
+    modelLoadFailedMessage: rt.detectorLoadFailedMessage,
+  });
+}
+
 export function createAdminEnrollmentSessionController(params: {
   dom: AdminEnrollmentCaptureMount;
   rt: GateRuntime;
@@ -52,16 +90,5 @@ export function createAdminEnrollmentSessionController(params: {
       embedder: ort.embedder,
     });
   }
-  const ort = createDetectorEmbedderRuntime({
-    createDetector: () => createYoloDetector(getDetectorRuntimeSettings()),
-    createEmbedder: () => createFaceEmbedder(getEmbedderRuntimeSettings()),
-  });
-  return createEnrollmentController({
-    ...base,
-    camera: createCamera(dom.video, dom.frameCanvas, {
-      defaultConstraints: rt.defaultVideoConstraintsForCamera,
-    }),
-    detector: ort.detector,
-    embedder: ort.embedder,
-  });
+  return createAdminEnrollmentWithModelLoad(dom, rt, base);
 }
