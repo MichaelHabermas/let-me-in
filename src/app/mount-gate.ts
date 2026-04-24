@@ -1,10 +1,12 @@
-import { getDetectorRuntimeSettings, getEmbedderRuntimeSettings } from '../config';
+import { config, getDetectorRuntimeSettings, getEmbedderRuntimeSettings } from '../config';
 import type { YoloDetector } from '../infra/detector-core';
 import { createYoloDetector } from '../infra/detector-ort';
 import { createFaceEmbedder, type FaceEmbedder } from '../infra/embedder-ort';
 import { getDefaultPersistence } from '../infra/persistence';
 import type { Camera, CreateCameraOptions } from './camera';
 import { createCamera } from './camera';
+import { createE2eEnrollmentCamera } from './enroll-e2e-doubles';
+import { createE2eGateEmbedder, createE2eGateYoloDetector } from './gate-e2e-doubles';
 import { buildGateDom } from './gate-preview-dom';
 import { bootstrapGateConsentIfNeeded } from './gate-consent-bootstrap';
 import { buildGatePreviewSessionDeps } from './gate-preview-session-deps';
@@ -112,9 +114,18 @@ export function mountGateView(): void {
   if (!app) return;
 
   const rt = resolveGateRuntime();
+  const stubGate = config.e2eStubGate;
   mountGateIntoHost(
     app,
     createMountGateHostDeps(rt, {
+      ...(stubGate
+        ? {
+            createCamera: (_video, canvas, _options) =>
+              createE2eEnrollmentCamera(canvas.width, canvas.height),
+            createYoloDetector: () => createE2eGateYoloDetector(),
+            createFaceEmbedder: () => createE2eGateEmbedder(),
+          }
+        : {}),
       sessionDepsExtras: {
         persistence: getDefaultPersistence(),
         databaseSeedFallback: rt.getDatabaseSeedSettings(),

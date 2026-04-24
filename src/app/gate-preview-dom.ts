@@ -130,6 +130,7 @@ export function buildGateDom(rt: GateRuntime): BuiltGateDom {
   const decision = document.createElement('div');
   decision.id = 'decision';
   decision.className = 'gate-decision';
+  decision.setAttribute('data-testid', 'gate-decision');
   decision.setAttribute('aria-live', 'polite');
   decision.textContent = '—';
 

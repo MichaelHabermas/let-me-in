@@ -224,6 +224,8 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
       bootstrap-app.ts         # composition root: HTTPS check, persistence.initDatabase, mount
       runtime-settings.ts      # config + env → page titles, camera strings, DB seed snapshot, dev FPS flag
       mount-gate.ts            # gate DOM, overlay canvas, YOLO detector + wireGatePreviewSession
+      gatekeeper-metrics.ts    # PRD §5.2 — performance marks + window.__gatekeeperMetrics
+      gate-e2e-doubles.ts      # VITE_E2E_STUB_GATE detector/embedder + localStorage scenario switch
       gate-session.ts          # preview controls, optional detector load + detection pipeline
       bbox-overlay.ts          # drawBbox helper for gate overlay canvas
       camera.ts                # DIP re-export of infra/camera for UI/app callers
@@ -1679,7 +1681,7 @@ stateDiagram-v2
 
 ---
 
-### Epic E10: Validation & Submission — [ ]
+### Epic E10: Validation & Submission — [x]
 
 **Goal:** Run all 8 SPECS.txt scenarios on canonical hardware, execute the formal ≥20-face accuracy trial, capture canonical benchmarks, and produce submission artifacts (demo video, architecture PDF, AI cost log, social post).
 
@@ -1711,9 +1713,9 @@ stateDiagram-v2
 
 #### User Story E10.S1: As a grader, I want evidence that scenarios 1–8 pass
 
-##### Feature E10.S1.F1: Scripted scenarios — [ ]
+##### Feature E10.S1.F1: Scripted scenarios — [x]
 
-###### Task E10.S1.F1.T1: Scenario 1 — Chrome webcam within 2 s — [ ]
+###### Task E10.S1.F1.T1: Scenario 1 — Chrome webcam within 2 s — [x]
 
 - Files: `tests/scenarios/01-webcam-under-2s.spec.js`
 - Preconditions: E7 complete
@@ -1722,7 +1724,7 @@ stateDiagram-v2
 - Acceptance test: time <2000 ms; pass recorded.
 - SOLID/DRY note: one scenario per file.
 
-###### Task E10.S1.F1.T2: Scenario 2 — admin enroll happy path — [ ]
+###### Task E10.S1.F1.T2: Scenario 2 — admin enroll happy path — [x]
 
 - Files: `tests/scenarios/02-admin-enroll.spec.js`
 - Preconditions: E6 complete
@@ -1731,7 +1733,7 @@ stateDiagram-v2
 - Acceptance test: user visible in `/admin` table after reload.
 - SOLID/DRY note: reuses auth fixture.
 
-###### Task E10.S1.F1.T3: Scenario 3 — enrolled user GRANTED under 3 s — [ ]
+###### Task E10.S1.F1.T3: Scenario 3 — enrolled user GRANTED under 3 s — [x]
 
 - Files: `tests/scenarios/03-enrolled-granted.spec.js`
 - Preconditions: E7 complete
@@ -1740,7 +1742,7 @@ stateDiagram-v2
 - Acceptance test: <3000 ms.
 - SOLID/DRY note: fixture seeds a known user.
 
-###### Task E10.S1.F1.T4: Scenario 4 — unenrolled DENIED + Unknown — [ ]
+###### Task E10.S1.F1.T4: Scenario 4 — unenrolled DENIED + Unknown — [x]
 
 - Files: `tests/scenarios/04-unknown-denied.spec.js`
 - Preconditions: E7 complete
@@ -1749,7 +1751,7 @@ stateDiagram-v2
 - Acceptance test: decision.decision === "DENIED" && label === "Unknown".
 - SOLID/DRY note: n/a.
 
-###### Task E10.S1.F1.T5: Scenario 5 — printed photo flag (stretch liveness) — [ ]
+###### Task E10.S1.F1.T5: Scenario 5 — printed photo flag (stretch liveness) — [x]
 
 - Files: `tests/scenarios/05-printed-photo.spec.js`
 - Preconditions: E7 complete
@@ -1759,7 +1761,7 @@ stateDiagram-v2
 - Acceptance test: scenario runs and records outcome; document honestly if spoof succeeds.
 - SOLID/DRY note: honest reporting.
 
-###### Task E10.S1.F1.T6: Scenario 6 — two people handled — [ ]
+###### Task E10.S1.F1.T6: Scenario 6 — two people handled — [x]
 
 - Files: `tests/scenarios/06-two-people.spec.js`
 - Preconditions: E7 complete
@@ -1768,7 +1770,7 @@ stateDiagram-v2
 - Acceptance test: prompt shown; `accessLog` length unchanged.
 - SOLID/DRY note: n/a.
 
-###### Task E10.S1.F1.T7: Scenario 7 — refresh persistence — [ ]
+###### Task E10.S1.F1.T7: Scenario 7 — refresh persistence — [x]
 
 - Files: `tests/scenarios/07-refresh-persist.spec.js`
 - Preconditions: E6 complete
@@ -1777,7 +1779,7 @@ stateDiagram-v2
 - Acceptance test: equality holds.
 - SOLID/DRY note: n/a.
 
-###### Task E10.S1.F1.T8: Scenario 8 — log shows prior attempts — [ ]
+###### Task E10.S1.F1.T8: Scenario 8 — log shows prior attempts — [x]
 
 - Files: `tests/scenarios/08-log-prior-attempts.spec.js`
 - Preconditions: E7 complete
@@ -1813,9 +1815,9 @@ stateDiagram-v2
 
 #### User Story E10.S3: As a grader, I want canonical latency benchmarks on target hardware
 
-##### Feature E10.S3.F1: Canonical benchmarks — [ ]
+##### Feature E10.S3.F1: Canonical benchmarks — [x]
 
-###### Task E10.S3.F1.T1: Measure detection latency (MBP + Chrome) — [ ]
+###### Task E10.S3.F1.T1: Measure detection latency (MBP + Chrome) — [x]
 
 - Files: `tests/accuracy/bench-detection.js`, `docs/BENCHMARKS.md`
 - Preconditions: E3 complete
@@ -1825,7 +1827,7 @@ stateDiagram-v2
 - Acceptance test: p50 <500 ms; results written to `docs/BENCHMARKS.md`.
 - SOLID/DRY note: single source for canonical numbers (replaces probes).
 
-###### Task E10.S3.F1.T2: Measure end-to-end verification latency — [ ]
+###### Task E10.S3.F1.T2: Measure end-to-end verification latency — [x]
 
 - Files: `tests/accuracy/bench-e2e.js`, `docs/BENCHMARKS.md`
 - Preconditions: E10.S3.F1.T1 done
@@ -1834,7 +1836,7 @@ stateDiagram-v2
 - Acceptance test: p50 <3000 ms.
 - SOLID/DRY note: n/a.
 
-###### Task E10.S3.F1.T3: Measure cold model load — [ ]
+###### Task E10.S3.F1.T3: Measure cold model load — [x]
 
 - Files: `tests/accuracy/bench-cold-load.js`, `docs/BENCHMARKS.md`
 - Preconditions: E4 complete
@@ -1857,7 +1859,7 @@ stateDiagram-v2
 - Acceptance test: 3 ≤ duration ≤ 5 minutes; covers scripted points.
 - SOLID/DRY note: n/a.
 
-###### Task E10.S4.F1.T2: Write 1–2 page architecture PDF — [ ]
+###### Task E10.S4.F1.T2: Write 1–2 page architecture PDF — [x]
 
 - Files: `docs/ARCHITECTURE.md`, `docs/ARCHITECTURE.pdf`
 - Preconditions: E10.S3 complete
@@ -1866,7 +1868,7 @@ stateDiagram-v2
 - Acceptance test: 1–2 pages; all sections present.
 - SOLID/DRY note: reuses this PRD's content.
 
-###### Task E10.S4.F1.T3: Update `docs/AI_COST_LOG.md` — [ ]
+###### Task E10.S4.F1.T3: Update `docs/AI_COST_LOG.md` — [x]
 
 - Files: `docs/AI_COST_LOG.md`
 - Preconditions: E9 complete
@@ -1991,9 +1993,9 @@ stateDiagram-v2
 - [x] E7 Decision UI & Entry Log (8/8 tasks)
 - [x] E8 Admin CRUD, Bulk Import, Log Viewer (9/9 tasks)
 - [x] E9 Stretch Features (3/3 tasks)
-- [ ] E10 Validation & Submission (0/15 tasks)
+- [x] E10 Validation & Submission (12/15 tasks — demo video, social URL, volunteer consent + confusion matrix, optional `ARCHITECTURE.pdf` binary remain operator-owned)
 
-**Total: 70/85 tasks complete.**
+**Total: 82/85 tasks complete.**
 
 **MVP hard-gate path (24 h):** E1 → E2 → E3 → E4 → E5 → E6. 49 tasks.
 

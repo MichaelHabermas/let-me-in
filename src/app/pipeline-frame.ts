@@ -9,6 +9,11 @@ import {
   tickNoFaceDebounced,
   type NoFaceDebouncer,
 } from './detection-pipeline-internals';
+import {
+  recordLastAccessEvaluationMs,
+  recordLastDetectorInferMs,
+  recordLastEmbedInferMs,
+} from './gatekeeper-metrics';
 import type { Decision } from '../domain/types';
 import type { EvaluateGateAccessFn } from './gate-access-evaluation';
 import { policyDecisionForCooldown } from './gate-access-evaluation';
@@ -46,7 +51,9 @@ export async function runDetectionPipelineFrame(
   noFaceState: NoFaceDebouncer,
 ): Promise<void> {
   const frame = opts.camera.getFrame();
+  const tDet0 = performance.now();
   const dets = await opts.detector.infer(frame);
+  recordLastDetectorInferMs(performance.now() - tDet0);
   opts.overlayCtx.clearRect(0, 0, opts.overlayWidth, opts.overlayHeight);
   drawDetections(opts.overlayCtx, dets);
 
@@ -71,12 +78,15 @@ export async function runDetectionPipelineFrame(
   const t0 = performance.now();
   const emb = await embedFace(frame, dets[0]!.bbox, opts.faceEmbedder);
   const ms = performance.now() - t0;
+  recordLastEmbedInferMs(ms);
   if (opts.logEmbeddingTimings) {
     console.info(`[gate] embed: ${ms.toFixed(1)} ms, len: ${emb.length}`);
   }
   if (!opts.evaluateDecision) return;
+  const tEval0 = performance.now();
   const raw = opts.evaluateDecision({ embedding: emb, frame });
   const evaluation = await Promise.resolve(raw);
+  recordLastAccessEvaluationMs(performance.now() - tEval0);
   if (!evaluation) return;
   const cd = policyDecisionForCooldown(evaluation.policy);
   if (cd) opts.cooldown?.markAttempt(opts.getNowMs());

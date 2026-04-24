@@ -1,0 +1,20 @@
+#!/usr/bin/env node
+/** E10.S3.F1.T3 — `navigationToDetectorReadyMs` after cold context + Start camera. */
+import { chromium } from '@playwright/test';
+
+const baseURL = process.env.BASE_URL ?? 'http://localhost:5199';
+const browser = await chromium.launch({ headless: true });
+const context = await browser.newContext();
+const page = await context.newPage();
+await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
+const consent = page.getByRole('button', { name: /understand/i });
+if (await consent.isVisible().catch(() => false)) await consent.click();
+await page.getByTestId('gate-camera-toggle').click();
+await page.waitForFunction(
+  () => window.__gatekeeperMetrics?.navigationToDetectorReadyMs != null,
+  null,
+  { timeout: 120_000 },
+);
+const navMs = await page.evaluate(() => window.__gatekeeperMetrics?.navigationToDetectorReadyMs);
+await browser.close();
+console.log(JSON.stringify({ navigationToDetectorReadyMs: navMs }, null, 2));

@@ -1,6 +1,7 @@
 import type { DatabaseSeedSettings } from '../domain/database-seed';
 import type { DexiePersistence } from '../infra/persistence';
 import { getDefaultPersistence } from '../infra/persistence';
+import { installGatekeeperMetricsOnWindow } from './gatekeeper-metrics';
 import { getHttpsStartupState as defaultGetHttpsStartupState } from './https-gate';
 import { resolveGateRuntime } from './runtime-settings';
 
@@ -54,6 +55,8 @@ export async function bootstrapApp(options: BootstrapAppOptions): Promise<Bootst
     renderHttpsBanner(https.message);
     return { ok: false, reason: 'https', message: https.message };
   }
+
+  installGatekeeperMetricsOnWindow();
 
   try {
     await persistence.initDatabase(getDatabaseSeedSettings());

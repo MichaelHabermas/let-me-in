@@ -1,8 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: 'tests/e2e',
   timeout: 120_000,
+  workers: 1,
   expect: { timeout: 15_000 },
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
@@ -22,6 +22,15 @@ export default defineConfig({
       VITE_ADMIN_USER: 'e2e_admin',
       VITE_ADMIN_PASS: 'e2e_secret',
       VITE_E2E_STUB_ENROLL: 'true',
+      VITE_E2E_STUB_GATE: 'true',
     },
   },
+  projects: [
+    { name: 'e2e', testDir: 'tests/e2e', testMatch: '**/*.spec.ts' },
+    {
+      name: 'scenarios',
+      testDir: 'tests/scenarios',
+      testMatch: '**/*.spec.ts',
+    },
+  ],
 });

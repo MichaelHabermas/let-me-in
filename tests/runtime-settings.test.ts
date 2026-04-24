@@ -67,6 +67,7 @@ const uiCfg: Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'> = 
       consentBulletRefuse: 'b4',
       consentAccept: 'okc',
       consentDecline: 'noc',
+      logExportCsv: 'csv',
     },
   },
   devLogEmbeddingTimings: false,

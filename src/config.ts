@@ -55,6 +55,8 @@ export interface Config {
   audioEnabled: boolean;
   /** When true (Vite `VITE_E2E_STUB_ENROLL`), admin enrollment skips camera/ONNX for Playwright. */
   e2eStubEnrollment: boolean;
+  /** When true (`VITE_E2E_STUB_GATE`), gate page uses synthetic camera + stub detector/embedder (E10 scenarios). */
+  e2eStubGate: boolean;
   ui: {
     strings: {
       unknown: string;
@@ -164,6 +166,7 @@ export const config: Config = {
   devLogEmbeddingTimings: import.meta.env.VITE_LOG_EMBEDDING_TIMINGS === 'true',
   audioEnabled: true,
   e2eStubEnrollment: import.meta.env.VITE_E2E_STUB_ENROLL === 'true',
+  e2eStubGate: import.meta.env.VITE_E2E_STUB_GATE === 'true',
   ui: {
     strings: {
       unknown: 'Unknown',

@@ -1,5 +1,9 @@
 import type { Camera } from './camera';
 import { createCooldown } from './cooldown';
+import {
+  maybeRecordNavigationToDetectorReady,
+  withMeasuredLoad,
+} from './gatekeeper-metrics';
 import { createDetectionPipeline } from './pipeline';
 import type { GatePreviewElements, GatePreviewSessionDeps } from './gate-session';
 
@@ -23,14 +27,14 @@ function beginDetectorLoad(ctx: {
 
   if (deps.yoloDetector) {
     state.loadState = 'pending';
-    promises.push(deps.yoloDetector.load());
+    promises.push(withMeasuredLoad('detector', () => deps.yoloDetector!.load()));
   } else {
     state.loadState = 'none';
   }
 
   if (deps.faceEmbedder) {
     state.embedderLoadState = 'pending';
-    promises.push(deps.faceEmbedder.load());
+    promises.push(withMeasuredLoad('embedder', () => deps.faceEmbedder!.load()));
   } else {
     state.embedderLoadState = 'none';
   }
@@ -45,6 +49,7 @@ function beginDetectorLoad(ctx: {
       await Promise.all(promises);
       if (deps.yoloDetector) state.loadState = 'ready';
       if (deps.faceEmbedder) state.embedderLoadState = 'ready';
+      maybeRecordNavigationToDetectorReady();
       if (!camera.isRunning()) statusEl.textContent = '';
       return true;
     } catch (e) {

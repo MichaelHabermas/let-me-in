@@ -10,5 +10,5 @@ Rolling log for IDE and API spend awareness per [`docs/PRE-WORK.md`](PRE-WORK.md
 
 | date | tool | task | est tokens in/out | est $ | notes |
 | --- | --- | --- | --- | --- | --- |
-| EXAMPLE — delete or replace | Cursor | PRD / implementation documentation | est. 80k in / 20k out | 0.00 | EXAMPLE ROW — delete or replace. Use one row per **product** (Cursor, Copilot, ChatGPT, …); same column pattern for each. |
-| EXAMPLE — delete or replace | Netlify | static site deploy (Epic 8 smoke) | — | 0.00 | EXAMPLE ROW — delete or replace; only needed if this host can charge you; free tier often stays at 0. |
+| 2026-04-23 | Cursor | Epic E10 validation — metrics, gate stubs, Playwright scenarios, docs | est. 120k in / 35k out | 0.00 | Large multi-file implementation session; counts approximate. |
+| 2026-04-23 | — | **Totals** | est. 120k in / 35k out | **0.00** | Within free-tier assumptions; adjust if invoiced. |

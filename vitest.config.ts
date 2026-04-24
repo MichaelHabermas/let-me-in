@@ -12,7 +12,7 @@ export default defineConfig({
     },
   },
   test: {
-    exclude: ['**/node_modules/**', '**/dist/**', 'tests/e2e/**'],
+    exclude: ['**/node_modules/**', '**/dist/**', 'tests/e2e/**', 'tests/scenarios/**'],
     environment: 'node',
     /**
      * Vitest 4 removed `environmentMatchGlobs`. Suites that need `document` must use
@@ -29,6 +29,7 @@ export default defineConfig({
         '**/dist/**',
         'src/**/*.test.ts',
         'tests/e2e/**',
+        'tests/scenarios/**',
       ],
     },
   },

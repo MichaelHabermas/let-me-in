@@ -1,4 +1,5 @@
 import type { GateAccessEvaluation } from './gate-access-evaluation';
+import { recordDecisionPresented } from './gatekeeper-metrics';
 import { renderConfidenceMeter } from '../ui/components/confidence-meter';
 import { renderDecisionBanner, type DecisionBannerVariant } from '../ui/components/decision-banner';
 import { renderSideBySide } from '../ui/components/side-by-side';
@@ -77,6 +78,7 @@ export function createGateAccessUiController(
       });
       host.appendChild(side);
     }
+    recordDecisionPresented();
   };
 
   return { present, clear };
