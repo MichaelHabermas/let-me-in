@@ -59,6 +59,35 @@ function bindEnrollmentSaveClick(
   });
 }
 
+type EnrollmentControllerRef = { ctrl: EnrollmentController | null };
+
+function createEnrollmentSyncHandlers(
+  dom: AdminEnrollmentDom,
+  rt: GateRuntime,
+  enrollmentRef: EnrollmentControllerRef,
+): { syncButtons: () => void; beginEdit: (user: User) => void } {
+  const syncButtons = () => {
+    const c = enrollmentRef.ctrl;
+    if (c === null) return;
+    syncAdminEnrollmentButtons(dom, c, rt);
+  };
+
+  const beginEdit = (user: User) => {
+    const c = enrollmentRef.ctrl;
+    if (c === null) return;
+    const copy = rt.adminUiStrings;
+    dom.nameInput.value = user.name;
+    fillEnrollmentRoleSelect(dom.roleSelect, user.role, {
+      enrollRolePlaceholder: copy.enrollRolePlaceholder,
+      enrollRoleLegacySuffix: copy.enrollRoleLegacySuffix,
+    });
+    c.beginEditFromUser(user);
+    syncButtons();
+  };
+
+  return { syncButtons, beginEdit };
+}
+
 function bindEnrollmentUi(
   dom: AdminEnrollmentDom,
   ctrl: EnrollmentController,
@@ -96,26 +125,8 @@ export function mountAuthenticatedAdminEnrollmentCoordinator(
   const dom = createAdminEnrollmentDom(rt);
   root.appendChild(dom.shell);
 
-  const enrollmentRef: { ctrl: EnrollmentController | null } = { ctrl: null };
-
-  const syncButtons = () => {
-    const c = enrollmentRef.ctrl;
-    if (c === null) return;
-    syncAdminEnrollmentButtons(dom, c, rt);
-  };
-
-  const beginEdit = (user: User) => {
-    const c = enrollmentRef.ctrl;
-    if (c === null) return;
-    const copy = rt.adminUiStrings;
-    dom.nameInput.value = user.name;
-    fillEnrollmentRoleSelect(dom.roleSelect, user.role, {
-      enrollRolePlaceholder: copy.enrollRolePlaceholder,
-      enrollRoleLegacySuffix: copy.enrollRoleLegacySuffix,
-    });
-    c.beginEditFromUser(user);
-    syncButtons();
-  };
+  const enrollmentRef: EnrollmentControllerRef = { ctrl: null };
+  const { syncButtons, beginEdit } = createEnrollmentSyncHandlers(dom, rt, enrollmentRef);
   const roster = createAdminEnrollmentRosterController({ dom, rt, persistence, beginEdit });
 
   dom.logoutBtn.addEventListener('click', () => {
