@@ -126,8 +126,8 @@ flowchart LR
 ```mermaid
 flowchart TB
     subgraph UI[UI layer]
-        ADMIN[admin-view]
-        LOG[log-view]
+        ADMIN["mount-admin-shell + mount-admin-enrollment"]
+        LOG["mount-log-page"]
     end
     subgraph APP[application layer]
         GATE[mount-gate]
@@ -161,7 +161,7 @@ flowchart TB
     DB --> CFG
 ```
 
-Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and other `app/*`. `infra/*` may import only from other `infra/*` and `config`. No circular imports. No UI logic inside `infra/*`. No direct `indexedDB` access outside `infra/db-dexie`.
+Rule: UI entrypoints call `app/*` composition roots (`mountGateView`, `mountAdminView`, `mountLogView`). `app/*` imports only from `infra/*` and other `app/*`. `infra/*` may import only from other `infra/*` and `config`. No circular imports. No UI logic inside `infra/*`. No direct `indexedDB` access outside `infra/db-dexie`.
 
 ### 2.3 Tech stack (locked — do not change without updating this PRD)
 
@@ -195,9 +195,9 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
 - **Open/Closed:** `policy` reads thresholds from `config`. Adding a new decision band requires editing `policy` + `config` only, never UI or pipeline.
 - **Liskov:** detector/embedder expose a uniform `OrtInferenceSession` contract — any future model swap must satisfy the same interface.
 - **Interface Segregation:** UI views receive narrow event callbacks (`onDecision`, `onFrame`, `onError`) — never the whole pipeline.
-- **Dependency Inversion:** `app/*` depends on `infra/*` via narrow ports: `src/infra/persistence.ts` (IndexedDB), `src/infra/camera.ts` (webcam), and `src/infra/onnx-runtime.ts` (onnxruntime-web — all ORT imports go through this file). Domain row types live in `src/domain/types.ts`. No `app/*` file imports `dexie`, `onnxruntime-web`, or `navigator.mediaDevices` directly.
+- **Dependency Inversion:** `app/*` depends on `infra/*` via narrow ports: `src/infra/persistence.ts` (IndexedDB), `src/infra/camera.ts` (webcam), and `src/infra/ort-session-factory.ts` (ORT session creation, surfaced through infra exports). Domain row types live in `src/domain/types.ts`. No `app/*` file imports `dexie`, `onnxruntime-web`, or `navigator.mediaDevices` directly.
 - **DRY:** thresholds, strings, model URLs, and routes live in exactly one file each. No magic numbers in logic.
-- **Modularity:** folder layout mirrors §2.2. No file may exceed 300 lines. No function may exceed 50 lines. Refactor if exceeded.
+- **Modularity:** folder layout mirrors §2.2. Favor small modules/functions; treat size limits as targets, not hard blockers when simplification benefits from consolidating orchestration.
 
 ### 2.7 Repository layout (agent MUST create this in E1)
 
@@ -254,8 +254,6 @@ Rule: UI imports only from `app/*`. `app/*` imports only from `infra/*` and othe
       embedder-ort.ts
       ort-session-factory.ts
     ui/
-      admin-view.ts
-      log-view.ts
       components/              # reusable: decision-banner.ts, confidence-meter.ts, etc.
     styles/
       tokens.css               # colors, spacing, fonts
@@ -465,7 +463,7 @@ settings: { key (pk, string), value }
 - Steps:
   1. On DB open, if `settings` is empty, write `{key: 'thresholds', value: {...config.thresholds}}` and `{key: 'cooldownMs', value: config.cooldownMs}`.
 - Acceptance test: fresh DB contains two settings rows after first load.
-- SOLID/DRY note: settings decoupled from `config.js` allows runtime override in E8 without code change (OCP).
+- SOLID/DRY note: settings decoupled from `config.ts` allows runtime override in E8 without code change (OCP).
 
 #### User Story E1.S3: As a developer, I want HTTPS deployment with model caching so that `getUserMedia` works and model loads are fast on return visits. — [x]
 
@@ -562,7 +560,7 @@ settings: { key (pk, string), value }
 **SOLID/DRY/Modularity checklist:**
 
 - Single Responsibility: `camera.ts` owns device selection + stream; `mount-gate.ts` owns gate page layout and preview wiring.
-- Open/Closed: adding a new camera-constraint (e.g., 4K) edits `config.js` only.
+- Open/Closed: adding a new camera-constraint (e.g., 4K) edits `config.ts` only.
 - Liskov: n/a.
 - Interface Segregation: `camera` exposes `start`, `stop`, `getFrame`, `onError` only.
 - Dependency Inversion: `mount-gate.ts` imports `createCamera` from `app/camera.ts` (policy re-export of `infra/camera.ts`); org strings and constraints resolve via `app/runtime-settings.ts` (config + env), not scattered `import.meta.env` in UI.
@@ -747,7 +745,7 @@ createOrtSession(modelUrl, preferredEPs) -> Promise<{ session, executionProvider
 - Preconditions: E3.S1.F1.T1 done
 - Steps:
   1. Set `ort.env.wasm.wasmPaths = config.ortWasmBase` (default: `https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/`).
-  2. Document in `config.js` that vendoring is an option if CSP tightens (deferred per `## 6`).
+  2. Document in `config.ts` notes that vendoring is an option if CSP tightens (deferred per `## 6`).
 - Acceptance test: page load fetches WASM from jsDelivr; console logs "ORT WASM base: …".
 - SOLID/DRY note: SRP — asset routing lives in one place.
 
@@ -980,7 +978,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 > **How to validate it yourself:**
 >
 > 1. Open DevTools console on the gate page.
-> 2. Enable dev flag (see `config.js`) to log embedding timings.
+> 2. Enable dev flag (see `config.ts`) to log embedding timings.
 > 3. Expected: each log line shows `embed: ~20ms` and `len: 512`.
 >
 > **Known limitations / follow-ups:** Still no matching against saved users.
@@ -1173,7 +1171,7 @@ stateDiagram-v2
 
 ###### Task E6.S1.F1.T2: Build admin login modal — [x]
 
-- Files: `src/ui/admin-view.ts`, `admin.html`
+- Files: `src/app/mount-admin-shell.ts`, `admin.html`
 - Preconditions: E6.S1.F1.T1 done
 - Steps:
   1. On `/admin` load, if `!isAdmin()`, show modal with username + password fields.
@@ -1213,7 +1211,7 @@ stateDiagram-v2
 
 ###### Task E6.S2.F1.T2: Build enrollment UI — [x]
 
-- Files: `src/ui/admin-view.ts`, `src/styles/layout.css`
+- Files: `src/app/admin-enrollment-dom.ts`, `src/styles/layout.css`
 - Preconditions: E6.S2.F1.T1 done
 - Steps:
   1. Camera tile on left; form on right.
@@ -1359,7 +1357,7 @@ stateDiagram-v2
 
 ###### Task E7.S2.F2.T1: Build `/log` page with latest-20 table — [x]
 
-- Files: `src/ui/log-view.ts`, `log.html`
+- Files: `src/app/mount-log-page.ts`, `log.html`
 - Preconditions: E7.S2.F1.T2 done
 - Steps:
   1. Query `accessLogRepo.toArray()` sorted by timestamp desc, take 20.
@@ -1455,7 +1453,7 @@ stateDiagram-v2
 **SOLID/DRY/Modularity checklist:**
 
 - SRP: CRUD in admin view; import parser in its own module; filter logic in log view.
-- OCP: adding a new filter edits log-view + its filter helper only.
+- OCP: adding a new filter edits `mount-log-page` filtering logic + its helper only.
 - LSP: import parser output is `User[]` — same type the enrollment flow produces.
 - ISP: `bulkImport.parse(json) -> {valid, errors}` is its only export.
 - DIP: views import from `app/*` re-exports and `infra/persistence.ts` where persistence is required.
@@ -1468,7 +1466,7 @@ stateDiagram-v2
 
 ###### Task E8.S1.F1.T1: User list table on `/admin` — [x]
 
-- Files: `src/ui/admin-view.ts`
+- Files: `src/app/admin-enrollment-dom.ts`, `src/app/mount-admin-enrollment.ts`
 - Preconditions: E6 complete
 - Steps:
   1. Render table with thumbnail + name + role + createdAt + Edit + Delete buttons.
@@ -1477,7 +1475,7 @@ stateDiagram-v2
 
 ###### Task E8.S1.F1.T2: Edit flow (name, role, optional re-capture) — [x]
 
-- Files: `src/ui/admin-view.ts`, `src/app/enroll.ts`
+- Files: `src/app/mount-admin-enrollment.ts`, `src/app/enroll.ts`
 - Preconditions: E8.S1.F1.T1 done
 - Steps:
   1. Edit opens the enrollment flow prefilled.
@@ -1520,7 +1518,7 @@ stateDiagram-v2
 
 ###### Task E8.S2.F1.T3: Execute import — [x]
 
-- Files: `src/app/bulk-import.ts`, `src/ui/admin-view.ts`
+- Files: `src/app/bulk-import.ts`, `src/app/mount-admin-enrollment.ts`
 - Preconditions: E8.S2.F1.T2 done
 - Steps:
   1. For each valid row: decode base64 → ImageData → run detector → crop → embed → save.
@@ -1535,7 +1533,7 @@ stateDiagram-v2
 
 ###### Task E8.S3.F1.T1: Filter by date range — [x]
 
-- Files: `src/ui/log-view.ts`
+- Files: `src/app/mount-log-page.ts`
 - Preconditions: E7 complete
 - Steps:
   1. Add two `<input type="date">`; query `accessLogRepo.where('timestamp').between(fromMs, toMs)`.
@@ -1544,7 +1542,7 @@ stateDiagram-v2
 
 ###### Task E8.S3.F1.T2: Filter by user and decision — [x]
 
-- Files: `src/ui/log-view.ts`
+- Files: `src/app/mount-log-page.ts`
 - Preconditions: E8.S3.F1.T1 done
 - Steps:
   1. Dropdown listing all users + "Unknown"; dropdown for GRANTED/UNCERTAIN/DENIED.
@@ -1553,7 +1551,7 @@ stateDiagram-v2
 
 ###### Task E8.S3.F1.T3: Sortable columns — [x]
 
-- Files: `src/ui/log-view.ts`
+- Files: `src/app/mount-log-page.ts`
 - Preconditions: E8.S3.F1.T2 done
 - Steps:
   1. Click column header to toggle asc/desc. Default: timestamp desc.
@@ -1646,7 +1644,7 @@ stateDiagram-v2
 
 ###### Task E9.S3.F1.T1: Build CSV exporter — [x]
 
-- Files: `src/app/csv-export.ts`, `src/ui/log-view.ts`
+- Files: `src/app/csv-export.ts`, `src/app/mount-log-page.ts`
 - Preconditions: E8 complete
 - Steps:
   1. `toCsv(rows)` with proper escaping (RFC 4180).
@@ -1809,7 +1807,7 @@ stateDiagram-v2
 - Steps:
   1. Enroll 20 faces.
   2. For each: present same face (TP test) + present each of 4 other faces (FP test) → build confusion matrix.
-  3. Compute TPR and FPR; retune `thresholds.strong` if needed (update `settings`, not `config.js` defaults, per `## 6` default).
+  3. Compute TPR and FPR; retune `thresholds.strong` if needed (update `settings`, not `config.ts` defaults, per `## 6` default).
 - Acceptance test: TPR ≥0.85 AND FPR ≤0.05 at chosen threshold.
 - SOLID/DRY note: results file is the audit record.
 
@@ -1971,7 +1969,7 @@ stateDiagram-v2
   Default: **confidence meter + audio feedback + CSV export** (E9). Replaceable if a higher-value stretch is feasible inside budget. Source: `docs/PRE-WORK.md` [OPEN] #5.
 4. **Exact final detector story for the interview.**
   Default: **YOLOv9-tiny COCO + person-head-band heuristic**. Face-specific YOLO swap is a follow-up if TPR <0.85 after E10 trial. Source: `docs/PRE-WORK.md` [OPEN] #1.
-5. **Threshold retune after ≥20-face trial — edit `config.js` defaults or runtime-only?**
+5. **Threshold retune after ≥20-face trial — edit `config.ts` defaults or runtime-only?**
   Default: **runtime-only** (write to `settings` store). Keeps `config.ts` defaults as the shipped fallback. Source: `docs/PRE-WORK.md` [OPEN] #6.
 6. **Admin credential rotation cadence.**
   Default: **manually by operator** via Netlify build secret. No automated rotation. Source: `docs/PRE-WORK.md` [OPEN] #7.
