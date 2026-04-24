@@ -10,6 +10,8 @@
 2. This `docs/PRD.md`
 3. `docs/PRE-WORK.md` (normalized evidence & locked decisions)
 
+[`docs/PRD-2.md`](PRD-2.md) tracks SPEC deltas and measurable closure work until the gap register is done or waived; it does not reorder the authority list above.
+
 ---
 
 ## 0. How to use this document (agent instructions)
