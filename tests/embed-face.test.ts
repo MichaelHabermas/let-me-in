@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { embedFace } from '../src/app/pipeline';
+import { embedFace } from '../src/app/detection-pipeline';
 import { getEmbedderRuntimeSettings } from '../src/config';
 import { createFaceEmbedder } from '../src/infra/embedder-ort';
 import { ORT_EP_ORDER_NODE_TEST } from '../src/infra/ort-execution-defaults';

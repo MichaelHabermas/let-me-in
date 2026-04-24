@@ -1,6 +1,6 @@
 import type { Camera } from './camera';
 import { createCooldown } from './cooldown';
-import { createDetectionPipeline } from './pipeline';
+import { createDetectionPipeline } from './detection-pipeline';
 import { syncCameraToggleUi } from './gate-camera-toggle-ui';
 import type { GatePreviewElements, GatePreviewSessionDeps } from './gate-session';
 import { beginDetectorLoad, type DetectorGateState } from './gate-session-detector-load';

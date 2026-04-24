@@ -1,5 +1,3 @@
-/** @vitest-environment happy-dom */
-
 import { describe, expect, it, vi } from 'vitest';
 
 import type { Camera } from '../src/app/camera';
@@ -11,6 +9,7 @@ import {
   testDetectorLoadFailedMessage,
   testDetectorLoadingMessage,
 } from './fixtures/gate-copy';
+import { createVitestCameraStub } from './support/fake-camera';
 
 function buildElements() {
   const cameraToggleBtn = document.createElement('button');
@@ -31,7 +30,7 @@ describe('wireGatePreviewSession', () => {
     const els = buildElements();
     let onErrorCb: Parameters<Camera['onError']>[0] | undefined;
     let running = false;
-    const fakeCamera = {
+    const fakeCamera = createVitestCameraStub({
       start: vi.fn(async () => {
         running = true;
       }),
@@ -47,7 +46,7 @@ describe('wireGatePreviewSession', () => {
       onFrame: vi.fn(() => () => {}),
       getFrame: vi.fn(),
       isRunning: vi.fn(() => running),
-    } as unknown as Camera;
+    });
 
     const createCamera = vi.fn(() => fakeCamera);
     const defaultConstraints = {
@@ -84,7 +83,7 @@ describe('wireGatePreviewSession', () => {
   it('maps camera errors to status text', () => {
     const els = buildElements();
     let onErrorCb: Parameters<Camera['onError']>[0] | undefined;
-    const fakeCamera = {
+    const fakeCamera = createVitestCameraStub({
       start: vi.fn(),
       stop: vi.fn(),
       onError(cb: Parameters<Camera['onError']>[0]) {
@@ -96,7 +95,7 @@ describe('wireGatePreviewSession', () => {
       onFrame: vi.fn(() => () => {}),
       getFrame: vi.fn(),
       isRunning: vi.fn(() => false),
-    } as unknown as Camera;
+    });
 
     wireGatePreviewSession(els, {
       createCamera: () => fakeCamera,
@@ -134,14 +133,7 @@ describe('wireGatePreviewSession', () => {
     overlayCanvas.width = 16;
     overlayCanvas.height = 16;
 
-    const fakeCamera = {
-      start: vi.fn().mockResolvedValue(undefined),
-      stop: vi.fn(),
-      onError: vi.fn(() => () => {}),
-      onFrame: vi.fn(() => () => {}),
-      getFrame: vi.fn(),
-      isRunning: vi.fn(() => false),
-    } as unknown as Camera;
+    const fakeCamera = createVitestCameraStub();
 
     wireGatePreviewSession(
       { ...els, overlayCanvas },

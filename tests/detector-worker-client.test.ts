@@ -1,5 +1,3 @@
-/** @vitest-environment happy-dom */
-
 import { describe, expect, it, vi } from 'vitest';
 
 import { createYoloWorkerDetector } from '../src/infra/detector-worker-client';

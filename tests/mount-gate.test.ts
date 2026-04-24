@@ -1,5 +1,3 @@
-/** @vitest-environment happy-dom */
-
 import Dexie from 'dexie';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -12,6 +10,8 @@ import type { FaceEmbedder } from '../src/infra/embedder-ort';
 import { createDexiePersistence } from '../src/infra/persistence';
 
 import { createTestGateRuntime } from './support/create-test-gate-runtime';
+import { createVitestCameraStub } from './support/fake-camera';
+import { embeddingVectorLeadingNonZero, embeddingVectorZeros } from './support/test-embeddings';
 import { stubCanvas2dContext } from './support/stub-canvas-2d-context';
 
 function fakeYoloDetector(): YoloDetector {
@@ -25,7 +25,7 @@ function fakeYoloDetector(): YoloDetector {
 function fakeFaceEmbedder(): FaceEmbedder {
   return {
     load: vi.fn().mockResolvedValue(undefined),
-    infer: vi.fn().mockResolvedValue(new Float32Array(512)),
+    infer: vi.fn().mockResolvedValue(embeddingVectorZeros()),
     dispose: vi.fn().mockResolvedValue(undefined),
   } as unknown as FaceEmbedder;
 }
@@ -42,14 +42,7 @@ describe('mountGateIntoHost', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
 
-    const fakeCamera = {
-      start: vi.fn().mockResolvedValue(undefined),
-      stop: vi.fn(),
-      onError: vi.fn(() => () => {}),
-      onFrame: vi.fn(() => () => {}),
-      getFrame: vi.fn(),
-      isRunning: vi.fn(() => false),
-    } as unknown as Camera;
+    const fakeCamera = createVitestCameraStub();
 
     const createCamera = vi.fn(() => fakeCamera);
 
@@ -83,14 +76,7 @@ describe('mountGateIntoHost', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
 
-    const fakeCamera = {
-      start: vi.fn().mockResolvedValue(undefined),
-      stop: vi.fn(),
-      onError: vi.fn(() => () => {}),
-      onFrame: vi.fn(() => () => {}),
-      getFrame: vi.fn(),
-      isRunning: vi.fn(() => false),
-    } as unknown as Camera;
+    const fakeCamera = createVitestCameraStub();
 
     const teardown = mountGateIntoHost(
       host,
@@ -113,7 +99,7 @@ describe('mountGateIntoHost', () => {
     const seed = rt.databaseSeedSettings!;
     await persistence.initDatabase(seed);
 
-    const raw = new Float32Array(512).map((_, i) => (i < 8 ? (i + 1) * 0.1 : 0));
+    const raw = embeddingVectorLeadingNonZero();
     const emb = l2normalize(new Float32Array(raw));
 
     await persistence.usersRepo.put({
@@ -133,14 +119,13 @@ describe('mountGateIntoHost', () => {
     let frameCb: ((t: number) => void) | undefined;
     let running = false;
 
-    const fakeCamera = {
+    const fakeCamera = createVitestCameraStub({
       start: vi.fn(async () => {
         running = true;
       }),
       stop: vi.fn(() => {
         running = false;
       }),
-      onError: vi.fn(() => () => {}),
       onFrame: vi.fn((cb: (t: number) => void) => {
         frameCb = cb;
         return () => {
@@ -149,7 +134,7 @@ describe('mountGateIntoHost', () => {
       }),
       getFrame: vi.fn(() => frame),
       isRunning: vi.fn(() => running),
-    } as unknown as Camera;
+    });
 
     const yoloDetector: YoloDetector = {
       load: vi.fn().mockResolvedValue(undefined),

@@ -3,13 +3,12 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { USER_ROLES } from '../../src/domain/user-roles';
 import { persistEnrolledUser } from '../../src/app/enrollment/enroll-save';
-import type { DatabaseSeedSettings } from '../../src/infra/persistence';
 import { createDexiePersistence } from '../../src/infra/persistence';
 
-const seed: DatabaseSeedSettings = {
-  thresholds: { strong: 0.85, weak: 0.65, unknown: 0.65, margin: 0.05 },
-  cooldownMs: 3000,
-};
+import { DEFAULT_TEST_DATABASE_SEED } from '../support/create-test-gate-runtime';
+import { embeddingVectorFilled } from '../support/test-embeddings';
+
+const seed = DEFAULT_TEST_DATABASE_SEED;
 
 const dbName = 'gatekeeper';
 
@@ -26,8 +25,7 @@ describe('seed 3 users (dev helper)', () => {
     await persistence.initDatabase(seed);
 
     for (let i = 0; i < 3; i++) {
-      const emb = new Float32Array(512);
-      emb.fill((i + 1) * 0.001);
+      const emb = embeddingVectorFilled((i + 1) * 0.001);
       await persistEnrolledUser(persistence, {
         name: `Seed User ${i + 1}`,
         role: USER_ROLES[i % USER_ROLES.length]!,

@@ -12,22 +12,13 @@ import {
 import { createYoloDetector } from '../src/infra/detector-ort';
 import { ORT_EP_ORDER_NODE_TEST } from '../src/infra/ort-execution-defaults';
 import { configureOrtWasmAssets, resetOrtWasmConfigForTests } from '../src/infra/ort-session-factory';
+import { minimalImageDataStub } from './support/synthetic-image-data';
 
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-/** Node test env has no DOM `ImageData`; minimal stub matches detector usage. */
-function createTestImageData(width: number, height: number): ImageData {
-  return {
-    width,
-    height,
-    data: new Uint8ClampedArray(width * height * 4),
-    colorSpace: 'srgb',
-  } as unknown as ImageData;
-}
-
 describe('preprocessToChwFloat (E3.S1.F2.T2)', () => {
   it('1280×720 ImageData yields CHW tensor length 1*3*640*640', () => {
-    const img = createTestImageData(1280, 720);
+    const img = minimalImageDataStub(1280, 720);
     const { tensorData, meta } = preprocessToChwFloat(img);
     expect(tensorData.length).toBe(3 * 640 * 640);
     expect(meta.srcW).toBe(1280);
@@ -104,7 +95,7 @@ describe('createYoloDetector integration (E3.S1.F2.T3)', () => {
         { modelBytes },
       );
       await det.load();
-      const img = createTestImageData(640, 480);
+      const img = minimalImageDataStub(640, 480);
       for (let p = 0; p < img.data.length; p += 4) {
         img.data[p] = 40;
         img.data[p + 1] = 80;

@@ -1,7 +1,9 @@
 import { expect, type Page } from '@playwright/test';
 
-/** Must match `E2E_GATE_SCENARIO_KEY` in `src/app/gate-e2e-doubles.ts`. */
-export const E2E_GATE_SCENARIO_LS_KEY = 'e2e_gate_scenario';
+import { E2E_GATE_SCENARIO_KEY } from '../../src/app/e2e-gate-scenario-key';
+
+/** Alias for scenario specs — same value as {@link E2E_GATE_SCENARIO_KEY}. */
+export const E2E_GATE_SCENARIO_LS_KEY = E2E_GATE_SCENARIO_KEY;
 
 /** After save the enrollment camera may still be running; next toolbar click stops it — recover until Capture is enabled. */
 export async function startEnrollmentCameraForCapture(page: Page): Promise<void> {

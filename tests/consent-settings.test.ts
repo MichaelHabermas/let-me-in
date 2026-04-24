@@ -1,5 +1,3 @@
-/** @vitest-environment happy-dom */
-
 import Dexie from 'dexie';
 import { describe, expect, it } from 'vitest';
 

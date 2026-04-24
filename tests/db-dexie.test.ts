@@ -1,7 +1,6 @@
 import Dexie from 'dexie';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import type { DatabaseSeedSettings } from '../src/infra/persistence';
 import {
   createDexiePersistence,
   getDefaultPersistence,
@@ -9,10 +8,12 @@ import {
   resetIndexedDbClientForTests,
 } from '../src/infra/persistence';
 
-const defaultTestSeed = {
-  thresholds: { strong: 0.85, weak: 0.65, unknown: 0.65, margin: 0.05 },
-  cooldownMs: 3000,
-} satisfies DatabaseSeedSettings;
+import { EMBEDDER_DIM } from '../src/infra/embedder-ort';
+
+import { DEFAULT_TEST_DATABASE_SEED } from './support/create-test-gate-runtime';
+import { embeddingVectorFilled } from './support/test-embeddings';
+
+const defaultTestSeed = DEFAULT_TEST_DATABASE_SEED;
 
 async function resetDb(): Promise<void> {
   await resetIndexedDbClientForTests();
@@ -52,13 +53,13 @@ describe('Dexie schema v1', () => {
       name: 'Test User',
       role: 'staff',
       referenceImageBlob: new Blob(['x'], { type: 'image/jpeg' }),
-      embedding: new Float32Array(512).fill(0.01),
+      embedding: embeddingVectorFilled(0.01),
       createdAt: Date.now(),
     };
     await db.usersRepo.put(user);
     const read = await db.usersRepo.get(id);
     expect(read?.name).toBe('Test User');
-    expect(read?.embedding.length).toBe(512);
+    expect(read?.embedding.length).toBe(EMBEDDER_DIM);
   });
 
   it('round-trips access log and supports appendDecision', async () => {

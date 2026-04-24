@@ -1,5 +1,3 @@
-/** @vitest-environment happy-dom */
-
 import Dexie from 'dexie';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -7,6 +5,7 @@ import { mountAuthenticatedAdminEnrollmentCoordinator } from '../src/app/admin-e
 import { createDexiePersistence } from '../src/infra/persistence';
 
 import { createTestGateRuntime } from './support/create-test-gate-runtime';
+import { embeddingVectorZeros } from './support/test-embeddings';
 import { stubCanvas2dContext } from './support/stub-canvas-2d-context';
 
 describe('mountAuthenticatedAdminEnrollmentCoordinator', () => {
@@ -27,7 +26,7 @@ describe('mountAuthenticatedAdminEnrollmentCoordinator', () => {
         name: 'One',
         role: 'Staff',
         referenceImageBlob: new Blob(),
-        embedding: new Float32Array(512),
+        embedding: embeddingVectorZeros(),
         createdAt: 1,
       });
       const root = document.createElement('div');

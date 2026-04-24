@@ -1,5 +1,3 @@
-/** @vitest-environment happy-dom */
-
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -7,30 +5,7 @@ import {
   createAdminAuth,
   type AdminAuthDeps,
 } from '../src/app/auth';
-
-function memoryStorage(): Storage {
-  const m = new Map<string, string>();
-  return {
-    getItem(k: string) {
-      return m.has(k) ? m.get(k)! : null;
-    },
-    setItem(k: string, v: string) {
-      m.set(k, v);
-    },
-    removeItem(k: string) {
-      m.delete(k);
-    },
-    clear() {
-      m.clear();
-    },
-    key() {
-      return null;
-    },
-    get length() {
-      return m.size;
-    },
-  };
-}
+import { createMemoryStorage } from './support/memory-storage';
 
 type MakeDepsOverrides = {
   storage?: AdminAuthDeps['storage'];
@@ -45,7 +20,7 @@ function makeDeps(overrides: MakeDepsOverrides = {}): {
   const t0 = 1_700_000_000_000;
   let now = t0;
   const deps: AdminAuthDeps = {
-    storage: overrides.storage ?? memoryStorage(),
+    storage: overrides.storage ?? createMemoryStorage(),
     nowMs: overrides.nowMs ?? (() => now),
     admin: overrides.admin ?? { user: 'admin', pass: 'secret' },
   };

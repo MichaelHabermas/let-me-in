@@ -1,14 +1,17 @@
 /**
  * Deterministic detector/embedder for Playwright when `VITE_E2E_STUB_GATE` is set.
- * Scenario is read from `localStorage` key {@link E2E_GATE_SCENARIO_KEY} (set via `addInitScript`).
+ * Scenario is read from `localStorage` key {@link E2E_GATE_SCENARIO_KEY} in `./e2e-gate-scenario-key` (set via `addInitScript`).
  */
 
 import type { Detection } from '../infra/detector-core';
 import type { YoloDetector } from '../infra/detector-core';
 import type { FaceEmbedder } from '../infra/embedder-ort';
+import { EMBEDDER_DIM } from '../infra/embedder-ort';
+import { E2E_GATE_SCENARIO_KEY } from './e2e-gate-scenario-key';
+import { e2eSingleFaceDetections } from './e2e-single-face-detections';
 import { createE2eEnrollmentEmbedder } from './enrollment/enroll-e2e-doubles';
 
-export const E2E_GATE_SCENARIO_KEY = 'e2e_gate_scenario';
+export { E2E_GATE_SCENARIO_KEY };
 
 export type E2eGateScenarioMode = 'granted' | 'denied' | 'multi' | 'printed' | '';
 
@@ -23,10 +26,7 @@ export function readE2eGateScenario(): E2eGateScenarioMode {
 }
 
 function oneFaceBox(frame: ImageData): Detection[] {
-  const { width: w, height: h } = frame;
-  const inset = Math.round(Math.min(w, h) * 0.12);
-  const bbox: [number, number, number, number] = [inset, inset, w - inset, h - inset];
-  return [{ bbox, confidence: 0.99, classId: 0 }];
+  return e2eSingleFaceDetections(frame);
 }
 
 function twoFaceBoxes(frame: ImageData): Detection[] {
@@ -54,7 +54,7 @@ export function createE2eGateYoloDetector(): YoloDetector {
 
 /** Embedding that is ~orthogonal to the uniform E2E enrollment vector → low similarity → DENIED. */
 function createLowMatchRawEmbedding(): Float32Array {
-  const out = new Float32Array(512);
+  const out = new Float32Array(EMBEDDER_DIM);
   out[0] = 1;
   return out;
 }

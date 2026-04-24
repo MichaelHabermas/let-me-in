@@ -1,7 +1,6 @@
 /**
- * `ImageData` when Vitest uses `environment: 'node'` (see [vitest.config.ts](../vitest.config.ts)).
- * Suites that need `document` use `/** @vitest-environment happy-dom *\/` (Vitest 4 has no
- * `environmentMatchGlobs`); see vitest.config comment for the list of DOM test files.
+ * `ImageData` when Vitest runs the `unit-node` project (`environment: 'node'`).
+ * DOM suites run in the `unit-dom` project (`happy-dom`); see `happyDomTestFiles` in vitest.config.ts.
  */
 
 type PredefinedColorSpace = 'srgb';

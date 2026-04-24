@@ -1,5 +1,3 @@
-/** @vitest-environment happy-dom */
-
 import Dexie from 'dexie';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -7,15 +5,12 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { parseBulkImportJson, runBulkImport } from '../src/app/bulk-import';
-import type { DatabaseSeedSettings } from '../src/infra/persistence';
 import { createDexiePersistence } from '../src/infra/persistence';
 
+import { DEFAULT_TEST_DATABASE_SEED } from './support/create-test-gate-runtime';
 import { stubCanvas2dContext } from './support/stub-canvas-2d-context';
 
-const seed: DatabaseSeedSettings = {
-  thresholds: { strong: 0.85, weak: 0.65, unknown: 0.65, margin: 0.05 },
-  cooldownMs: 3000,
-};
+const seed = DEFAULT_TEST_DATABASE_SEED;
 
 const png1x1 =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';

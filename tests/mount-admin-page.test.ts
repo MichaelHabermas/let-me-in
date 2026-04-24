@@ -1,40 +1,18 @@
-/** @vitest-environment happy-dom */
-
 import Dexie from 'dexie';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAdminAuth } from '../src/app/auth';
+import type { GateRuntime } from '../src/app/gate-runtime';
 import { mountAdminView } from '../src/app/mount-admin-shell';
 import { createDexiePersistence } from '../src/infra/persistence';
 import { createTestGateRuntime } from './support/create-test-gate-runtime';
+import { createMemoryStorage } from './support/memory-storage';
+import { embeddingVectorFilled } from './support/test-embeddings';
 import { stubCanvas2dContext } from './support/stub-canvas-2d-context';
-
-function memoryStorage(): Storage {
-  const m = new Map<string, string>();
-  return {
-    getItem(k: string) {
-      return m.has(k) ? m.get(k)! : null;
-    },
-    setItem(k: string, v: string) {
-      m.set(k, v);
-    },
-    removeItem(k: string) {
-      m.delete(k);
-    },
-    clear() {
-      m.clear();
-    },
-    key() {
-      return null;
-    },
-    get length() {
-      return m.size;
-    },
-  };
-}
 
 const testDbName = 'mount-admin-page-test';
 let currentPersistence: ReturnType<typeof createDexiePersistence> | null = null;
+let testRt: GateRuntime;
 
 function createTestPersistence() {
   currentPersistence = createDexiePersistence(testDbName);
@@ -58,6 +36,7 @@ describe('mountAdminView', () => {
     await Dexie.delete(testDbName);
     document.body.innerHTML = '<div id="app"></div>';
     stubCanvas2dContext();
+    testRt = createTestGateRuntime();
   });
 
   afterEach(async () => {
@@ -69,14 +48,14 @@ describe('mountAdminView', () => {
   });
 
   it('shows login modal when injected auth is not admin', () => {
-    const storage = memoryStorage();
+    const storage = createMemoryStorage();
     const auth = createAdminAuth({
       storage,
       nowMs: () => 1_700_000_000_000,
       admin: { user: 'u', pass: 'p' },
     });
     mountAdminView({
-      rt: createTestGateRuntime(),
+      rt: testRt,
       persistence: createTestPersistence(),
       auth,
     });
@@ -86,7 +65,7 @@ describe('mountAdminView', () => {
   });
 
   it('shows enrollment when injected auth is already admin', async () => {
-    const storage = memoryStorage();
+    const storage = createMemoryStorage();
     const auth = createAdminAuth({
       storage,
       nowMs: () => 1_700_000_000_000,
@@ -95,9 +74,9 @@ describe('mountAdminView', () => {
     expect(auth.login('u', 'p')).toBe(true);
 
     const persistence = createTestPersistence();
-    await persistence.initDatabase(createTestGateRuntime().databaseSeedSettings!);
+    await persistence.initDatabase(testRt.databaseSeedSettings!);
     mountAdminView({
-      rt: createTestGateRuntime(),
+      rt: testRt,
       persistence,
       auth,
     });
@@ -107,7 +86,7 @@ describe('mountAdminView', () => {
   });
 
   it('lists seeded users in roster table', async () => {
-    const storage = memoryStorage();
+    const storage = createMemoryStorage();
     const auth = createAdminAuth({
       storage,
       nowMs: () => 1_700_000_000_000,
@@ -116,8 +95,8 @@ describe('mountAdminView', () => {
     expect(auth.login('u', 'p')).toBe(true);
 
     const persistence = createTestPersistence();
-    await persistence.initDatabase(createTestGateRuntime().databaseSeedSettings!);
-    const emb = new Float32Array(512).fill(0.02);
+    await persistence.initDatabase(testRt.databaseSeedSettings!);
+    const emb = embeddingVectorFilled(0.02);
     for (let i = 0; i < 3; i += 1) {
       await persistence.usersRepo.put({
         id: `id-${i}`,
@@ -130,7 +109,7 @@ describe('mountAdminView', () => {
     }
 
     mountAdminView({
-      rt: createTestGateRuntime(),
+      rt: testRt,
       persistence,
       auth,
     });
@@ -139,7 +118,7 @@ describe('mountAdminView', () => {
   });
 
   it('logout uses injected auth storage only', async () => {
-    const storage = memoryStorage();
+    const storage = createMemoryStorage();
     const auth = createAdminAuth({
       storage,
       nowMs: () => 1_700_000_000_000,
@@ -148,9 +127,9 @@ describe('mountAdminView', () => {
     expect(auth.login('u', 'p')).toBe(true);
 
     const persistence = createTestPersistence();
-    await persistence.initDatabase(createTestGateRuntime().databaseSeedSettings!);
+    await persistence.initDatabase(testRt.databaseSeedSettings!);
     mountAdminView({
-      rt: createTestGateRuntime(),
+      rt: testRt,
       persistence,
       auth,
     });

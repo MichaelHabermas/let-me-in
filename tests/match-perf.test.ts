@@ -2,20 +2,21 @@ import { describe, expect, it } from 'vitest';
 
 import { evaluateGateAccessMatch } from '../src/domain/gate-decision';
 import type { AccessThresholds } from '../src/domain/access-policy';
+import { EMBEDDER_DIM } from '../src/infra/embedder-ort';
 import { matchOne, type EnrolledEmbedding } from '../src/app/match';
 
-/** E5 DoD-1: 50 enrolled 512-d vectors — match + policy stays under a tight ms budget (higher on CI: shared runners are noisy). */
-function normalizedRandom512(seed: number): Float32Array {
-  const v = new Float32Array(512);
+/** E5 DoD-1: 50 enrolled embedding-length vectors — match + policy stays under a tight ms budget (higher on CI: shared runners are noisy). */
+function normalizedRandomEmbedding(seed: number): Float32Array {
+  const v = new Float32Array(EMBEDDER_DIM);
   let s = seed;
-  for (let i = 0; i < 512; i++) {
+  for (let i = 0; i < EMBEDDER_DIM; i++) {
     s = (s * 1103515245 + 12345) & 0x7fffffff;
     v[i] = (s / 0x7fffffff) * 2 - 1;
   }
   let sumSq = 0;
-  for (let i = 0; i < 512; i++) sumSq += v[i]! * v[i]!;
+  for (let i = 0; i < EMBEDDER_DIM; i++) sumSq += v[i]! * v[i]!;
   const inv = 1 / Math.sqrt(sumSq);
-  for (let i = 0; i < 512; i++) v[i]! *= inv;
+  for (let i = 0; i < EMBEDDER_DIM; i++) v[i]! *= inv;
   return v;
 }
 
@@ -30,9 +31,9 @@ describe('matchOne perf (E5 DoD-1)', () => {
   it('completes matchOne + decide path for 50 users within perf budget (warm-up excluded)', () => {
     const enrolled: EnrolledEmbedding[] = [];
     for (let u = 0; u < 50; u++) {
-      enrolled.push({ userId: `u${u}`, embedding: normalizedRandom512(10_000 + u) });
+      enrolled.push({ userId: `u${u}`, embedding: normalizedRandomEmbedding(10_000 + u) });
     }
-    const live = normalizedRandom512(42);
+    const live = normalizedRandomEmbedding(42);
 
     for (let w = 0; w < 5; w++) {
       const ranked = matchOne(live, enrolled);

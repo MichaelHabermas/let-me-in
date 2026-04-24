@@ -1,5 +1,3 @@
-/** @vitest-environment happy-dom */
-
 import Dexie from 'dexie';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -10,13 +8,11 @@ import {
   createE2eEnrollmentDetector,
   createE2eEnrollmentEmbedder,
 } from '../src/app/enrollment/enroll-e2e-doubles';
-import type { DatabaseSeedSettings } from '../src/domain/database-seed';
 import { createDexiePersistence } from '../src/infra/persistence';
 
-const seed: DatabaseSeedSettings = {
-  thresholds: { strong: 0.85, weak: 0.65, unknown: 0.65, margin: 0.05 },
-  cooldownMs: 3000,
-};
+import { DEFAULT_TEST_DATABASE_SEED } from './support/create-test-gate-runtime';
+
+const seed = DEFAULT_TEST_DATABASE_SEED;
 
 const dbName = 'enroll-e2e-controller-test';
 let currentPersistence: ReturnType<typeof createDexiePersistence> | null = null;

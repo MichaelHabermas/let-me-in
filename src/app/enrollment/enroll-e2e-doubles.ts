@@ -7,8 +7,10 @@ import type { Camera, ErrorCallback, FrameCallback, Unsubscribe } from '../../in
 import { makeCameraError } from '../../infra/camera';
 import type { Detection } from '../../infra/detector-core';
 import type { FaceEmbedder } from '../../infra/embedder-ort';
+import { EMBEDDER_DIM } from '../../infra/embedder-ort';
+import { e2eSingleFaceDetections } from '../e2e-single-face-detections';
 
-const E2E_EMBEDDING_UNIT = 1 / Math.sqrt(512);
+const E2E_EMBEDDING_UNIT = 1 / Math.sqrt(EMBEDDER_DIM);
 
 function greyImageData(frameWidth: number, frameHeight: number): ImageData {
   const data = new Uint8ClampedArray(frameWidth * frameHeight * 4);
@@ -32,22 +34,19 @@ export function createE2eEnrollmentDetector(): E2eEnrollmentDetector {
   return {
     async load() {},
     async infer(frame: ImageData): Promise<Detection[]> {
-      const { width: w, height: h } = frame;
-      const inset = Math.round(Math.min(w, h) * 0.12);
-      const bbox: [number, number, number, number] = [inset, inset, w - inset, h - inset];
-      return [{ bbox, confidence: 0.99, classId: 0 }];
+      return e2eSingleFaceDetections(frame);
     },
     async dispose() {},
   };
 }
 
-/** Deterministic 512-D embedding (matches former stub enrollment). */
+/** Deterministic `EMBEDDER_DIM`-length embedding (matches former stub enrollment). */
 export function createE2eEnrollmentEmbedder(): FaceEmbedder {
   return {
     async load() {},
     async infer(_: Float32Array) {
       void _;
-      const out = new Float32Array(512);
+      const out = new Float32Array(EMBEDDER_DIM);
       out.fill(E2E_EMBEDDING_UNIT);
       return out;
     },

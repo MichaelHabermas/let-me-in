@@ -1,12 +1,12 @@
-/** @vitest-environment happy-dom */
-
 import { describe, expect, it, vi } from 'vitest';
 
 import { createCooldown } from '../src/app/cooldown';
-import { createDetectionPipeline } from '../src/app/pipeline';
-import type { Camera } from '../src/app/camera';
+import { createDetectionPipeline } from '../src/app/detection-pipeline';
 import type { YoloDetector } from '../src/infra/detector-core';
 import type { FaceEmbedder } from '../src/infra/embedder-ort';
+
+import { createCameraWithCapturedFrameCallback } from './support/fake-camera';
+import { embeddingVectorFilled } from './support/test-embeddings';
 
 const sampleBlob = new Blob(['x'], { type: 'image/png' });
 
@@ -60,17 +60,7 @@ describe('createDetectionPipeline', () => {
   it('subscribes onFrame and draws after infer', async () => {
     const clearRect = vi.fn();
     const frame = { width: 2, height: 2, data: new Uint8ClampedArray(16) } as unknown as ImageData;
-    let frameCb: ((t: number) => void) | undefined;
-    const camera = {
-      isRunning: vi.fn(() => true),
-      getFrame: vi.fn(() => frame),
-      onFrame: vi.fn((cb: (t: number) => void) => {
-        frameCb = cb;
-        return () => {
-          frameCb = undefined;
-        };
-      }),
-    } as unknown as Camera;
+    const { camera, getFrameCb } = createCameraWithCapturedFrameCallback(frame);
 
     const detector = {
       infer: vi.fn().mockResolvedValue([
@@ -88,6 +78,7 @@ describe('createDetectionPipeline', () => {
       overlayHeight: 80,
     });
 
+    const frameCb = getFrameCb();
     expect(frameCb).toBeTypeOf('function');
     frameCb!(1);
     await vi.waitFor(() => expect(detector.infer).toHaveBeenCalled());
@@ -99,17 +90,7 @@ describe('createDetectionPipeline', () => {
   it('runs embedder when exactly one detection and faceEmbedder is set', async () => {
     const clearRect = vi.fn();
     const frame = new ImageData(128, 128);
-    let frameCb: ((t: number) => void) | undefined;
-    const camera = {
-      isRunning: vi.fn(() => true),
-      getFrame: vi.fn(() => frame),
-      onFrame: vi.fn((cb: (t: number) => void) => {
-        frameCb = cb;
-        return () => {
-          frameCb = undefined;
-        };
-      }),
-    } as unknown as Camera;
+    const { camera, getFrameCb } = createCameraWithCapturedFrameCallback(frame);
 
     const detector = {
       infer: vi.fn().mockResolvedValue([{ bbox: [32, 32, 96, 96] as const, confidence: 0.9, classId: 0 }]),
@@ -117,7 +98,7 @@ describe('createDetectionPipeline', () => {
 
     const faceEmbedder: FaceEmbedder = {
       load: vi.fn(),
-      infer: vi.fn().mockResolvedValue(new Float32Array(512).fill(3)),
+      infer: vi.fn().mockResolvedValue(embeddingVectorFilled(3)),
       dispose: vi.fn(),
     };
 
@@ -132,6 +113,7 @@ describe('createDetectionPipeline', () => {
       faceEmbedder,
     });
 
+    const frameCb = getFrameCb();
     expect(frameCb).toBeTypeOf('function');
     frameCb!(1);
     await vi.waitFor(() => expect(faceEmbedder.infer).toHaveBeenCalled());
@@ -148,17 +130,7 @@ describe('createDetectionPipeline', () => {
     const frame = new ImageData(64, 64);
     const statusEl = document.createElement('p');
     let now = 0;
-    let frameCb: ((t: number) => void) | undefined;
-    const camera = {
-      isRunning: vi.fn(() => true),
-      getFrame: vi.fn(() => frame),
-      onFrame: vi.fn((cb: (t: number) => void) => {
-        frameCb = cb;
-        return () => {
-          frameCb = undefined;
-        };
-      }),
-    } as unknown as Camera;
+    const { camera, getFrameCb } = createCameraWithCapturedFrameCallback(frame);
     const detector = {
       infer: vi.fn().mockResolvedValue([]),
     } as unknown as YoloDetector;
@@ -177,6 +149,7 @@ describe('createDetectionPipeline', () => {
       getNowMs: () => now,
       evaluateDecision,
     });
+    const frameCb = getFrameCb();
     frameCb!(1);
     await vi.waitFor(() => expect(detector.infer).toHaveBeenCalled());
     expect(statusEl.textContent).toBe('');
@@ -192,17 +165,7 @@ describe('createDetectionPipeline', () => {
   it('shows multi-face status and does not embed', async () => {
     const frame = new ImageData(64, 64);
     const statusEl = document.createElement('p');
-    let frameCb: ((t: number) => void) | undefined;
-    const camera = {
-      isRunning: vi.fn(() => true),
-      getFrame: vi.fn(() => frame),
-      onFrame: vi.fn((cb: (t: number) => void) => {
-        frameCb = cb;
-        return () => {
-          frameCb = undefined;
-        };
-      }),
-    } as unknown as Camera;
+    const { camera, getFrameCb } = createCameraWithCapturedFrameCallback(frame);
     const detector = {
       infer: vi.fn().mockResolvedValue([
         { bbox: [1, 1, 10, 10] as const, confidence: 0.9, classId: 0 },
@@ -227,6 +190,7 @@ describe('createDetectionPipeline', () => {
       noFaceMessage: 'No face detected',
       multiFaceMessage: 'Multiple faces detected',
     });
+    const frameCb = getFrameCb();
     frameCb!(1);
     await vi.waitFor(() => expect(detector.infer).toHaveBeenCalled());
     expect(statusEl.textContent).toBe('Multiple faces detected');
@@ -238,17 +202,7 @@ describe('createDetectionPipeline', () => {
     const cooldown = createCooldown(3_000, () => now);
     const frame = new ImageData(128, 128);
     const statusEl = document.createElement('p');
-    let frameCb: ((t: number) => void) | undefined;
-    const camera = {
-      isRunning: vi.fn(() => true),
-      getFrame: vi.fn(() => frame),
-      onFrame: vi.fn((cb: (t: number) => void) => {
-        frameCb = cb;
-        return () => {
-          frameCb = undefined;
-        };
-      }),
-    } as unknown as Camera;
+    const { camera, getFrameCb } = createCameraWithCapturedFrameCallback(frame);
 
     const detector = {
       infer: vi.fn().mockResolvedValue([{ bbox: [32, 32, 96, 96] as const, confidence: 0.9, classId: 0 }]),
@@ -256,7 +210,7 @@ describe('createDetectionPipeline', () => {
 
     const faceEmbedder: FaceEmbedder = {
       load: vi.fn(),
-      infer: vi.fn().mockResolvedValue(new Float32Array(512).fill(3)),
+      infer: vi.fn().mockResolvedValue(embeddingVectorFilled(3)),
       dispose: vi.fn(),
     };
     const evaluateDecision = vi.fn(() => evalGranted());
@@ -277,6 +231,7 @@ describe('createDetectionPipeline', () => {
       evaluateDecision,
     });
 
+    const frameCb = getFrameCb();
     frameCb!(1);
     await vi.waitFor(() => expect(faceEmbedder.infer).toHaveBeenCalledTimes(1));
     expect(evaluateDecision).toHaveBeenCalledTimes(1);
@@ -293,17 +248,7 @@ describe('createDetectionPipeline', () => {
     const cooldown = createCooldown(3_000, () => now);
     const frame = new ImageData(128, 128);
     const statusEl = document.createElement('p');
-    let frameCb: ((t: number) => void) | undefined;
-    const camera = {
-      isRunning: vi.fn(() => true),
-      getFrame: vi.fn(() => frame),
-      onFrame: vi.fn((cb: (t: number) => void) => {
-        frameCb = cb;
-        return () => {
-          frameCb = undefined;
-        };
-      }),
-    } as unknown as Camera;
+    const { camera, getFrameCb } = createCameraWithCapturedFrameCallback(frame);
 
     const detector = {
       infer: vi.fn().mockResolvedValue([{ bbox: [32, 32, 96, 96] as const, confidence: 0.9, classId: 0 }]),
@@ -311,7 +256,7 @@ describe('createDetectionPipeline', () => {
 
     const faceEmbedder: FaceEmbedder = {
       load: vi.fn(),
-      infer: vi.fn().mockResolvedValue(new Float32Array(512).fill(3)),
+      infer: vi.fn().mockResolvedValue(embeddingVectorFilled(3)),
       dispose: vi.fn(),
     };
     const evaluateDecision = vi.fn(() => evalDenied());
@@ -332,12 +277,13 @@ describe('createDetectionPipeline', () => {
       evaluateDecision,
     });
 
-    frameCb!(1);
+    const frameCbDenied = getFrameCb();
+    frameCbDenied!(1);
     await vi.waitFor(() => expect(faceEmbedder.infer).toHaveBeenCalledTimes(1));
     expect(evaluateDecision).toHaveBeenCalledTimes(1);
 
     now += 100;
-    frameCb!(2);
+    frameCbDenied!(2);
     await vi.waitFor(() => expect(detector.infer).toHaveBeenCalledTimes(2));
     expect(faceEmbedder.infer).toHaveBeenCalledTimes(1);
     expect(statusEl.textContent).toBe('Please wait 3 s');
@@ -348,17 +294,7 @@ describe('createDetectionPipeline', () => {
     const cooldown = createCooldown(3_000, () => now);
     const frame = new ImageData(128, 128);
     const statusEl = document.createElement('p');
-    let frameCb: ((t: number) => void) | undefined;
-    const camera = {
-      isRunning: vi.fn(() => true),
-      getFrame: vi.fn(() => frame),
-      onFrame: vi.fn((cb: (t: number) => void) => {
-        frameCb = cb;
-        return () => {
-          frameCb = undefined;
-        };
-      }),
-    } as unknown as Camera;
+    const { camera, getFrameCb } = createCameraWithCapturedFrameCallback(frame);
 
     const detector = {
       infer: vi.fn().mockResolvedValue([{ bbox: [32, 32, 96, 96] as const, confidence: 0.9, classId: 0 }]),
@@ -366,7 +302,7 @@ describe('createDetectionPipeline', () => {
 
     const faceEmbedder: FaceEmbedder = {
       load: vi.fn(),
-      infer: vi.fn().mockResolvedValue(new Float32Array(512).fill(3)),
+      infer: vi.fn().mockResolvedValue(embeddingVectorFilled(3)),
       dispose: vi.fn(),
     };
     const evaluateDecision = vi.fn(() => evalUncertain());
@@ -387,10 +323,11 @@ describe('createDetectionPipeline', () => {
       evaluateDecision,
     });
 
-    frameCb!(1);
+    const frameCbUncertain = getFrameCb();
+    frameCbUncertain!(1);
     await vi.waitFor(() => expect(faceEmbedder.infer).toHaveBeenCalledTimes(1));
     now += 100;
-    frameCb!(2);
+    frameCbUncertain!(2);
     await vi.waitFor(() => expect(faceEmbedder.infer).toHaveBeenCalledTimes(2));
     expect(statusEl.textContent).toBe('');
     expect(evaluateDecision).toHaveBeenCalledTimes(2);
@@ -399,23 +336,13 @@ describe('createDetectionPipeline', () => {
   it('calls appendAccessLog for DENIED', async () => {
     const appendAccessLog = vi.fn().mockResolvedValue(undefined);
     const frame = new ImageData(128, 128);
-    let frameCb: ((t: number) => void) | undefined;
-    const camera = {
-      isRunning: vi.fn(() => true),
-      getFrame: vi.fn(() => frame),
-      onFrame: vi.fn((cb: (t: number) => void) => {
-        frameCb = cb;
-        return () => {
-          frameCb = undefined;
-        };
-      }),
-    } as unknown as Camera;
+    const { camera, getFrameCb } = createCameraWithCapturedFrameCallback(frame);
     const detector = {
       infer: vi.fn().mockResolvedValue([{ bbox: [32, 32, 96, 96] as const, confidence: 0.9, classId: 0 }]),
     } as unknown as YoloDetector;
     const faceEmbedder: FaceEmbedder = {
       load: vi.fn(),
-      infer: vi.fn().mockResolvedValue(new Float32Array(512).fill(3)),
+      infer: vi.fn().mockResolvedValue(embeddingVectorFilled(3)),
       dispose: vi.fn(),
     };
     const overlayCtx = createOverlayCtx();
@@ -431,7 +358,8 @@ describe('createDetectionPipeline', () => {
       evaluateDecision: vi.fn(() => evalDenied()),
     });
 
-    frameCb!(1);
+    const frameCbLogDenied = getFrameCb();
+    frameCbLogDenied!(1);
     await vi.waitFor(() => expect(appendAccessLog).toHaveBeenCalledTimes(1));
     const logCalls = appendAccessLog.mock.calls;
     const firstLog = logCalls[0];
@@ -445,23 +373,13 @@ describe('createDetectionPipeline', () => {
   it('does not call appendAccessLog for UNCERTAIN', async () => {
     const appendAccessLog = vi.fn().mockResolvedValue(undefined);
     const frame = new ImageData(128, 128);
-    let frameCb: ((t: number) => void) | undefined;
-    const camera = {
-      isRunning: vi.fn(() => true),
-      getFrame: vi.fn(() => frame),
-      onFrame: vi.fn((cb: (t: number) => void) => {
-        frameCb = cb;
-        return () => {
-          frameCb = undefined;
-        };
-      }),
-    } as unknown as Camera;
+    const { camera, getFrameCb } = createCameraWithCapturedFrameCallback(frame);
     const detector = {
       infer: vi.fn().mockResolvedValue([{ bbox: [32, 32, 96, 96] as const, confidence: 0.9, classId: 0 }]),
     } as unknown as YoloDetector;
     const faceEmbedder: FaceEmbedder = {
       load: vi.fn(),
-      infer: vi.fn().mockResolvedValue(new Float32Array(512).fill(3)),
+      infer: vi.fn().mockResolvedValue(embeddingVectorFilled(3)),
       dispose: vi.fn(),
     };
     const overlayCtx = createOverlayCtx();
@@ -477,8 +395,9 @@ describe('createDetectionPipeline', () => {
       evaluateDecision: vi.fn(() => evalUncertain()),
     });
 
-    frameCb!(1);
-    frameCb!(2);
+    const frameCbLogUncertain = getFrameCb();
+    frameCbLogUncertain!(1);
+    frameCbLogUncertain!(2);
     await vi.waitFor(() => expect(appendAccessLog).not.toHaveBeenCalled());
   });
 });

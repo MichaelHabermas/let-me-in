@@ -1,5 +1,3 @@
-/** @vitest-environment happy-dom */
-
 import Dexie from 'dexie';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -7,6 +5,7 @@ import { mountLogPageIntoApp } from '../src/app/mount-log-page';
 import { createDexiePersistence } from '../src/infra/persistence';
 
 import { createTestGateRuntime } from './support/create-test-gate-runtime';
+import { embeddingVectorZeros } from './support/test-embeddings';
 
 describe('mountLogPageIntoApp', () => {
   it('renders all log rows with toolbar', async () => {
@@ -20,7 +19,7 @@ describe('mountLogPageIntoApp', () => {
       name: 'One',
       role: 'Staff',
       referenceImageBlob: new Blob(),
-      embedding: new Float32Array(512),
+      embedding: embeddingVectorZeros(),
       createdAt: 1,
     });
 
@@ -59,7 +58,7 @@ describe('mountLogPageIntoApp', () => {
       name: 'One',
       role: 'Staff',
       referenceImageBlob: new Blob(),
-      embedding: new Float32Array(512),
+      embedding: embeddingVectorZeros(),
       createdAt: 1,
     });
     const blob = new Blob(['x']);
@@ -105,7 +104,7 @@ describe('mountLogPageIntoApp', () => {
       name: 'One',
       role: 'Staff',
       referenceImageBlob: new Blob(),
-      embedding: new Float32Array(512),
+      embedding: embeddingVectorZeros(),
       createdAt: 1,
     });
     const blob = new Blob(['x']);
@@ -153,7 +152,7 @@ describe('mountLogPageIntoApp', () => {
       name: 'One',
       role: 'Staff',
       referenceImageBlob: new Blob(),
-      embedding: new Float32Array(512),
+      embedding: embeddingVectorZeros(),
       createdAt: 1,
     });
     const blob = new Blob(['x']);

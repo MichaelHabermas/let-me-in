@@ -1,7 +1,18 @@
-import { createGateUiRuntimeSlice } from '../../src/app/gate-ui-runtime';
-import { getDatabaseSeedSettingsFromConfig } from '../../src/app/gate-seed-settings';
+import type { DatabaseSeedSettings } from '../../src/domain/database-seed';
 import { composeGateRuntime, type GateRuntime } from '../../src/app/gate-runtime';
+import { getDatabaseSeedSettingsFromConfig } from '../../src/app/gate-seed-settings';
+import type { GateSeedConfigSlice } from '../../src/app/gate-seed-settings';
+import { createGateUiRuntimeSlice } from '../../src/app/gate-ui-runtime';
 import type { Config } from '../../src/config';
+
+/** Canonical gate seed config for Vitest — same values as `createTestGateRuntime` uses. */
+export const DEFAULT_TEST_GATE_SEED_CONFIG: GateSeedConfigSlice = {
+  thresholds: { strong: 0.85, weak: 0.65, unknown: 0.65, margin: 0.05 },
+  cooldownMs: 3000,
+};
+
+export const DEFAULT_TEST_DATABASE_SEED: DatabaseSeedSettings =
+  getDatabaseSeedSettingsFromConfig(DEFAULT_TEST_GATE_SEED_CONFIG);
 
 const testGateUiConfig: Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'> = {
   org: {
@@ -78,11 +89,7 @@ const testGateUiConfig: Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingT
 
 /** `GateRuntime` for DOM tests — same composition path as production `resolveGateRuntime`. */
 export function createTestGateRuntime(): GateRuntime {
-  const seedCfg = {
-    thresholds: { strong: 0.85, weak: 0.65, unknown: 0.65, margin: 0.05 },
-    cooldownMs: 3000,
-  };
   return composeGateRuntime(createGateUiRuntimeSlice(testGateUiConfig, false), () =>
-    getDatabaseSeedSettingsFromConfig(seedCfg),
+    getDatabaseSeedSettingsFromConfig(DEFAULT_TEST_GATE_SEED_CONFIG),
   );
 }
