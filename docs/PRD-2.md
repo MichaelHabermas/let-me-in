@@ -22,7 +22,7 @@
 ## 2. Gap register (SPEC → current state → target)
 
 | Area | SPECS reference | Gap | Target / acceptance |
-|------|------------------|-----|---------------------|
+| ------ | ------------------ | ----- | --------------------- |
 | Detector semantics | Face Detection: “YOLOv9… detect **faces** with bounding box”; Deep dive `yolov9-face.onnx` narrative | Shipped [`public/models/yolov9t.onnx`](../public/models/README.md) is **COCO person** + **head-band** heuristic ([`src/infra/detector-yolo-decode.ts`](../src/infra/detector-yolo-decode.ts)) | **Path A (preferred for literal SPEC):** Integrate a **face-class or face-specialized** ONNX (e.g. YOLOv8-face export or documented face-YOLO) + decode/NMS aligned to that model; keep ORT pipeline. **Path B (defense-only):** Keep COCO+tight crop but update **all user-facing copy** and **ARCHITECTURE** to say “upper-body / head ROI detector” and add **independent face validation** (e.g. BlazeFace) before embed — still not literal “YOLOv9 face” unless YOLO is face-specific. Pick Path A or B in Epic P2.D1; no silent ambiguity. |
 | Model load UX | “Display a **loading progress bar**”; graceful failure | Text status only ([`src/app/gate-session-detector-load.ts`](../src/app/gate-session-detector-load.ts)) | **Progress UI:** For each of detector + embedder `fetch`/load, show **determinate bar** (bytes loaded / content-length when available, or indeterminate + stage labels). Reuse single status region on gate (and admin if models load there). **Failure:** retain friendly error + retry affordance (SPEC: graceful). |
 | Mobile cameras | “Support **front and rear** cameras on mobile” | `facingMode` from config only ([`src/infra/camera.ts`](../src/infra/camera.ts)); no user-facing switch | **Gate + Admin:** `enumerateDevices` + labeled picker (“Front” / “Back” / list) or explicit flip control; persist last choice in `settings` store. |
@@ -88,7 +88,7 @@ Each epic: **Goal**, **Files likely touched**, **Acceptance**, **SPEC cite**.
 ## 5. Acceptance: SPECS “We will test” mapping
 
 | # | SPEC scenario | PRD-2 closure |
-|---|---------------|---------------|
+| --- | --------------- | --------------- |
 | 1 | Feed <2s | P1.5 + documented measurement |
 | 2 | Enroll | Already covered; keep E2E |
 | 3 | GRANTED <3s | Benchmarks + pipeline |
@@ -119,5 +119,5 @@ Each epic: **Goal**, **Files likely touched**, **Acceptance**, **SPEC cite**.
 ## 8. Revision history
 
 | Date | Author | Notes |
-|------|--------|-------|
+| ------ | -------- | ------- |
 | 2026-04-24 | PRD-2 draft | Initial gap synthesis from SPECS + repo audit. |
