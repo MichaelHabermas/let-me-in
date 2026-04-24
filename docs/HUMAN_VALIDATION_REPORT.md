@@ -10,6 +10,6 @@
 
 | Item | Owner | Date |
 | --- | --- | --- |
-| Scenarios 1–8 (real camera row) | _name_ | _date_ |
-| Benchmarks (MBP + Chrome) | _name_ | _date_ |
-| Accuracy trial complete | _name_ | _date_ |
+| Scenarios 1–8 (real camera row) | _PENDING OPERATOR ASSIGNMENT_ | _PENDING_ |
+| Benchmarks (MBP + Chrome) | _PENDING OPERATOR ASSIGNMENT_ | _PENDING_ |
+| Accuracy trial complete | _PENDING OPERATOR ASSIGNMENT_ | _PENDING_ |

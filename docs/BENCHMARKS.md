@@ -16,8 +16,8 @@
 
 | Metric | Budget (SPECS / PRD) | p50 | p90 | p99 | Environment |
 | --- | --- | --- | --- | --- | --- |
-| Detector infer | <500 ms | _TBD_ | _TBD_ | _TBD_ | _MBP model, Chrome version_ |
-| End-to-end to decision | <3000 ms | _TBD_ | _TBD_ | — | _same_ |
-| Cold navigation → models ready | <8000 ms | _TBD_ | — | — | _same_ |
+| Detector infer | <500 ms | _PENDING MBP+CHROME RUN_ | _PENDING MBP+CHROME RUN_ | _PENDING MBP+CHROME RUN_ | _PENDING OPERATOR ENTRY (MBP model, Chrome version)_ |
+| End-to-end to decision | <3000 ms | _PENDING MBP+CHROME RUN_ | _PENDING MBP+CHROME RUN_ | — | _same_ |
+| Cold navigation → models ready | <8000 ms | _PENDING MBP+CHROME RUN_ | — | — | _same_ |
 
-_Last updated: automation scaffolding only — replace `_TBD_` after MBP run._
+_Last updated: deployment URL fixed; canonical MBP+Chrome numbers still pending operator run._

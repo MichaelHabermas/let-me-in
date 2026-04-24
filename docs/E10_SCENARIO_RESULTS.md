@@ -19,6 +19,6 @@ Run: `pnpm test:e2e` (includes `VITE_E2E_STUB_GATE` + `VITE_E2E_STUB_ENROLL` via
 
 | # | Check | Operator notes | Pass / date |
 | --- | --- | --- | --- |
-| 1 | Live `getUserMedia` feed within 2 s of permission | Grant camera; stopwatch click → first visible preview frame | _Fill after run_ |
+| 1 | Live `getUserMedia` feed within 2 s of permission | Grant camera; stopwatch click → first visible preview frame | _PENDING OPERATOR RUN_ |
 
 _Stubbed automation does not replace real-camera SPECS evidence on target hardware._

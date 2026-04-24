@@ -1,6 +1,6 @@
 # Accuracy trial results (Epic E10.S2.F1.T2)
 
-**Status:** Template — populate after volunteers complete the protocol in `docs/ACCURACY_TRIAL.md`.
+**Status:** Pending operator-run trial (>=20 identities) per `docs/ACCURACY_TRIAL.md`.
 
 ## Threshold used
 
@@ -10,8 +10,8 @@
 
 |  | Predicted accept | Predicted reject |
 | --- | ---: | ---: |
-| **Same person** | TP = _n_ | FN = _n_ |
-| **Impostor** | FP = _n_ | TN = _n_ |
+| **Same person** | TP = _PENDING_ | FN = _PENDING_ |
+| **Impostor** | FP = _PENDING_ | TN = _PENDING_ |
 
 ## Rates
 

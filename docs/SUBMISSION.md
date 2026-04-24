@@ -3,7 +3,7 @@
 ## Demo video (DoD-4)
 
 - **Target:** 3–5 minute screen recording: enroll → GRANTED → stranger DENIED → multi-face → `/log` → CSV export.
-- **Artifact:** Add `docs/demo.mp4` **or** paste a stable public URL here: _TBD_
+- **Artifact:** Add `docs/demo.mp4` **or** paste a stable public URL here: _PENDING OPERATOR RECORDING/LINK_
 
 ## Architecture PDF (DoD-5)
 
@@ -16,13 +16,85 @@
 
 ## Pre-Search export (DoD-7)
 
-- Link or path to saved Pre-Search conversation (per `docs/SPECS.txt`): _TBD_
+- Link or path to saved Pre-Search conversation (per `docs/SPECS.txt`): _PENDING OPERATOR EXPORT_
 
 ## Social post (DoD-8)
 
-- Publish on X or LinkedIn, tag **@GauntletAI**, include demo link + screenshot/GIF.
-- **Public URL:** _TBD_
+- Out of scope for this instance by operator decision.
+- **Public URL:** _N/A (intentionally skipped)_
 
 ## Deployed app
 
-- Production / preview URL with HTTPS: _TBD_
+- Production / preview URL with HTTPS: `https://let-me-in-gatekeeper.netlify.app`
+
+## Runbook (operator quick closeout)
+
+Use this checklist to complete the remaining operator-owned items without guessing.
+
+### 1) Demo artifact
+
+1. Record a 3–5 minute walkthrough per `docs/DEMO.md`.
+2. Save locally as `docs/demo.mp4` **or** upload and capture a stable URL.
+3. Replace this line:
+   - `- **Artifact:** ... _PENDING OPERATOR RECORDING/LINK_`
+
+Template:
+
+- `docs/demo.mp4` (local file)  
+  **or**
+- `https://<your-video-host>/<id>`
+
+### 2) Pre-Search export link/path
+
+1. Export your Pre-Search conversation as PDF/Markdown.
+2. Place it in `docs/` (recommended) or store externally.
+3. Replace this line:
+   - `- Link or path to saved Pre-Search conversation ... _PENDING OPERATOR EXPORT_`
+
+Template:
+
+- `docs/pre-search-export.pdf`  
+  **or**
+- `https://<drive-or-notion-link>`
+
+### 3) Canonical benchmarks (MBP + desktop Chrome)
+
+1. Run app locally:
+   - `pnpm run dev`
+2. In desktop Chrome on MBP, open `http://localhost:5173/`.
+3. Accept consent and start camera.
+4. Follow measurement steps in `docs/BENCHMARKS.md` and fill p50/p90/p99 rows.
+5. Add exact environment text (MacBook model + Chrome version).
+
+Optional helper commands:
+
+- `pnpm run bench:detection`
+- `pnpm run bench:e2e`
+- `pnpm run bench:cold-load`
+
+### 4) Accuracy trial (>=20 identities)
+
+1. Follow protocol in `docs/ACCURACY_TRIAL.md`.
+2. Fill TP/FN/FP/TN in `docs/ACCURACY_RESULTS.md`.
+3. Compute/verify rates (TPR/FPR) and record final values.
+
+Helper:
+
+- `node -e "import('./tests/accuracy/trial.js').then(m => console.log(m.formatRates({tpr:m.truePositiveRate(TP,FN), fpr:m.falsePositiveRate(FP,TN)})))"`
+
+### 5) Manual scenario + validation sign-off
+
+1. Complete manual row(s) in `docs/E10_SCENARIO_RESULTS.md`.
+2. Fill owner/date sign-offs in `docs/HUMAN_VALIDATION_REPORT.md`.
+
+### 6) Final pre-submit sanity checks
+
+Run:
+
+- `pnpm run typecheck`
+- `pnpm run lint`
+- `pnpm test`
+
+Then confirm:
+
+- No `PENDING` placeholders remain in `docs/SUBMISSION.md`, `docs/BENCHMARKS.md`, `docs/ACCURACY_RESULTS.md`, `docs/E10_SCENARIO_RESULTS.md`, `docs/HUMAN_VALIDATION_REPORT.md`.
