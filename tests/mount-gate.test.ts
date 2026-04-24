@@ -201,6 +201,8 @@ describe('mountGateIntoHost', () => {
     const getContextSpy = vi.spyOn(overlay, 'getContext').mockImplementation((type) =>
       type === '2d' ? overlayCtx : null,
     );
+    const createUrlSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
+    const revokeUrlSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
     try {
       await vi.waitFor(() => {
@@ -217,6 +219,8 @@ describe('mountGateIntoHost', () => {
         expect(host.querySelector('#decision .banner__title')?.textContent).toContain('Enrolled');
       });
     } finally {
+      createUrlSpy.mockRestore();
+      revokeUrlSpy.mockRestore();
       getContextSpy.mockRestore();
       restoreCanvasStub();
       document.body.removeChild(host);

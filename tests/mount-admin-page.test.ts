@@ -34,6 +34,12 @@ function memoryStorage(): Storage {
 }
 
 const testDbName = 'mount-admin-page-test';
+let currentPersistence: ReturnType<typeof createDexiePersistence> | null = null;
+
+function createTestPersistence() {
+  currentPersistence = createDexiePersistence(testDbName);
+  return currentPersistence;
+}
 
 async function waitForRosterRows(expected: number): Promise<void> {
   for (let i = 0; i < 100; i += 1) {
@@ -47,6 +53,8 @@ async function waitForRosterRows(expected: number): Promise<void> {
 
 describe('mountAdminPage', () => {
   beforeEach(async () => {
+    await currentPersistence?.resetIndexedDbClientForTests();
+    currentPersistence = null;
     await Dexie.delete(testDbName);
     document.body.innerHTML = '<div id="app"></div>';
     stubCanvas2dContext();
@@ -54,6 +62,8 @@ describe('mountAdminPage', () => {
 
   afterEach(async () => {
     vi.restoreAllMocks();
+    await currentPersistence?.resetIndexedDbClientForTests();
+    currentPersistence = null;
     await Dexie.delete(testDbName);
     document.body.innerHTML = '';
   });
@@ -67,7 +77,7 @@ describe('mountAdminPage', () => {
     });
     mountAdminPage({
       rt: createTestGateRuntime(),
-      persistence: createDexiePersistence(testDbName),
+      persistence: createTestPersistence(),
       auth,
     });
 
@@ -84,7 +94,7 @@ describe('mountAdminPage', () => {
     });
     expect(auth.login('u', 'p')).toBe(true);
 
-    const persistence = createDexiePersistence(testDbName);
+    const persistence = createTestPersistence();
     await persistence.initDatabase(createTestGateRuntime().getDatabaseSeedSettings());
     mountAdminPage({
       rt: createTestGateRuntime(),
@@ -105,7 +115,7 @@ describe('mountAdminPage', () => {
     });
     expect(auth.login('u', 'p')).toBe(true);
 
-    const persistence = createDexiePersistence(testDbName);
+    const persistence = createTestPersistence();
     await persistence.initDatabase(createTestGateRuntime().getDatabaseSeedSettings());
     const emb = new Float32Array(512).fill(0.02);
     for (let i = 0; i < 3; i += 1) {
@@ -137,7 +147,7 @@ describe('mountAdminPage', () => {
     });
     expect(auth.login('u', 'p')).toBe(true);
 
-    const persistence = createDexiePersistence(testDbName);
+    const persistence = createTestPersistence();
     await persistence.initDatabase(createTestGateRuntime().getDatabaseSeedSettings());
     mountAdminPage({
       rt: createTestGateRuntime(),

@@ -19,20 +19,26 @@ const seed: DatabaseSeedSettings = {
 };
 
 const dbName = 'enroll-e2e-controller-test';
+let currentPersistence: ReturnType<typeof createDexiePersistence> | null = null;
 
 describe('createEnrollmentController with E2E doubles', () => {
   beforeEach(async () => {
+    await currentPersistence?.resetIndexedDbClientForTests();
+    currentPersistence = null;
     await Dexie.delete(dbName);
     stubCanvas2dContext();
   });
 
   afterEach(async () => {
     vi.restoreAllMocks();
+    await currentPersistence?.resetIndexedDbClientForTests();
+    currentPersistence = null;
     await Dexie.delete(dbName);
   });
 
   it('idle → capture → save with doubles', async () => {
     const persistence = createDexiePersistence(dbName);
+    currentPersistence = persistence;
     await persistence.initDatabase(seed);
 
     const wrap = document.createElement('div');

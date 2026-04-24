@@ -67,16 +67,21 @@ export function createGateAccessUiController(
       ev.referenceImageBlob;
 
     if (showCompare && ev.referenceImageBlob) {
-      const refUrl = URL.createObjectURL(ev.referenceImageBlob);
-      const liveUrl = URL.createObjectURL(ev.capturedFrameBlob);
-      revocations.push(() => URL.revokeObjectURL(refUrl));
-      revocations.push(() => URL.revokeObjectURL(liveUrl));
-      const side = renderSideBySide({
-        referenceObjectUrl: refUrl,
-        liveObjectUrl: liveUrl,
-        similarityLine: `${similarityPct(ev.policy.score)}% match`,
-      });
-      host.appendChild(side);
+      try {
+        const refUrl = URL.createObjectURL(ev.referenceImageBlob);
+        const liveUrl = URL.createObjectURL(ev.capturedFrameBlob);
+        revocations.push(() => URL.revokeObjectURL(refUrl));
+        revocations.push(() => URL.revokeObjectURL(liveUrl));
+        const side = renderSideBySide({
+          referenceObjectUrl: refUrl,
+          liveObjectUrl: liveUrl,
+          similarityLine: `${similarityPct(ev.policy.score)}% match`,
+        });
+        host.appendChild(side);
+      } catch (error) {
+        // Keep access decisions flowing even if optional preview rendering fails.
+        console.warn('[gate-access-ui] side-by-side preview unavailable', error);
+      }
     }
     recordDecisionPresented();
   };
