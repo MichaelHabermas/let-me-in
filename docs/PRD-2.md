@@ -76,7 +76,7 @@ Each row maps to exactly one **Closing Epic**. Detailed work lives under **§5**
 | --- | --- | --- | --- | --- |
 | Detector semantics | Face Detection (~L72–L76); Deep dive (~L154–L182) | COCO person + head heuristic vs face-specialized | **Path A (default):** face-class or face-specialized ONNX + decode/NMS aligned; OR **Path B:** `WAIVED` after documented Path A attempt + two-stage + copy | **E13** |
 | Model load UX | Deep dive (~L163–L164) | Text status only | Determinate bar where `Content-Length` exists; indeterminate + stage labels otherwise; graceful failure + retry | **E11** |
-| Mobile cameras | Webcam (~L72) | `facingMode` from config only | Gate + Admin: device picker or flip; persist in `settings` | **E12** |
+| Mobile cameras | Webcam (~L72) | `facingMode` from config only | Gate + Admin: device picker or flip; persist in `settings` | **E12** — DONE |
 | Preview latency | Test 1 (~L127–L127) | Not asserted in CI/docs | Document + measure in [`docs/BENCHMARKS.md`](BENCHMARKS.md); tune path if missed | **E16** |
 | Access decision colors | Access (~L112–L112) | `UNCERTAIN` third state | Green / red / distinct amber; score visible on grant/deny paths | **E14** |
 | Default threshold wording | Threshold (~L82–L82) | Banded thresholds vs “default ≥ 0.75” | Document mapping to SPEC 0.75 and/or admin-visible preset; update [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) | **E14** |
@@ -208,7 +208,7 @@ Each row maps to exactly one **Closing Epic**. Detailed work lives under **§5**
 
 ---
 
-### Epic E12: Front and rear camera selection — [ ]
+### Epic E12: Front and rear camera selection — [x]
 
 **Goal:** Meet SPECS webcam integration: **support front and rear cameras on mobile** via explicit user choice; persist last choice.
 
@@ -216,22 +216,22 @@ Each row maps to exactly one **Closing Epic**. Detailed work lives under **§5**
 
 **Epic DoD:**
 
-- [ ] Gate and Admin can select camera device or facing mode with clear labels.
-- [ ] Last choice persists in `settings` store.
-- [ ] All E12 Tasks `- [x]`.
+- [x] Gate and Admin can select camera device or facing mode with clear labels.
+- [x] Last choice persists in `settings` store.
+- [x] All E12 Tasks `- [x]`.
 
-#### User Story E12.S1: As a visitor, I can pick which camera feeds the gate — [ ]
+#### User Story E12.S1: As a visitor, I can pick which camera feeds the gate — [x]
 
 **Acceptance criteria:**
 
 - Given multiple video input devices, when I open the gate, then I can pick front vs rear (or device list).
 - Given a selection, when I reload, then the app restores my last choice from IndexedDB settings.
 
-##### Feature E12.S1.F1: Device enumeration and picker UI (gate) — [ ]
+##### Feature E12.S1.F1: Device enumeration and picker UI (gate) — [x]
 
 **Files:** [`src/infra/camera.ts`](../src/infra/camera.ts), [`src/app/mount-gate.ts`](../src/app/mount-gate.ts), [`src/app/gate-session.ts`](../src/app/gate-session.ts), settings persistence via [`src/infra/db-dexie.ts`](../src/infra/db-dexie.ts) / [`src/infra/persistence.ts`](../src/infra/persistence.ts).
 
-###### Task E12.S1.F1.T1: Implement `enumerateDevices` + labeled picker for gate — [ ]
+###### Task E12.S1.F1.T1: Implement `enumerateDevices` + labeled picker for gate — [x]
 
 - **Preconditions:** none
 - **Steps:**
@@ -240,7 +240,7 @@ Each row maps to exactly one **Closing Epic**. Detailed work lives under **§5**
 - **Acceptance test:** With fake `MediaDevices` in unit test, preferred device id is passed to `getUserMedia`.
 - **SPEC cite:** L72 “front and rear cameras on mobile”.
 
-###### Task E12.S1.F1.T2: Persist gate camera choice in settings — [ ]
+###### Task E12.S1.F1.T2: Persist gate camera choice in settings — [x]
 
 - **Preconditions:** E12.S1.F1.T1 done
 - **Steps:**
@@ -249,13 +249,13 @@ Each row maps to exactly one **Closing Epic**. Detailed work lives under **§5**
 - **Acceptance test:** Unit or integration: setting round-trips across mocked reload.
 - **SPEC cite:** L72; storage L308 (IndexedDB / settings).
 
-#### User Story E12.S2: As an admin, I can pick the enrollment camera — [ ]
+#### User Story E12.S2: As an admin, I can pick the enrollment camera — [x]
 
-##### Feature E12.S2.F1: Admin enrollment picker — [ ]
+##### Feature E12.S2.F1: Admin enrollment picker — [x]
 
 **Files:** admin enrollment mount / [`src/app/mount-admin-shell.ts`](../src/app/mount-admin-shell.ts) or enrollment controllers.
 
-###### Task E12.S2.F1.T1: Wire same enumeration + persistence for admin capture — [ ]
+###### Task E12.S2.F1.T1: Wire same enumeration + persistence for admin capture — [x]
 
 - **Preconditions:** E12.S1.F1.T2 done
 - **Steps:** Reuse shared camera picker helper; separate settings key or shared policy per product decision (document in ARCHITECTURE).
@@ -762,7 +762,7 @@ Update the `(x/y tasks)` counts when Tasks flip to `- [x]`.
 | Epic | Title | Progress |
 | --- | --- | --- |
 | E11 | Model load progress + graceful failure | - [x] (4/4 tasks) |
-| E12 | Front/rear camera selection | - [ ] (0/3 tasks) |
+| E12 | Front/rear camera selection | - [x] (3/3 tasks) |
 | E13 | Literal face detection (Path A) | - [ ] (0/4 tasks) |
 | E14 | Decision UI + threshold semantics | - [ ] (0/4 tasks) |
 | E15 | Multi-face overlay | - [ ] (0/2 tasks) |

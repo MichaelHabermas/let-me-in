@@ -62,6 +62,7 @@ describe('createEnrollmentController with E2E doubles', () => {
       getNoFaceMessage: () => 'no face',
       getMultiFaceMessage: () => 'multi',
       persistence,
+      defaultVideoConstraints: { idealWidth: 640, idealHeight: 480, facingMode: 'user' },
     });
 
     expect(ctrl.getState()).toBe('idle');

@@ -11,7 +11,9 @@ import type {
 } from './admin-enrollment-ports';
 import type { EnrollmentController } from './enroll';
 import type { User } from '../domain/types';
+import { ENROLL_CAMERA_PREFERENCE_KEY } from '../domain/camera-preference';
 import type { DexiePersistence } from '../infra/persistence';
+import { writeCameraPreference } from './camera-preference-persistence';
 import type { GateRuntime } from './gate-runtime';
 
 export type MountAdminEnrollmentOptions = {
@@ -96,6 +98,8 @@ function bindEnrollmentUi(
   dom: AdminEnrollmentCaptureMount,
   ctrl: EnrollmentController,
   rt: GateRuntime,
+  persistence: DexiePersistence,
+  useStubEnrollment: boolean,
   syncButtons: () => void,
   refreshRoster: () => Promise<void>,
 ): void {
@@ -115,6 +119,28 @@ function bindEnrollmentUi(
     ctrl.retake();
     syncButtons();
   });
+  if (!useStubEnrollment) {
+    dom.cameraDeviceSelect.addEventListener('change', () => {
+      const d = rt.defaultVideoConstraintsForCamera;
+      if (!dom.cameraDeviceSelect.value) {
+        void writeCameraPreference(
+          persistence.settingsRepo,
+          ENROLL_CAMERA_PREFERENCE_KEY,
+          { facingMode: d.facingMode },
+        );
+      } else {
+        void writeCameraPreference(persistence.settingsRepo, ENROLL_CAMERA_PREFERENCE_KEY, {
+          deviceId: dom.cameraDeviceSelect.value,
+        });
+      }
+      if (ctrl.isCameraRunning()) {
+        ctrl.stopSession();
+        void ctrl.startSession().catch(() => {
+          /* surface via controller */
+        });
+      }
+    });
+  }
   bindEnrollmentSaveClick(dom, ctrl, rt, syncButtons, refreshRoster);
 }
 
@@ -151,7 +177,7 @@ export function mountAuthenticatedAdminEnrollmentCoordinator(
   }
 
   syncButtons();
-  bindEnrollmentUi(dom, ctrl, rt, syncButtons, roster.refresh);
+  bindEnrollmentUi(dom, ctrl, rt, persistence, useStubEnrollment, syncButtons, roster.refresh);
   const disposeImport = bindAdminEnrollmentImportController({
     dom,
     rt,

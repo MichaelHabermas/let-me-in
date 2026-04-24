@@ -44,6 +44,8 @@ export interface CreateCameraOptions {
 }
 
 export interface CameraStartOptions {
+  /** When set, `getUserMedia` uses `deviceId: { exact }` and omits `facingMode` for that start. */
+  deviceId?: string;
   facingMode?: string;
 }
 
@@ -54,6 +56,8 @@ export interface Camera {
   onFrame(cb: FrameCallback): Unsubscribe;
   onError(cb: ErrorCallback): Unsubscribe;
   isRunning(): boolean;
+  /** Active video track settings when running; otherwise `null` (E12 device selection). */
+  getTrackSettings(): MediaTrackSettings | null;
 }
 
 export function mapGetUserMediaFailure(err: unknown): CameraError {
@@ -95,10 +99,16 @@ export function buildVideoConstraints(
   defaults: DefaultVideoConstraints,
   opts?: CameraStartOptions,
 ): MediaTrackConstraints {
-  return {
-    facingMode: opts?.facingMode ?? defaults.facingMode,
+  const base: MediaTrackConstraints = {
     width: { ideal: defaults.idealWidth },
     height: { ideal: defaults.idealHeight },
+  };
+  if (opts?.deviceId) {
+    return { ...base, deviceId: { exact: opts.deviceId } };
+  }
+  return {
+    ...base,
+    facingMode: opts?.facingMode ?? defaults.facingMode,
   };
 }
 
@@ -238,6 +248,11 @@ function buildCameraApi(rt: CameraRuntime): Camera {
       }
       const ctx = getCanvas2dContext(rt);
       return ctx.getImageData(0, 0, rt.canvasEl.width, rt.canvasEl.height);
+    },
+    getTrackSettings(): MediaTrackSettings | null {
+      if (!rt.stream) return null;
+      const t = rt.stream.getVideoTracks()[0];
+      return t?.getSettings() ?? null;
     },
   };
 }

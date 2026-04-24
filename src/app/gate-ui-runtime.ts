@@ -40,6 +40,9 @@ export type AdminUiStrings = {
   enrollRoleLegacySuffix: string;
   enrollSuccess: string;
   enrollNameRequired: string;
+  cameraDefaultDeviceOption: string;
+  cameraSelectAriaLabel: string;
+  cameraUnnamedFormat: (indexOneBased: number) => string;
 };
 
 /** Log page copy — keep mounts off raw `config.ui.strings`. */
@@ -74,6 +77,9 @@ export type GateUiRuntimeSlice = {
   modelLoadRetryLabel: string;
   noFaceMessage: string;
   multiFaceMessage: string;
+  cameraDefaultDeviceOption: string;
+  cameraSelectAriaLabel: string;
+  formatUnnamedCamera: (indexOneBased: number) => string;
   adminUiStrings: AdminUiStrings;
   gateAccessUiStrings: GateAccessUiStrings;
   consentModalStrings: ConsentModalStrings;
@@ -135,6 +141,9 @@ function adminStringsFromConfig(cfg: GateUiConfigSlice): AdminUiStrings {
     enrollRoleLegacySuffix: s.enrollRoleLegacySuffix,
     enrollSuccess: s.enrollSuccess,
     enrollNameRequired: s.enrollNameRequired,
+    cameraDefaultDeviceOption: s.cameraDefaultDeviceOption,
+    cameraSelectAriaLabel: s.cameraSelectAriaLabel,
+    cameraUnnamedFormat: (i: number) => s.cameraUnnamedFormat.replaceAll('{n}', String(i)),
   };
 }
 
@@ -176,6 +185,11 @@ export function createGateUiRuntimeSlice(
     modelLoadRetryLabel: s.modelLoadRetry,
     noFaceMessage: s.noFace,
     multiFaceMessage: s.multiFace,
+    cameraDefaultDeviceOption: s.cameraDefaultDeviceOption,
+    cameraSelectAriaLabel: s.cameraSelectAriaLabel,
+    formatUnnamedCamera(i: number) {
+      return s.cameraUnnamedFormat.replaceAll('{n}', String(i));
+    },
     adminUiStrings: adminStringsFromConfig(cfg),
     gateAccessUiStrings: {
       formatGranted(name, similarityPct) {

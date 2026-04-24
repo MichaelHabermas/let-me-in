@@ -15,6 +15,7 @@ export type AdminEnrollmentDom = {
   frameCanvas: HTMLCanvasElement;
   overlayCanvas: HTMLCanvasElement;
   modelLoadRoot: HTMLElement;
+  cameraDeviceSelect: HTMLSelectElement;
   statusEl: HTMLElement;
   nameInput: HTMLInputElement;
   roleSelect: HTMLSelectElement;
@@ -121,12 +122,25 @@ function buildPreviewColumn(rt: GateRuntime): {
   frameCanvas: HTMLCanvasElement;
   overlayCanvas: HTMLCanvasElement;
   modelLoadRoot: HTMLElement;
+  cameraDeviceSelect: HTMLSelectElement;
   statusEl: HTMLElement;
 } {
   const column = document.createElement('div');
   column.className = 'admin-enroll__preview';
   const previewWrap = document.createElement('div');
   previewWrap.className = 'admin-enroll__video-wrap';
+
+  const deviceRow = document.createElement('div');
+  deviceRow.className = 'admin-enroll__camera-device';
+  const cameraDeviceSelect = document.createElement('select');
+  cameraDeviceSelect.className = 'admin-enroll__camera-select';
+  cameraDeviceSelect.setAttribute('data-testid', 'enroll-camera-device');
+  cameraDeviceSelect.setAttribute('aria-label', rt.adminUiStrings.cameraSelectAriaLabel);
+  const defOpt = document.createElement('option');
+  defOpt.value = '';
+  defOpt.textContent = rt.adminUiStrings.cameraDefaultDeviceOption;
+  cameraDeviceSelect.appendChild(defOpt);
+  deviceRow.appendChild(cameraDeviceSelect);
 
   const video = document.createElement('video');
   video.className = 'admin-enroll__video';
@@ -149,8 +163,8 @@ function buildPreviewColumn(rt: GateRuntime): {
   const statusEl = document.createElement('p');
   statusEl.className = 'admin-enroll__status';
   statusEl.setAttribute('data-testid', 'enroll-status');
-  column.append(previewWrap, modelLoadRoot, statusEl);
-  return { column, video, frameCanvas, overlayCanvas, modelLoadRoot, statusEl };
+  column.append(deviceRow, previewWrap, modelLoadRoot, statusEl);
+  return { column, video, frameCanvas, overlayCanvas, modelLoadRoot, cameraDeviceSelect, statusEl };
 }
 
 function buildNameFields(rt: GateRuntime): {
@@ -300,6 +314,7 @@ export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
     frameCanvas: preview.frameCanvas,
     overlayCanvas: preview.overlayCanvas,
     modelLoadRoot: preview.modelLoadRoot,
+    cameraDeviceSelect: preview.cameraDeviceSelect,
     statusEl: preview.statusEl,
     nameInput: form.nameInput,
     roleSelect: form.roleSelect,

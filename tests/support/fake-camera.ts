@@ -11,6 +11,7 @@ export function createVitestCameraStub(overrides: Partial<Camera> = {}): Camera 
     onFrame: vi.fn(() => () => {}),
     getFrame: vi.fn(),
     isRunning: vi.fn(() => false),
+    getTrackSettings: vi.fn(() => null),
     ...overrides,
   } as Camera;
 }

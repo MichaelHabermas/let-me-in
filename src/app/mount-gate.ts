@@ -96,6 +96,7 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
 
   const {
     main,
+    cameraDeviceSelect,
     cameraToggleBtn,
     modelLoadRoot,
     statusEl,
@@ -138,6 +139,7 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
   );
   const teardown = wireSession(
     {
+      cameraDeviceSelect,
       cameraToggleBtn,
       statusEl,
       modelLoadUi,

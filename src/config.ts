@@ -115,6 +115,11 @@ export interface Config {
       consentAccept: string;
       consentDecline: string;
       logExportCsv: string;
+      /** E12: `<select>` and admin camera picker. */
+      cameraSelectAriaLabel: string;
+      cameraDefaultDeviceOption: string;
+      /** E12: label when `label` is empty, e.g. "Camera {n}" */
+      cameraUnnamedFormat: string;
     };
   };
 }
@@ -230,6 +235,9 @@ export const config: Config = {
       consentAccept: 'I understand — continue',
       consentDecline: 'Decline',
       logExportCsv: 'Export CSV',
+      cameraSelectAriaLabel: 'Camera for verification',
+      cameraDefaultDeviceOption: 'Default',
+      cameraUnnamedFormat: 'Camera {n}',
     },
   },
 };

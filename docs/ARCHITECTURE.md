@@ -28,7 +28,7 @@ flowchart LR
 
 - **users:** name, role, embedding, reference image blob (`src/infra/db-dexie.ts`).
 - **accessLog:** timestamped decisions for `/log` + CSV export.
-- **settings:** `thresholds`, `cooldownMs`, consent flag.
+- **settings:** `thresholds`, `cooldownMs`, consent flag, and **E12** camera preferences: `gateCameraPreference` and `enrollCameraPreference` (JSON: optional `deviceId` and `facingMode`). Stale or missing `deviceId` falls back to `config.camera.defaultFacingMode` and the choice is re-saved when the stream starts.
 
 ## Performance observability
 

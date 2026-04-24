@@ -1,11 +1,21 @@
 import { getDetectorRuntimeSettings, getEmbedderRuntimeSettings } from '../config';
+import { ENROLL_CAMERA_PREFERENCE_KEY, type CameraPreference } from '../domain/camera-preference';
+import {
+  ensureVideoInputDeviceLabels,
+  getBrowserMediaDeviceAccess,
+  preferenceForTrackSettings,
+  resolveCameraStartOptions,
+  videoInputDevicesToList,
+} from '../infra/camera-devices';
 import type { ModelLoadProgress } from '../infra/model-load-types';
 import type { DexiePersistence } from '../infra/persistence';
 import { createFaceEmbedder } from '../infra/embedder-ort';
 import { createYoloDetector } from '../infra/detector-ort';
 import { createDetectorEmbedderRuntime } from '../infra/inference-runtime';
+import { readCameraPreference, writeCameraPreference } from './camera-preference-persistence';
 import { createCamera } from './camera';
 import type { AdminEnrollmentCaptureMount } from './admin-enrollment-ports';
+import { fillVideoDeviceSelect } from './gate-video-device-select-ui';
 import { mountModelLoadStatusUi } from './model-load-status-ui';
 import { createEnrollmentController, type EnrollmentController } from './enroll';
 import {
@@ -14,6 +24,7 @@ import {
   createE2eEnrollmentEmbedder,
 } from './enrollment/enroll-e2e-doubles';
 import type { GateRuntime } from './gate-runtime';
+import type { Camera } from './camera';
 
 function enrollmentControllerBase(
   dom: AdminEnrollmentCaptureMount,
@@ -57,15 +68,57 @@ function createAdminEnrollmentWithModelLoad(
         onLoadProgress: onProgress,
       }),
   });
+  const dc = rt.defaultVideoConstraintsForCamera;
+  let listPopulated = false;
+  let cached: CameraPreference | undefined;
+  void readCameraPreference(base.persistence.settingsRepo, ENROLL_CAMERA_PREFERENCE_KEY).then(
+    (p) => {
+      cached = p;
+    },
+  );
   return createEnrollmentController({
     ...base,
+    defaultVideoConstraints: dc,
     camera: createCamera(dom.video, dom.frameCanvas, {
-      defaultConstraints: rt.defaultVideoConstraintsForCamera,
+      defaultConstraints: dc,
     }),
     detector: ort.detector,
     embedder: ort.embedder,
     modelLoadUi,
     modelLoadFailedMessage: rt.detectorLoadFailedMessage,
+    getCameraStartOptions: () =>
+      resolveCameraStartOptions({
+        listPopulated,
+        selectValue: dom.cameraDeviceSelect.value.trim(),
+        defaultFacingMode: dc.facingMode,
+        loadedPreference: cached,
+      }),
+    onAfterCameraStart: async (cam: Camera) => {
+      const access = getBrowserMediaDeviceAccess();
+      if (!access) return;
+      const all = await ensureVideoInputDeviceLabels(access);
+      const items = videoInputDevicesToList(all, (i) => rt.formatUnnamedCamera(i + 1));
+      const active = cam.getTrackSettings()?.deviceId;
+      fillVideoDeviceSelect(
+        dom.cameraDeviceSelect,
+        rt.adminUiStrings.cameraDefaultDeviceOption,
+        items,
+        active ?? null,
+      );
+      listPopulated = true;
+      await writeCameraPreference(
+        base.persistence.settingsRepo,
+        ENROLL_CAMERA_PREFERENCE_KEY,
+        preferenceForTrackSettings(cam.getTrackSettings(), dc.facingMode),
+      );
+    },
+    onRecoverStaleEnrollDevice: async (fb) => {
+      listPopulated = false;
+      cached = { facingMode: fb };
+      await writeCameraPreference(base.persistence.settingsRepo, ENROLL_CAMERA_PREFERENCE_KEY, {
+        facingMode: fb,
+      });
+    },
   });
 }
 
@@ -79,12 +132,14 @@ export function createAdminEnrollmentSessionController(params: {
   const { dom, rt, persistence, useStubEnrollment, onStateChange } = params;
   const base = enrollmentControllerBase(dom, rt, persistence, onStateChange);
   if (useStubEnrollment) {
+    dom.cameraDeviceSelect.hidden = true;
     const ort = createDetectorEmbedderRuntime({
       createDetector: () => createE2eEnrollmentDetector(),
       createEmbedder: () => createE2eEnrollmentEmbedder(),
     });
     return createEnrollmentController({
       ...base,
+      defaultVideoConstraints: rt.defaultVideoConstraintsForCamera,
       camera: createE2eEnrollmentCamera(dom.frameCanvas.width, dom.frameCanvas.height),
       detector: ort.detector,
       embedder: ort.embedder,

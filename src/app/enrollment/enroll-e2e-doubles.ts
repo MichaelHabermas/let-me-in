@@ -3,7 +3,7 @@
  * `VITE_E2E_STUB_ENROLL` is set — keeps a single `createEnrollmentController` path.
  */
 
-import type { Camera, ErrorCallback, FrameCallback, Unsubscribe } from '../../infra/camera';
+import type { Camera, CameraStartOptions, ErrorCallback, FrameCallback, Unsubscribe } from '../../infra/camera';
 import { makeCameraError } from '../../infra/camera';
 import type { Detection } from '../../infra/detector-core';
 import type { FaceEmbedder } from '../../infra/embedder-ort';
@@ -84,7 +84,8 @@ export function createE2eEnrollmentCamera(frameWidth: number, frameHeight: numbe
       void _;
       return () => {};
     },
-    async start(): Promise<void> {
+    async start(_opts?: CameraStartOptions): Promise<void> {
+      void _opts;
       if (running) return;
       running = true;
       rafId = requestAnimationFrame(loop);
@@ -99,6 +100,10 @@ export function createE2eEnrollmentCamera(frameWidth: number, frameHeight: numbe
     getFrame(): ImageData {
       if (!running) throw makeCameraError('camera-stopped', 'Camera is stopped.', undefined);
       return greyImageData(frameWidth, frameHeight);
+    },
+    getTrackSettings(): MediaTrackSettings | null {
+      if (!running) return null;
+      return { deviceId: 'e2e-stub-device', width: frameWidth, height: frameHeight };
     },
   };
 }

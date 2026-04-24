@@ -70,6 +70,9 @@ describe('wireGatePreviewSession', () => {
       noFaceMessage: 'No face',
       multiFaceMessage: 'Multiple faces',
       cooldownMs: 3000,
+      cameraDefaultDeviceOption: 'Default',
+      cameraSelectAriaLabel: 'Camera',
+      formatUnnamedCamera: (i: number) => `Cam ${i}`,
     });
 
     expect(createCamera).toHaveBeenCalledWith(els.video, els.canvas, { defaultConstraints });
@@ -120,6 +123,9 @@ describe('wireGatePreviewSession', () => {
       noFaceMessage: 'No face',
       multiFaceMessage: 'Multiple faces',
       cooldownMs: 3000,
+      cameraDefaultDeviceOption: 'Default',
+      cameraSelectAriaLabel: 'Camera',
+      formatUnnamedCamera: (i: number) => `Cam ${i}`,
     });
 
     onErrorCb?.(makeCameraError('permission-denied', 'nope'));
@@ -163,6 +169,9 @@ describe('wireGatePreviewSession', () => {
         noFaceMessage: 'No face',
         multiFaceMessage: 'Multiple faces',
         cooldownMs: 3000,
+        cameraDefaultDeviceOption: 'Default',
+        cameraSelectAriaLabel: 'Camera',
+        formatUnnamedCamera: (i: number) => `Cam ${i}`,
       },
     );
 

@@ -31,6 +31,10 @@ export type GatePreviewSessionDeps = {
   noFaceMessage: string;
   multiFaceMessage: string;
   cooldownMs: number;
+  /** E12: first option label for the gate camera `<select>`. */
+  cameraDefaultDeviceOption: string;
+  cameraSelectAriaLabel: string;
+  formatUnnamedCamera: (indexOneBased: number) => string;
   evaluateDecision?: EvaluateGateAccessFn;
   appendAccessLog?: AppendAccessLogFn;
   accessUiStrings?: GateAccessUiStrings;
@@ -51,6 +55,8 @@ export type GatePreviewElements = {
   overlayCanvas?: HTMLCanvasElement;
   /** Live access result (`#decision`); optional for tests that omit DOM shell. */
   decisionEl?: HTMLElement;
+  /** E12: when set with persistence, populates from `enumerateDevices` after the first stream. */
+  cameraDeviceSelect?: HTMLSelectElement;
 };
 
 /**

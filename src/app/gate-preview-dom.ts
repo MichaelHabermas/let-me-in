@@ -9,6 +9,7 @@ export type BaseGatePreviewElements = {
 
 export interface BuiltGateDom extends BaseGatePreviewElements {
   main: HTMLElement;
+  cameraDeviceSelect: HTMLSelectElement;
   cameraToggleBtn: HTMLButtonElement;
   /** E11: empty host; caller runs `mountModelLoadStatusUi`. */
   modelLoadRoot: HTMLElement;
@@ -18,6 +19,7 @@ export interface BuiltGateDom extends BaseGatePreviewElements {
 
 export function createGateToolbar(rt: GateRuntime): {
   toolbar: HTMLElement;
+  cameraDeviceSelect: HTMLSelectElement;
   cameraToggleBtn: HTMLButtonElement;
 } {
   const toolbar = document.createElement('div');
@@ -25,6 +27,16 @@ export function createGateToolbar(rt: GateRuntime): {
 
   const startLabel = rt.cameraStartLabel;
   const stopLabel = rt.cameraStopLabel;
+
+  const cameraDeviceSelect = document.createElement('select');
+  cameraDeviceSelect.id = 'gate-camera-device';
+  cameraDeviceSelect.className = 'gate-toolbar__device';
+  cameraDeviceSelect.setAttribute('data-testid', 'gate-camera-device');
+  cameraDeviceSelect.setAttribute('aria-label', rt.cameraSelectAriaLabel);
+  const defaultOpt = document.createElement('option');
+  defaultOpt.value = '';
+  defaultOpt.textContent = rt.cameraDefaultDeviceOption;
+  cameraDeviceSelect.appendChild(defaultOpt);
 
   const cameraToggleBtn = document.createElement('button');
   cameraToggleBtn.type = 'button';
@@ -37,8 +49,9 @@ export function createGateToolbar(rt: GateRuntime): {
   cameraToggleBtn.textContent = startLabel;
   cameraToggleBtn.setAttribute('aria-label', startLabel);
 
+  toolbar.appendChild(cameraDeviceSelect);
   toolbar.appendChild(cameraToggleBtn);
-  return { toolbar, cameraToggleBtn };
+  return { toolbar, cameraDeviceSelect, cameraToggleBtn };
 }
 
 export function createGatePreview(rt: GateRuntime): BaseGatePreviewElements {
@@ -109,6 +122,7 @@ function createGateHeaderIntro(rt: GateRuntime): HTMLElement {
 
 function createGateHeader(rt: GateRuntime): {
   header: HTMLElement;
+  cameraDeviceSelect: HTMLSelectElement;
   cameraToggleBtn: HTMLButtonElement;
   statusEl: HTMLElement;
 } {
@@ -116,7 +130,7 @@ function createGateHeader(rt: GateRuntime): {
   header.className = 'gate-header';
   const intro = createGateHeaderIntro(rt);
 
-  const { toolbar, cameraToggleBtn } = createGateToolbar(rt);
+  const { toolbar, cameraDeviceSelect, cameraToggleBtn } = createGateToolbar(rt);
   toolbar.classList.add('gate-header__actions');
 
   const statusEl = document.createElement('p');
@@ -124,7 +138,7 @@ function createGateHeader(rt: GateRuntime): {
   statusEl.setAttribute('role', 'status');
   header.appendChild(intro);
   header.appendChild(toolbar);
-  return { header, cameraToggleBtn, statusEl };
+  return { header, cameraDeviceSelect, cameraToggleBtn, statusEl };
 }
 
 function createGateLiveBar(statusEl: HTMLElement): {
@@ -162,7 +176,7 @@ export function buildGateDom(rt: GateRuntime): BuiltGateDom {
 
   const shell = document.createElement('div');
   shell.className = 'gate-shell';
-  const { header, cameraToggleBtn, statusEl } = createGateHeader(rt);
+  const { header, cameraDeviceSelect, cameraToggleBtn, statusEl } = createGateHeader(rt);
   const { previewWrap, video, canvas, overlayCanvas } = createGatePreview(rt);
   const { liveBar, modelLoadRoot, decisionEl } = createGateLiveBar(statusEl);
 
@@ -173,6 +187,7 @@ export function buildGateDom(rt: GateRuntime): BuiltGateDom {
 
   return {
     main,
+    cameraDeviceSelect,
     cameraToggleBtn,
     modelLoadRoot,
     statusEl,

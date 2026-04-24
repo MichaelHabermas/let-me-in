@@ -1,8 +1,27 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { buildVideoConstraints } from '../src/infra/camera';
 import { createCamera, type CameraBrowserDeps, type CameraError } from '../src/app/camera';
 
 const defaults = { idealWidth: 1280, idealHeight: 720, facingMode: 'user' };
+
+describe('buildVideoConstraints', () => {
+  it('uses exact deviceId and omits facingMode when deviceId is set', () => {
+    const c = buildVideoConstraints(defaults, { deviceId: 'cam-1' });
+    expect(c).toEqual({
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
+      deviceId: { exact: 'cam-1' },
+    });
+  });
+
+  it('uses facingMode from opts or defaults when no deviceId', () => {
+    expect(buildVideoConstraints(defaults, { facingMode: 'environment' }).facingMode).toBe(
+      'environment',
+    );
+    expect(buildVideoConstraints(defaults, undefined).facingMode).toBe('user');
+  });
+});
 
 function createMockCanvas(
   w: number,
@@ -214,6 +233,35 @@ describe('createCamera', () => {
 
     camera.stop();
     expect(getImageData).toHaveBeenCalled();
+  });
+
+  it('passes deviceId exact constraint to getUserMedia', async () => {
+    const stream = {
+      getTracks: () => [{ stop: vi.fn() }],
+    } as unknown as MediaStream;
+    const video = createMockVideo();
+    const { canvas } = createMockCanvas(16, 16);
+    const getUserMedia = vi.fn().mockResolvedValue(stream);
+    const deps: CameraBrowserDeps = {
+      getUserMedia,
+      requestAnimationFrame: (cb) => {
+        queueMicrotask(() => cb(0));
+        return 1;
+      },
+      cancelAnimationFrame: vi.fn(),
+      now: () => 0,
+    };
+    const camera = createCamera(video, canvas, { defaultConstraints: defaults, deps });
+    await camera.start({ deviceId: 'dev-xy' });
+    expect(getUserMedia).toHaveBeenCalledWith({
+      video: {
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        deviceId: { exact: 'dev-xy' },
+      },
+      audio: false,
+    });
+    camera.stop();
   });
 
   it('notifies onError subscribers when getUserMedia fails', async () => {

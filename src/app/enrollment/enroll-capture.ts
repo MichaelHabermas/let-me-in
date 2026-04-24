@@ -1,4 +1,5 @@
-import type { Camera } from '../camera';
+import type { Camera, CameraStartOptions, DefaultVideoConstraints } from '../camera';
+import { startVideoCameraResilient } from '../camera-resilient-start';
 import type { EnrollState } from './enroll-fsm';
 import { transitionEnrollState } from './enroll-fsm';
 import {
@@ -34,6 +35,11 @@ export type EnrollmentControllerOptions = {
   modelLoadUi?: ModelLoadStatusController;
   /** Shown with Retry when `modelLoadUi` is set. */
   modelLoadFailedMessage?: string;
+  /** E12: same basis as `createCamera({ defaultConstraints })` for start + stale recovery. */
+  defaultVideoConstraints: DefaultVideoConstraints;
+  getCameraStartOptions?: () => CameraStartOptions;
+  onAfterCameraStart?: (camera: Camera) => void | Promise<void>;
+  onRecoverStaleEnrollDevice?: (fallbackFacing: string) => void | Promise<void>;
 };
 
 export type EnrollmentController = {
@@ -153,7 +159,19 @@ export function createEnrollmentController(
             modelLoadUi: opts.modelLoadUi,
           });
           if (gen !== loadGeneration) return;
-          await opts.camera.start();
+          const dc = opts.defaultVideoConstraints;
+          const getOpts = () =>
+            opts.getCameraStartOptions?.() ?? { facingMode: dc.facingMode };
+          await startVideoCameraResilient(
+            opts.camera,
+            getOpts,
+            dc.facingMode,
+            async (fb) => {
+              await opts.onRecoverStaleEnrollDevice?.(fb);
+            },
+          );
+          if (gen !== loadGeneration) return;
+          await opts.onAfterCameraStart?.(opts.camera);
           if (gen !== loadGeneration) return;
           paintEnrollmentPreview(frameDeps);
           apply({ type: 'ready_detecting' });

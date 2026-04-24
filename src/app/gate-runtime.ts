@@ -22,6 +22,9 @@ export type GatePreviewSessionCoreDeps = Pick<
   | 'noFaceMessage'
   | 'multiFaceMessage'
   | 'cooldownMs'
+  | 'cameraDefaultDeviceOption'
+  | 'cameraSelectAriaLabel'
+  | 'formatUnnamedCamera'
 >;
 
 export type GateRuntime = GateUiRuntimeSlice & {
@@ -47,6 +50,9 @@ export function composeGateRuntime(
     noFaceMessage: ui.noFaceMessage,
     multiFaceMessage: ui.multiFaceMessage,
     cooldownMs: databaseSeedSettings.cooldownMs,
+    cameraDefaultDeviceOption: ui.cameraDefaultDeviceOption,
+    cameraSelectAriaLabel: ui.cameraSelectAriaLabel,
+    formatUnnamedCamera: (i) => ui.formatUnnamedCamera(i),
   };
 
   return {
