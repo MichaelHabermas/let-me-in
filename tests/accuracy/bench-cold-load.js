@@ -2,13 +2,13 @@
 /** E10.S3.F1.T3 — `navigationToDetectorReadyMs` after cold context + Start camera. */
 import { chromium } from '@playwright/test';
 
+import { prepareGatePage } from './bench-gate-consent.ts';
+
 const baseURL = process.env.BASE_URL ?? 'http://localhost:5199';
 const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext();
 const page = await context.newPage();
-await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
-const consent = page.getByRole('button', { name: /understand/i });
-if (await consent.isVisible().catch(() => false)) await consent.click();
+await prepareGatePage(page, baseURL, { clearE2eScenario: true });
 await page.getByTestId('gate-camera-toggle').click();
 await page.waitForFunction(
   () => window.__gatekeeperMetrics?.navigationToDetectorReadyMs != null,

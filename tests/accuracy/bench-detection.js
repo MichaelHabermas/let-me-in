@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 /**
  * E10.S3.F1.T1 — sample `lastDetectorInferMs` from a running gate tab.
- * Usage: `pnpm vite --port 5199` then `node tests/accuracy/bench-detection.js`
+ * Usage: `pnpm run bench:detection` or `pnpm run bench` (full suite; Vite on 5199 via start-server-and-test)
  */
 import { chromium } from '@playwright/test';
+
+import { prepareGatePage } from './bench-gate-consent.ts';
 
 const baseURL = process.env.BASE_URL ?? 'http://localhost:5199';
 const samples = Number(process.env.BENCH_SAMPLES ?? 80);
@@ -17,10 +19,7 @@ function percentile(sorted, p) {
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage();
-await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
-const consent = page.getByRole('button', { name: /understand/i });
-if (await consent.isVisible().catch(() => false)) await consent.click();
-await page.getByTestId('gate-camera-toggle').waitFor({ state: 'visible' });
+await prepareGatePage(page, baseURL, { clearE2eScenario: true });
 await page.getByTestId('gate-camera-toggle').click();
 
 const values = [];

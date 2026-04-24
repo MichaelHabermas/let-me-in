@@ -42,7 +42,6 @@ Open:
 
 ## Scripts
 
-
 | Script                  | Purpose                                                                                        |
 | ----------------------- | ---------------------------------------------------------------------------------------------- |
 | `pnpm run dev`          | Vite dev server with HMR                                                                       |
@@ -54,10 +53,14 @@ Open:
 | `pnpm run format:check` | Prettier check                                                                                 |
 | `pnpm test`             | Vitest (unit; excludes `tests/e2e`)                                                            |
 | `pnpm test:e2e`         | Playwright (`tests/e2e`; installs Chromium on first run via `pnpm exec playwright install`)    |
+| `pnpm run test:scenarios` | Playwright `scenarios` project (`tests/scenarios`)                                           |
+| `pnpm run tests`        | `pnpm test` then `pnpm run test:scenarios`                                                     |
+| `pnpm run bench`        | Stub-gate latency benches on port **5199** (`start-server-and-test` + `bench:serve`); see [docs/BENCHMARKS.md](docs/BENCHMARKS.md) |
+| `pnpm run bench:detection` / `bench:e2e` / `bench:cold-load` | One automated bench each (same server wiring as `bench`)  |
+| `pnpm run bench:serve`  | Vite on **5199** with stub env only (leave running, then `pnpm exec tsx tests/accuracy/bench-*.js` + `BASE_URL` if you want) |
 | `pnpm seed:users`       | Seeds three sample users into IndexedDB (`gatekeeper`) — see `tests/scenarios/seed-3-users.js` |
 | `pnpm sync:netlify`     | Rewrite `netlify.toml` redirect blocks from `multi-page.ts`                                    |
 | `pnpm verify:netlify`   | Fail if redirects drift from `multi-page.ts` (no writes)                                       |
-
 
 ## Source layout (current)
 
@@ -91,4 +94,3 @@ The app uses database name `**gatekeeper`** with stores `users`, `accessLog`, an
 1. `pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm test` — all exit 0. Optionally `pnpm test:e2e` after `pnpm exec playwright install chromium`.
 2. `pnpm run build` — `dist/` contains `index.html`, `admin.html`, `log.html`.
 3. In Chrome DevTools → Application → IndexedDB → `gatekeeper` — three stores; `settings` has two keys (`thresholds`, `cooldownMs`) after load.
-

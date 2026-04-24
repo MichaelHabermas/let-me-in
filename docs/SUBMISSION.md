@@ -66,11 +66,13 @@ Template:
 4. Follow measurement steps in `docs/BENCHMARKS.md` and fill p50/p90/p99 rows.
 5. Add exact environment text (MacBook model + Chrome version).
 
-Optional helper commands:
+Optional helper commands (automated benches use **port 5199** and **`start-server-and-test`**; `bench:serve` matches Playwright `webServer` stub env: `VITE_E2E_STUB_GATE`, `VITE_E2E_STUB_ENROLL`, admin vars):
 
-- `pnpm run bench:detection`
-- `pnpm run bench:e2e`
-- `pnpm run bench:cold-load`
+- `pnpm run bench` — runs detection, e2e, and cold-load benches in one session (one Vite start/stop).
+- `pnpm run bench:detection` / `bench:e2e` / `bench:cold-load` — same, one metric each.
+- `pnpm run bench:serve` — only Vite on 5199 with stub env; use when you want the app left up, then run `pnpm exec tsx tests/accuracy/bench-*.js` with `BASE_URL=http://localhost:5199` yourself.
+
+For **canonical** MBP + desktop Chrome numbers, still follow steps 1–2 above (`pnpm run dev` / port **5173**); the `bench*` scripts are stub-gate automation on **5199**, not a substitute for that row in `docs/BENCHMARKS.md`.
 
 ### 4) Accuracy trial (>=20 identities)
 

@@ -1,5 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
+import { prepareGatePage } from '../accuracy/bench-gate-consent';
 import { E2E_GATE_SCENARIO_KEY } from '../../src/app/e2e-gate-scenario-key';
 
 /** Alias for scenario specs — same value as {@link E2E_GATE_SCENARIO_KEY}. */
@@ -36,26 +37,7 @@ export async function enrollOneStubUser(page: Page, name = 'Scenario User'): Pro
 }
 
 export async function acceptGateConsent(page: Page): Promise<void> {
-  await page.goto('/');
-  const toggle = page.getByTestId('gate-camera-toggle');
-  await toggle.waitFor({ state: 'visible' });
-  const consentBtn = page.getByRole('button', { name: /understand/i });
-  let consentClicked = false;
-  // Consent modal mounts after async IndexedDB read — poll until toggle is released
-  // (cold first load used to miss a single immediate isVisible check).
-  await expect
-    .poll(
-      async () => {
-        if (await toggle.isEnabled()) return true;
-        if (!consentClicked && (await consentBtn.isVisible().catch(() => false))) {
-          await consentBtn.click();
-          consentClicked = true;
-        }
-        return await toggle.isEnabled();
-      },
-      { timeout: 15_000 },
-    )
-    .toBe(true);
+  await prepareGatePage(page, '/');
 }
 
 export async function startGateCamera(page: Page): Promise<void> {

@@ -4,13 +4,26 @@
 
 ## How to measure
 
-1. Start the app (`pnpm vite --port 5199` for local stub gate, or production deploy URL).
-2. Open the gate page, accept consent, click **Start camera**.
+### Canonical (human, target hardware)
+
+1. Start the app for manual use (e.g. `pnpm run dev` — default port **5173** — or your deploy URL).
+2. Open the gate page in **desktop Chrome** on the target machine, accept consent, click **Start camera**.
 3. Read `window.__gatekeeperMetrics` in DevTools (populated by `src/app/gatekeeper-metrics.ts`).
-4. Optional automation (stub-friendly):  
-   - `node tests/accuracy/bench-detection.js` — samples `lastDetectorInferMs`  
-   - `node tests/accuracy/bench-e2e.js` — first evaluation wall time  
-   - `node tests/accuracy/bench-cold-load.js` — `navigationToDetectorReadyMs` in a fresh context  
+
+### Automated (stub gate, Playwright Chromium, port **5199**)
+
+These `pnpm` scripts start **`bench:serve`** via **`start-server-and-test`**, wait for `http://localhost:5199`, run the script(s), then stop Vite. Stub env matches the `webServer` block in [playwright.config.ts](../playwright.config.ts).
+
+| Command | What it runs |
+| --- | --- |
+| `pnpm run bench` | `bench-detection.js` then `bench-e2e.js` then `bench-cold-load.js` in one go |
+| `pnpm run bench:detection` | Samples `lastDetectorInferMs` |
+| `pnpm run bench:e2e` | First evaluation wall time |
+| `pnpm run bench:cold-load` | `navigationToDetectorReadyMs` in a fresh browser context |
+
+`pnpm run bench:serve` alone starts only Vite on 5199 with that env (leave it running, then point `BASE_URL=http://localhost:5199` at the `pnpm exec tsx tests/accuracy/bench-*.js` files if you prefer not to use `start-server-and-test`).
+
+**Non-stub / real models:** start Vite yourself with `VITE_E2E_STUB_GATE` unset or not `true`, serve on 5199 (or set `BASE_URL`), then run the same `tsx` scripts; headless runs usually need a fake or real camera setup and may not match CI.
 
 ## Results table (fill on target hardware)
 
