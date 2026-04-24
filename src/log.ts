@@ -1,8 +1,4 @@
-import { bootstrapApp } from './app/bootstrap-app';
-import { mountLogView } from './ui/log-view';
+import { mountLogView } from './app/mount-log-page';
+import { runBootstrap } from './app/run-bootstrap';
 
-void bootstrapApp({ mount: mountLogView }).then((result) => {
-  if (result.ok) return;
-  if (result.reason === 'https') return;
-  console.error('[Gatekeeper] bootstrap failed', result);
-});
+runBootstrap(mountLogView);

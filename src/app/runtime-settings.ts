@@ -22,6 +22,8 @@ export type GatePreviewSessionCoreDeps = Pick<
 >;
 
 export type GateRuntime = GateUiRuntimeSlice & {
+  databaseSeedSettings?: DatabaseSeedSettings;
+  gatePreviewSessionCoreDeps?: GatePreviewSessionCoreDeps;
   getDatabaseSeedSettings(): DatabaseSeedSettings;
   getGatePreviewSessionCoreDeps(): GatePreviewSessionCoreDeps;
 };
@@ -31,21 +33,24 @@ export function composeGateRuntime(
   ui: GateUiRuntimeSlice,
   getDatabaseSeedSettings: () => DatabaseSeedSettings,
 ): GateRuntime {
+  const databaseSeedSettings = getDatabaseSeedSettings();
+  const gatePreviewSessionCoreDeps: GatePreviewSessionCoreDeps = {
+    getDefaultVideoConstraintsForCamera: () => ui.getDefaultVideoConstraintsForCamera(),
+    getCameraUserFacingMessage: (code) => ui.getCameraUserFacingMessage(code),
+    logEmbeddingTimings: ui.devLogEmbeddingTimings,
+    detectorLoadingMessage: ui.getDetectorLoadingMessage(),
+    detectorLoadFailedMessage: ui.getDetectorLoadFailedMessage(),
+    noFaceMessage: ui.getNoFaceMessage(),
+    multiFaceMessage: ui.getMultiFaceMessage(),
+    cooldownMs: databaseSeedSettings.cooldownMs,
+  };
+
   return {
     ...ui,
-    getDatabaseSeedSettings,
-    getGatePreviewSessionCoreDeps(): GatePreviewSessionCoreDeps {
-      return {
-        getDefaultVideoConstraintsForCamera: () => ui.getDefaultVideoConstraintsForCamera(),
-        getCameraUserFacingMessage: (code) => ui.getCameraUserFacingMessage(code),
-        logEmbeddingTimings: ui.devLogEmbeddingTimings,
-        detectorLoadingMessage: ui.getDetectorLoadingMessage(),
-        detectorLoadFailedMessage: ui.getDetectorLoadFailedMessage(),
-        noFaceMessage: ui.getNoFaceMessage(),
-        multiFaceMessage: ui.getMultiFaceMessage(),
-        cooldownMs: getDatabaseSeedSettings().cooldownMs,
-      };
-    },
+    databaseSeedSettings,
+    gatePreviewSessionCoreDeps,
+    getDatabaseSeedSettings: () => databaseSeedSettings,
+    getGatePreviewSessionCoreDeps: () => gatePreviewSessionCoreDeps,
   };
 }
 

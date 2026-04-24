@@ -1,8 +1,7 @@
-import { bootstrapApp } from './app/bootstrap-app';
-import { mountAdminView } from './ui/admin-view';
+import { mountAdminView } from './app/mount-admin-shell';
+import { readE2eStubFlags } from './app/e2e-stub-flags';
+import { runBootstrap } from './app/run-bootstrap';
 
-void bootstrapApp({ mount: mountAdminView }).then((result) => {
-  if (result.ok) return;
-  if (result.reason === 'https') return;
-  console.error('[Gatekeeper] bootstrap failed', result);
-});
+const flags = readE2eStubFlags();
+
+runBootstrap(() => mountAdminView({ useStubEnrollment: flags.enrollment }));

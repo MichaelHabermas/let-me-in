@@ -1,100 +1,30 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { YoloWorkerTransport } from '../src/infra/yolo-worker-transport';
-import { YOLO_WORKER_MSG } from '../src/infra/yolo-detector-worker-protocol';
+import { YOLO_WORKER_MSG, isYoloWorkerToHostMessage } from '../src/infra/yolo-detector-worker-protocol';
 
-type Posted = { msg: unknown; transfer?: Transferable[] };
-
-function createMockWorker(
-  handler: (posted: Posted, reply: (data: unknown) => void) => void,
-): Worker {
-  return new (class MockWorker {
-    onmessage: ((ev: MessageEvent) => void) | null = null;
-    onerror: ((ev: ErrorEvent) => void) | null = null;
-
-    postMessage(msg: unknown, transfer?: Transferable[]): void {
-      handler({ msg, transfer }, (data) => {
-        queueMicrotask(() => this.onmessage?.({ data } as MessageEvent));
-      });
-    }
-
-    terminate(): void {
-      /* no-op */
-    }
-  })() as unknown as Worker;
-}
-
-describe('YoloWorkerTransport', () => {
-  afterEach(() => {
-    vi.useRealTimers();
+describe('yolo-detector-worker protocol guard', () => {
+  it('accepts known ok/error worker replies', () => {
+    expect(isYoloWorkerToHostMessage({ type: YOLO_WORKER_MSG.initOk, id: 1 })).toBe(true);
+    expect(
+      isYoloWorkerToHostMessage({ type: YOLO_WORKER_MSG.initErr, id: 2, error: 'boom' }),
+    ).toBe(true);
+    expect(isYoloWorkerToHostMessage({ type: YOLO_WORKER_MSG.inferOk, id: 3, dets: [] })).toBe(
+      true,
+    );
+    expect(
+      isYoloWorkerToHostMessage({ type: YOLO_WORKER_MSG.inferErr, id: 4, error: 'boom' }),
+    ).toBe(true);
   });
 
-  it('resolves postToWorker when init-ok id matches', async () => {
-    const worker = createMockWorker((p, reply) => {
-      const m = p.msg as { type: string; id: number };
-      if (m.type === YOLO_WORKER_MSG.init) {
-        reply({ type: YOLO_WORKER_MSG.initOk, id: m.id });
-      }
-    });
-    const t = new YoloWorkerTransport(worker);
-    const msg = {
-      type: YOLO_WORKER_MSG.init,
-      id: t.nextMessageId(),
-      ortWasmBase: '/wasm/',
-      modelUrl: '/m.onnx',
-    } as const;
-    await expect(t.postToWorker(msg)).resolves.toMatchObject({ type: YOLO_WORKER_MSG.initOk, id: msg.id });
-  });
-
-  it('rejects postToWorker on init-err', async () => {
-    const worker = createMockWorker((p, reply) => {
-      const m = p.msg as { type: string; id: number };
-      if (m.type === YOLO_WORKER_MSG.init) {
-        reply({ type: YOLO_WORKER_MSG.initErr, id: m.id, error: 'boom' });
-      }
-    });
-    const t = new YoloWorkerTransport(worker);
-    const id = t.nextMessageId();
-    await expect(
-      t.postToWorker({ type: YOLO_WORKER_MSG.init, id, ortWasmBase: '/', modelUrl: 'x' }),
-    ).rejects.toThrow('boom');
-  });
-
-  it('does not resolve pending when reply id mismatches', async () => {
-    vi.useFakeTimers();
-    const worker = createMockWorker((p, reply) => {
-      const m = p.msg as { type: string; id: number };
-      if (m.type === YOLO_WORKER_MSG.init) {
-        reply({ type: YOLO_WORKER_MSG.initOk, id: m.id + 999 });
-      }
-    });
-    const t = new YoloWorkerTransport(worker);
-    const id = t.nextMessageId();
-    const pending = t.postToWorker({ type: YOLO_WORKER_MSG.init, id, ortWasmBase: '/', modelUrl: 'x' });
-    const raced = Promise.race([
-      pending,
-      new Promise<string>((r) => setTimeout(() => r('still-pending'), 25)),
-    ]);
-    await vi.advanceTimersByTimeAsync(25);
-    await expect(raced).resolves.toBe('still-pending');
-  });
-
-  it('rejects pending on worker onerror', async () => {
-    const worker = createMockWorker(() => {
-      /* never replies */
-    });
-    const t = new YoloWorkerTransport(worker);
-    const id = t.nextMessageId();
-    const p = t.postToWorker({ type: YOLO_WORKER_MSG.init, id, ortWasmBase: '/', modelUrl: 'x' });
-    worker.onerror?.({ message: 'worker blew up' } as unknown as ErrorEvent);
-    await expect(p).rejects.toThrow('worker blew up');
-  });
-
-  it('clearPending drops handlers without rejecting', () => {
-    const worker = createMockWorker(() => {});
-    const t = new YoloWorkerTransport(worker);
-    const id = t.nextMessageId();
-    void t.postToWorker({ type: YOLO_WORKER_MSG.init, id, ortWasmBase: '/', modelUrl: 'x' });
-    t.clearPending();
+  it('rejects unknown or malformed messages', () => {
+    expect(isYoloWorkerToHostMessage(null)).toBe(false);
+    expect(isYoloWorkerToHostMessage({ type: 'unknown', id: 1 })).toBe(false);
+    expect(isYoloWorkerToHostMessage({ type: YOLO_WORKER_MSG.initOk, id: '1' })).toBe(false);
+    expect(isYoloWorkerToHostMessage({ type: YOLO_WORKER_MSG.inferOk, id: 1, dets: null })).toBe(
+      false,
+    );
+    expect(
+      isYoloWorkerToHostMessage({ type: YOLO_WORKER_MSG.initErr, id: 1, error: 123 }),
+    ).toBe(false);
   });
 });

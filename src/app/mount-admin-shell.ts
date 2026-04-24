@@ -10,6 +10,7 @@ export type MountAdminShellOptions = {
   persistence?: DexiePersistence;
   /** When omitted, uses `localStorage` and `config.admin`. */
   auth?: AdminAuth;
+  useStubEnrollment?: boolean;
 };
 
 /**
@@ -52,8 +53,15 @@ export function mountAdminShell(root: HTMLElement, options?: MountAdminShellOpti
       persistence,
       auth,
       rerender: render,
+      useStubEnrollment: options?.useStubEnrollment === true,
     });
   };
 
   render();
+}
+
+export function mountAdminView(options?: MountAdminShellOptions): void {
+  const root = document.getElementById('app');
+  if (!root) return;
+  mountAdminShell(root, options);
 }

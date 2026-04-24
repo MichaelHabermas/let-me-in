@@ -1,9 +1,6 @@
 import type { Camera } from './camera';
 import { createCooldown } from './cooldown';
-import {
-  maybeRecordNavigationToDetectorReady,
-  withMeasuredLoad,
-} from './gatekeeper-metrics';
+import { maybeRecordNavigationToDetectorReady, withMeasuredLoad } from './gatekeeper-metrics';
 import { createDetectionPipeline } from './pipeline';
 import type { GatePreviewElements, GatePreviewSessionDeps } from './gate-session';
 

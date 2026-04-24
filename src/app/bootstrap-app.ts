@@ -26,7 +26,7 @@ function defaultRenderHttpsBanner(message: string): void {
 export type BootstrapAppOptions = {
   mount: () => void | Promise<void>;
   persistence?: DexiePersistence;
-  /** When omitted, uses `resolveGateRuntime().getDatabaseSeedSettings()`. */
+  /** When omitted, uses `resolveGateRuntime().databaseSeedSettings`. */
   getDatabaseSeedSettings?: () => DatabaseSeedSettings;
   getHttpsStartupState?: () => HttpsStartupState;
   renderHttpsBanner?: (message: string) => void;

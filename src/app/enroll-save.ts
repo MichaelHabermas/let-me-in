@@ -2,7 +2,11 @@ import { formatAllowedRolesHint, resolveUserRole } from '../domain/user-roles';
 import type { User } from '../domain/types';
 import type { DexiePersistence } from '../infra/persistence';
 
-function normalizePersistedRole(role: string, existingId: string | undefined, prev: User | undefined): string {
+function normalizePersistedRole(
+  role: string,
+  existingId: string | undefined,
+  prev: User | undefined,
+): string {
   const t = role.trim();
   const canon = resolveUserRole(t);
   if (canon) return canon;

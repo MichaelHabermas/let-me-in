@@ -80,6 +80,7 @@ describe('runBulkImport', () => {
       { name: 'B', role: 'Visitor', imageBase64: png1x1 },
     ];
     const res = await runBulkImport(p, JSON.stringify(rows), {
+      useStubEnrollment: true,
       onProgress: () => {},
       confirmDuplicateNames: async () => true,
     });

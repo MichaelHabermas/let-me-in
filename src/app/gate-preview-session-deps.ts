@@ -14,7 +14,7 @@ export function buildGatePreviewSessionDeps(
 ): GatePreviewSessionDeps {
   return {
     ...factories,
-    ...rt.getGatePreviewSessionCoreDeps(),
+    ...(rt.gatePreviewSessionCoreDeps ?? rt.getGatePreviewSessionCoreDeps()),
     accessUiStrings: rt.getGateAccessUiStrings(),
     ...extras,
   };
