@@ -1,11 +1,13 @@
+import {
+  createAccessDecisionEvaluator,
+  type LiveAccessDecisionUi,
+} from './access-decision-engine';
 import { createAccessAudioCues } from './audio';
-import type { LiveAccessDecisionUi } from './access-decision-engine';
 import {
   createGateAccessUiController,
   FALLBACK_GATE_ACCESS_UI_STRINGS,
   type GateAccessUiStrings,
 } from './gate-access-ui-controller';
-import { createAccessDecisionEvaluator } from './access-decision-engine';
 import type { AppendAccessLogFn } from './detection-pipeline';
 import type { DexiePersistence } from '../infra/persistence';
 import type { GatePreviewElements, GatePreviewSessionDeps } from './gate-session';

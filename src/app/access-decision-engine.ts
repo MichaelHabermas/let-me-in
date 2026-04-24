@@ -1,25 +1,14 @@
 import type { AccessThresholds } from '../domain/access-policy';
 import type { DatabaseSeedSettings } from '../domain/database-seed';
-import type { User } from '../domain/types';
 import type { AccessDecisionDataStores } from '../infra/persistence';
 import type { GateAccessEvaluation, GateAccessEvaluationInput } from './gate-access-evaluation';
 import { imageDataToPngBlob } from './gate-access-evaluation';
-import { matchOne, type EnrolledEmbedding } from './match';
+import { matchOne, type EnrolledEmbedding } from '../domain/embedding-match';
 import { decide, type PolicyDecision } from './policy';
 
 export type LiveAccessDecisionUi = {
   onDecision(evaluation: GateAccessEvaluation): void;
 };
-
-function referenceForPolicy(usersById: Map<string, User>, policy: PolicyDecision): Blob | null {
-  if (policy.decision === 'DENIED') return null;
-  return usersById.get(policy.userId)?.referenceImageBlob ?? null;
-}
-
-function displayNameForPolicy(usersById: Map<string, User>, policy: PolicyDecision): string | null {
-  if (policy.decision !== 'GRANTED') return null;
-  return usersById.get(policy.userId)?.name ?? null;
-}
 
 /**
  * Deep module: loads enrolled users + thresholds, ranks the embedding, applies policy,
@@ -56,10 +45,11 @@ export async function createAccessDecisionEvaluator(
     });
 
     const capturedFrameBlob = await imageDataToPngBlob(input.frame);
+    const user = policy.userId != null ? usersById.get(policy.userId) : undefined;
     const evaluation: GateAccessEvaluation = {
       policy,
-      displayName: displayNameForPolicy(usersById, policy),
-      referenceImageBlob: referenceForPolicy(usersById, policy),
+      displayName: policy.decision === 'GRANTED' ? (user?.name ?? null) : null,
+      referenceImageBlob: policy.decision === 'DENIED' ? null : (user?.referenceImageBlob ?? null),
       capturedFrameBlob,
     };
     ui?.onDecision(evaluation);

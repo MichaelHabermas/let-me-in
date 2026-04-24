@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { cosine, l2normalize, matchOne, similarity01 } from '../src/app/match';
+import { cosine, l2normalize, matchOne, similarity01 } from '../src/domain/embedding-match';
 
 describe('l2normalize (E4.S1.F3.T2)', () => {
   it('makes dot(v,v) ≈ 1 after normalize', () => {

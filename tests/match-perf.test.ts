@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { evaluateGateAccessMatch } from '../src/domain/gate-decision';
 import type { AccessThresholds } from '../src/domain/access-policy';
 import { EMBEDDER_DIM } from '../src/infra/embedder-ort';
-import { matchOne, type EnrolledEmbedding } from '../src/app/match';
+import { matchOne, type EnrolledEmbedding } from '../src/domain/embedding-match';
 
 /** E5 DoD-1: 50 enrolled embedding-length vectors — match + policy stays under a tight ms budget (higher on CI: shared runners are noisy). */
 function normalizedRandomEmbedding(seed: number): Float32Array {

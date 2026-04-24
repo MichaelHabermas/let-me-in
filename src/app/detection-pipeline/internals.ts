@@ -1,6 +1,6 @@
 import { drawBbox } from '../bbox-overlay';
 import { squareCropWithMargin, resizeTo112, type Bbox } from '../crop';
-import { l2normalize } from '../match';
+import { l2normalize } from '../../domain/embedding-match';
 import type { CooldownGate } from '../cooldown';
 import { toEmbedderTensor } from '../../infra/embedder-preprocess';
 import type { FaceEmbedder } from '../../infra/embedder-ort';

@@ -77,13 +77,15 @@ export function wireCameraControls(
         }
       }
 
+      const overlay = elements.overlayCanvas;
+      const embedderReady = !attachDeps.faceEmbedder || state.embedderLoadState === 'ready';
       if (
         attachDeps.yoloDetector &&
-        elements.overlayCanvas &&
+        overlay &&
         state.loadState === 'ready' &&
-        (!attachDeps.faceEmbedder || state.embedderLoadState === 'ready')
+        embedderReady
       ) {
-        const overlayCtx = elements.overlayCanvas.getContext('2d');
+        const overlayCtx = overlay.getContext('2d');
         if (overlayCtx) {
           state.stopPipeline?.();
           const cooldown = createCooldown(attachDeps.cooldownMs, () => performance.now());
@@ -91,8 +93,8 @@ export function wireCameraControls(
             camera,
             detector: attachDeps.yoloDetector,
             overlayCtx,
-            overlayWidth: elements.overlayCanvas.width,
-            overlayHeight: elements.overlayCanvas.height,
+            overlayWidth: overlay.width,
+            overlayHeight: overlay.height,
             faceEmbedder: attachDeps.faceEmbedder,
             logEmbeddingTimings: attachDeps.logEmbeddingTimings,
             statusEl: elements.statusEl,

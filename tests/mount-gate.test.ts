@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { Camera } from '../src/app/camera';
 import { CONSENT_SETTINGS_KEY } from '../src/app/gate-consent-settings';
-import { l2normalize } from '../src/app/match';
+import { l2normalize } from '../src/domain/embedding-match';
 import { createMountGateHostDeps, mountGateIntoHost } from '../src/app/mount-gate';
 import type { YoloDetector } from '../src/infra/detector-core';
 import type { FaceEmbedder } from '../src/infra/embedder-ort';

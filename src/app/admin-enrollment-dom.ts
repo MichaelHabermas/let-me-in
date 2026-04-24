@@ -1,3 +1,8 @@
+/**
+ * Admin enrollment shell: each `build*` block is a vertical slice (header, roster
+ * table, JSON import bar, live preview + device row, name/role form, actions).
+ * `createAdminEnrollmentDom` wires them into one tree; mount/controllers own behavior.
+ */
 import { fillEnrollmentRoleSelect } from './admin-enrollment-role-select';
 import type { GateRuntime } from './gate-runtime';
 
@@ -26,6 +31,7 @@ export type AdminEnrollmentDom = {
 };
 
 function buildAdminHeader(rt: GateRuntime): { header: HTMLElement; logoutBtn: HTMLButtonElement } {
+  const ui = rt.runtimeSlices.admin.ui;
   const header = document.createElement('header');
   header.className = 'admin-header';
   const h1 = document.createElement('h1');
@@ -34,7 +40,7 @@ function buildAdminHeader(rt: GateRuntime): { header: HTMLElement; logoutBtn: HT
   const logoutBtn = document.createElement('button');
   logoutBtn.type = 'button';
   logoutBtn.className = 'admin-header__logout';
-  logoutBtn.textContent = rt.runtimeSlices.admin.ui.logout;
+  logoutBtn.textContent = ui.logout;
   logoutBtn.setAttribute('data-testid', 'admin-logout');
   header.append(h1, logoutBtn);
   return { header, logoutBtn };
@@ -125,6 +131,7 @@ function buildPreviewColumn(rt: GateRuntime): {
   cameraDeviceSelect: HTMLSelectElement;
   statusEl: HTMLElement;
 } {
+  const ui = rt.runtimeSlices.admin.ui;
   const column = document.createElement('div');
   column.className = 'admin-enroll__preview';
   const previewWrap = document.createElement('div');
@@ -135,10 +142,10 @@ function buildPreviewColumn(rt: GateRuntime): {
   const cameraDeviceSelect = document.createElement('select');
   cameraDeviceSelect.className = 'admin-enroll__camera-select';
   cameraDeviceSelect.setAttribute('data-testid', 'enroll-camera-device');
-  cameraDeviceSelect.setAttribute('aria-label', rt.runtimeSlices.admin.ui.cameraSelectAriaLabel);
+  cameraDeviceSelect.setAttribute('aria-label', ui.cameraSelectAriaLabel);
   const defOpt = document.createElement('option');
   defOpt.value = '';
-  defOpt.textContent = rt.runtimeSlices.admin.ui.cameraDefaultDeviceOption;
+  defOpt.textContent = ui.cameraDefaultDeviceOption;
   cameraDeviceSelect.appendChild(defOpt);
   deviceRow.appendChild(cameraDeviceSelect);
 
@@ -173,10 +180,11 @@ function buildNameFields(rt: GateRuntime): {
   roleLabel: HTMLLabelElement;
   roleSelect: HTMLSelectElement;
 } {
+  const ui = rt.runtimeSlices.admin.ui;
   const nameLabel = document.createElement('label');
   nameLabel.className = 'admin-enroll__label';
   nameLabel.htmlFor = 'enroll-name';
-  nameLabel.textContent = rt.runtimeSlices.admin.ui.enrollNameLabel;
+  nameLabel.textContent = ui.enrollNameLabel;
   const nameInput = document.createElement('input');
   nameInput.id = 'enroll-name';
   nameInput.type = 'text';
@@ -186,12 +194,12 @@ function buildNameFields(rt: GateRuntime): {
   const roleLabel = document.createElement('label');
   roleLabel.className = 'admin-enroll__label';
   roleLabel.htmlFor = 'enroll-role';
-  roleLabel.textContent = rt.runtimeSlices.admin.ui.enrollRoleLabel;
+  roleLabel.textContent = ui.enrollRoleLabel;
   const roleSelect = document.createElement('select');
   roleSelect.id = 'enroll-role';
   roleSelect.className = 'admin-enroll__select';
   roleSelect.setAttribute('data-testid', 'enroll-role');
-  const copy = rt.runtimeSlices.admin.ui;
+  const copy = ui;
   fillEnrollmentRoleSelect(roleSelect, '', {
     enrollRolePlaceholder: copy.enrollRolePlaceholder,
     enrollRoleLegacySuffix: copy.enrollRoleLegacySuffix,
@@ -207,10 +215,11 @@ function buildActionButtons(rt: GateRuntime): {
   retakeBtn: HTMLButtonElement;
   saveBtn: HTMLButtonElement;
 } {
+  const ui = rt.runtimeSlices.admin.ui;
   const btnRow = document.createElement('div');
   btnRow.className = 'admin-enroll__actions';
 
-  const startLabel = rt.runtimeSlices.admin.ui.enrollStartCamera;
+  const startLabel = ui.enrollStartCamera;
   const stopLabel = rt.cameraStopLabel;
 
   const cameraToggleBtn = document.createElement('button');
@@ -225,21 +234,21 @@ function buildActionButtons(rt: GateRuntime): {
   const capBtn = document.createElement('button');
   capBtn.type = 'button';
   capBtn.className = 'btn';
-  capBtn.textContent = rt.runtimeSlices.admin.ui.enrollCapture;
+  capBtn.textContent = ui.enrollCapture;
   capBtn.setAttribute('data-testid', 'enroll-capture');
   capBtn.disabled = true;
 
   const retakeBtn = document.createElement('button');
   retakeBtn.type = 'button';
   retakeBtn.className = 'btn';
-  retakeBtn.textContent = rt.runtimeSlices.admin.ui.enrollRetake;
+  retakeBtn.textContent = ui.enrollRetake;
   retakeBtn.setAttribute('data-testid', 'enroll-retake');
   retakeBtn.disabled = true;
 
   const saveBtn = document.createElement('button');
   saveBtn.type = 'button';
   saveBtn.className = 'btn btn--primary';
-  saveBtn.textContent = rt.runtimeSlices.admin.ui.enrollSave;
+  saveBtn.textContent = ui.enrollSave;
   saveBtn.setAttribute('data-testid', 'enroll-save');
   saveBtn.disabled = true;
 
@@ -256,11 +265,12 @@ function buildFormColumn(rt: GateRuntime): {
   retakeBtn: HTMLButtonElement;
   saveBtn: HTMLButtonElement;
 } {
+  const ui = rt.runtimeSlices.admin.ui;
   const column = document.createElement('div');
   column.className = 'admin-enroll__form-col';
   const h2 = document.createElement('h2');
   h2.className = 'admin-enroll__heading';
-  h2.textContent = rt.runtimeSlices.admin.ui.enrollTitle;
+  h2.textContent = ui.enrollTitle;
 
   const names = buildNameFields(rt);
   const actions = buildActionButtons(rt);
