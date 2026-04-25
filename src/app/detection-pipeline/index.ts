@@ -1,6 +1,6 @@
 /**
  * Per-frame YOLO + optional embedding + access evaluation + logging.
- * Import from `detection-pipeline` or the legacy `./pipeline` re-export.
+ * Import from `detection-pipeline`.
  */
 
 export {

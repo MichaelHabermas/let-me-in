@@ -84,6 +84,17 @@ export type RefreshVideoInputDeviceListParams = {
   formatUnnamedForListIndex: (index: number) => string;
 };
 
+export type BindCameraDevicePreferenceChangeParams = {
+  deviceSelect: HTMLSelectElement;
+  settingsRepo: SettingsReadPort;
+  preferenceKey: string;
+  defaultFacingMode: string;
+  isCameraRunning: () => boolean;
+  restartCamera: () => void | Promise<void>;
+  setLoadedPreference?: (v: CameraPreference | undefined) => void;
+  onRestartError?: () => void;
+};
+
 /**
  * After a stream starts: enumerate + label devices, fill `<select>`, persist
  * track-based preference. Returns whether the list path ran (for `listPopulated`).
@@ -112,4 +123,22 @@ export async function refreshVideoInputDeviceListAfterStart(
   } catch {
     return false;
   }
+}
+
+/** Persists select changes as camera preference and restarts the active session when needed. */
+export function bindCameraDevicePreferenceChange(p: BindCameraDevicePreferenceChangeParams): () => void {
+  const onChange = () => {
+    const selectedDeviceId = p.deviceSelect.value.trim();
+    const preference = selectedDeviceId
+      ? ({ deviceId: selectedDeviceId } as const)
+      : ({ facingMode: p.defaultFacingMode } as const);
+    void writeCameraPreference(p.settingsRepo, p.preferenceKey, preference);
+    p.setLoadedPreference?.(preference);
+    if (!p.isCameraRunning()) return;
+    void Promise.resolve(p.restartCamera()).catch(() => {
+      p.onRestartError?.();
+    });
+  };
+  p.deviceSelect.addEventListener('change', onChange);
+  return () => p.deviceSelect.removeEventListener('change', onChange);
 }

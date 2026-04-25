@@ -7,6 +7,7 @@ const happyDomTestFiles = [
   'tests/auth.test.ts',
   'tests/bootstrap-app.test.ts',
   'tests/bulk-import.test.ts',
+  'tests/camera-device-session.test.ts',
   'tests/access-decision-engine.test.ts',
   'tests/confidence-meter.test.ts',
   'tests/consent-settings.test.ts',

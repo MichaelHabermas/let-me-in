@@ -1,12 +1,13 @@
 import type { Camera, CameraStartOptions } from './camera';
 import { startVideoCameraResilient } from './camera-resilient-start';
 import {
+  bindCameraDevicePreferenceChange,
   createCameraStartOptionsState,
   refreshVideoInputDeviceListAfterStart,
 } from './camera-device-session';
 import { createCooldown } from './cooldown';
 import { createDetectionPipeline } from './detection-pipeline';
-import { readCameraPreference, writeCameraPreference } from './camera-preference-persistence';
+import { readCameraPreference } from './camera-preference-persistence';
 import { syncCameraToggleUi } from './gate-camera-toggle-ui';
 import { GATE_CAMERA_PREFERENCE_KEY } from '../domain/camera-preference';
 import type { GatePreviewElements, GatePreviewSessionDeps } from './gate-session';
@@ -110,27 +111,21 @@ export function wireCameraControls(
   const lifecycle = createGateSessionLifecycle(camera, cameraToggleBtn, state, onStart);
   cameraToggleBtn.addEventListener('click', lifecycle.onToggleClick);
 
-  if (deviceSelect && settingsRepo) {
-    deviceSelect.addEventListener('change', () => {
-      const d = deps.getDefaultVideoConstraintsForCamera();
-      if (!deviceSelect.value) {
-        void writeCameraPreference(settingsRepo, GATE_CAMERA_PREFERENCE_KEY, {
-          facingMode: d.facingMode,
-        });
-        startOpts.setLoadedPreference({ facingMode: d.facingMode });
-      } else {
-        void writeCameraPreference(settingsRepo, GATE_CAMERA_PREFERENCE_KEY, {
-          deviceId: deviceSelect.value,
-        });
-        startOpts.setLoadedPreference({ deviceId: deviceSelect.value });
-      }
-      if (camera.isRunning()) {
-        lifecycle.restart();
-      }
-    });
-  }
+  const unbindDevicePreferenceChange =
+    deviceSelect && settingsRepo
+      ? bindCameraDevicePreferenceChange({
+          deviceSelect,
+          settingsRepo,
+          preferenceKey: GATE_CAMERA_PREFERENCE_KEY,
+          defaultFacingMode: deps.getDefaultVideoConstraintsForCamera().facingMode,
+          isCameraRunning: () => camera.isRunning(),
+          restartCamera: () => lifecycle.restart(),
+          setLoadedPreference: (preference) => startOpts.setLoadedPreference(preference),
+        })
+      : undefined;
 
   return () => {
+    unbindDevicePreferenceChange?.();
     state.stopPipeline?.();
     state.stopPipeline = undefined;
   };

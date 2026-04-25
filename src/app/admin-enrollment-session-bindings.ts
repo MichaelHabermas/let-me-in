@@ -6,7 +6,7 @@ import type { EnrollmentController } from './enroll';
 import type { User } from '../domain/types';
 import { ENROLL_CAMERA_PREFERENCE_KEY } from '../domain/camera-preference';
 import type { DexiePersistence } from '../infra/persistence';
-import { writeCameraPreference } from './camera-preference-persistence';
+import { bindCameraDevicePreferenceChange } from './camera-device-session';
 import type { GateRuntime } from './gate-runtime';
 
 export type EnrollmentControllerRef = { ctrl: EnrollmentController | null };
@@ -67,23 +67,19 @@ export function bindAdminEnrollmentSessionUi(
     syncButtons();
   });
   if (!useStubEnrollment) {
-    dom.cameraDeviceSelect.addEventListener('change', () => {
-      const d = rt.defaultVideoConstraintsForCamera;
-      if (!dom.cameraDeviceSelect.value) {
-        void writeCameraPreference(persistence.settingsRepo, ENROLL_CAMERA_PREFERENCE_KEY, {
-          facingMode: d.facingMode,
-        });
-      } else {
-        void writeCameraPreference(persistence.settingsRepo, ENROLL_CAMERA_PREFERENCE_KEY, {
-          deviceId: dom.cameraDeviceSelect.value,
-        });
-      }
-      if (ctrl.isCameraRunning()) {
+    bindCameraDevicePreferenceChange({
+      deviceSelect: dom.cameraDeviceSelect,
+      settingsRepo: persistence.settingsRepo,
+      preferenceKey: ENROLL_CAMERA_PREFERENCE_KEY,
+      defaultFacingMode: rt.defaultVideoConstraintsForCamera.facingMode,
+      isCameraRunning: () => ctrl.isCameraRunning(),
+      restartCamera: async () => {
         ctrl.stopSession();
-        void ctrl.startSession().catch(() => {
-          /* surface via controller */
-        });
-      }
+        await ctrl.startSession();
+      },
+      onRestartError: () => {
+        /* surface via controller */
+      },
     });
   }
   bindEnrollUserSaveOnClick(dom, ctrl, rt, syncButtons, refreshRoster);

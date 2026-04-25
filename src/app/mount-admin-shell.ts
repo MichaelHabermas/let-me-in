@@ -1,6 +1,6 @@
 import { mountAdminLoginModal } from './admin-login-modal';
 import { createAdminAuth, type AdminAuth } from './auth';
-import { mountAuthenticatedAdminEnrollment } from './mount-admin-enrollment';
+import { mountAuthenticatedAdminEnrollmentCoordinator } from './admin-enrollment-mount-coordinator';
 import { config } from '../config';
 import { AppContextOptions, resolveAppContext } from './app-context';
 
@@ -43,7 +43,7 @@ export function mountAdminShell(root: HTMLElement, options: Required<MountAdminS
       return;
     }
 
-    teardownEnroll = mountAuthenticatedAdminEnrollment({
+    teardownEnroll = mountAuthenticatedAdminEnrollmentCoordinator({
       root,
       rt,
       persistence,

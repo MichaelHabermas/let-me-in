@@ -6,8 +6,8 @@ import type { FaceEmbedder } from '../../infra/embedder-ort';
 import {
   type AppendAccessLogFn,
   type FramePipelineOpts,
+  runDetectionPipelineFrame,
 } from './run-frame';
-import { createFrameProcessor } from './frame-processor';
 
 export type { AppendAccessLogFn } from './run-frame';
 
@@ -58,14 +58,12 @@ export function createDetectionPipeline(opts: DetectionPipelineOptions): () => v
     evaluateDecision: opts.evaluateDecision,
     appendAccessLog: opts.appendAccessLog,
   };
-  const processor = createFrameProcessor(frameOpts, noFaceState);
-
   const unsub = opts.camera.onFrame(() => {
     if (!opts.camera.isRunning() || busy) return;
     busy = true;
     void (async () => {
       try {
-        await processor.processFrame();
+        await runDetectionPipelineFrame(frameOpts, noFaceState);
       } catch (e) {
         console.warn('[detection-pipeline] frame error', e);
       } finally {

@@ -1,6 +1,7 @@
 import type { AccessThresholds } from '../domain/access-policy';
 import type { DatabaseSeedSettings } from '../domain/database-seed';
 import type { DexiePersistence } from '../infra/persistence';
+import { readAccessThresholdsFromSettings } from './access-thresholds-store';
 
 /** SPECS L82 “default ≥ 0.75” — course strong-line preset (E14). */
 export const SPECS_COURSE_STRONG_FLOOR = 0.75 as const;
@@ -9,11 +10,7 @@ export async function readAccessThresholds(
   persistence: DexiePersistence,
   seedFallback: DatabaseSeedSettings,
 ): Promise<AccessThresholds> {
-  const row = await persistence.settingsRepo.get('thresholds');
-  if (row?.value != null && typeof row.value === 'object') {
-    return { ...(row.value as AccessThresholds) };
-  }
-  return { ...seedFallback.thresholds };
+  return readAccessThresholdsFromSettings(persistence.settingsRepo, seedFallback);
 }
 
 /** Sets `strong` to the course default; leaves `weak`, `margin`, and `unknown` unchanged. */

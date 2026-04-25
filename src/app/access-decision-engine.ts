@@ -1,10 +1,10 @@
-import type { AccessThresholds } from '../domain/access-policy';
 import type { DatabaseSeedSettings } from '../domain/database-seed';
 import type { AccessDecisionDataStores } from '../infra/persistence';
 import type { GateAccessEvaluation, GateAccessEvaluationInput } from './gate-access-evaluation';
 import { imageDataToPngBlob } from './gate-access-evaluation';
 import { matchOne, type EnrolledEmbedding } from '../domain/embedding-match';
 import { evaluateGateAccessMatch } from '../domain/gate-decision';
+import { readAccessThresholdsFromSettings } from './access-thresholds-store';
 
 export type LiveAccessDecisionUi = {
   onDecision(evaluation: GateAccessEvaluation): void;
@@ -20,16 +20,11 @@ export async function createAccessDecisionEvaluator(
   ui?: LiveAccessDecisionUi,
 ): Promise<(input: GateAccessEvaluationInput) => Promise<GateAccessEvaluation | null>> {
   return async (input) => {
-    const [users, thrRow] = await Promise.all([
+    const [users, thresholds] = await Promise.all([
       dataStores.usersRepo.toArray(),
-      dataStores.settingsRepo.get('thresholds'),
+      readAccessThresholdsFromSettings(dataStores.settingsRepo, seedFallback),
     ]);
     if (users.length === 0) return null;
-
-    const thresholds: AccessThresholds =
-      thrRow?.value != null && typeof thrRow.value === 'object'
-        ? (thrRow.value as AccessThresholds)
-        : { ...seedFallback.thresholds };
 
     const enrolled: EnrolledEmbedding[] = users.map((u) => ({
       userId: u.id,
