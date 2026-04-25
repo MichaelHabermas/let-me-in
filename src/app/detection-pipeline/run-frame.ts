@@ -16,7 +16,6 @@ import {
 } from '../gatekeeper-metrics';
 import type { Decision } from '../../domain/types';
 import type { EvaluateGateAccessFn, GateAccessEvaluation } from '../gate-access-evaluation';
-import { policyDecisionForCooldown } from '../gate-access-evaluation';
 import type { Camera } from '../camera';
 import type { YoloDetector } from '../../infra/detector-core';
 import type { FaceEmbedder } from '../../infra/embedder-ort';
@@ -65,12 +64,12 @@ export async function appendAccessLogIfNeeded(
   evaluation: GateAccessEvaluation,
 ): Promise<void> {
   if (!opts.appendAccessLog) return;
-  const { policy } = evaluation;
-  if (policy.decision !== 'GRANTED' && policy.decision !== 'DENIED') return;
+  const { verdict } = evaluation;
+  if (verdict.decision !== 'GRANTED' && verdict.decision !== 'DENIED') return;
   await opts.appendAccessLog({
-    userId: policy.decision === 'GRANTED' ? policy.userId : null,
-    similarity01: policy.bestScore,
-    decision: policy.decision,
+    userId: verdict.decision === 'GRANTED' ? verdict.userId : null,
+    similarity01: verdict.bestScore,
+    decision: verdict.decision,
     capturedFrameBlob: evaluation.capturedFrameBlob,
   });
 }
@@ -97,7 +96,10 @@ async function runEmbeddingAccessAndAppend(
   }
   const evaluation = await evaluateAccessDecision(opts, emb, frame);
   if (!evaluation) return;
-  const cd = policyDecisionForCooldown(evaluation.policy);
+  const cd =
+    evaluation.verdict.decision === 'GRANTED' || evaluation.verdict.decision === 'DENIED'
+      ? evaluation.verdict.decision
+      : null;
   if (cd) opts.cooldown?.markAttempt(opts.getNowMs());
   await appendAccessLogIfNeeded(opts, evaluation);
 }

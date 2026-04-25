@@ -14,7 +14,7 @@ export type MountAdminShellOptions = AppContextOptions & {
  * Admin app shell: login gate, enrollment when authenticated, `document.title`.
  * HTML entry resolves `#app` and calls this with the element.
  */
-export function mountAdminShell(root: HTMLElement, options: Required<MountAdminShellOptions>): void {
+export function mountAdminShell(root: HTMLElement, options?: MountAdminShellOptions): void {
   const { rt, persistence } = resolveAppContext(options);
   const auth =
     options?.auth ??
@@ -56,7 +56,7 @@ export function mountAdminShell(root: HTMLElement, options: Required<MountAdminS
   render();
 }
 
-export function mountAdminView(options: Required<MountAdminShellOptions>): void {
+export function mountAdminView(options?: MountAdminShellOptions): void {
   const app = document.getElementById('app');
   if (!app) return;
   mountAdminShell(app, options);

@@ -11,6 +11,39 @@ import type { GateRuntime } from './gate-runtime';
 
 export type EnrollmentControllerRef = { ctrl: EnrollmentController | null };
 
+function bindCaptureButtons(
+  dom: AdminEnrollmentCaptureMount,
+  ctrl: EnrollmentController,
+  syncButtons: () => void,
+): Array<() => void> {
+  const disposers: Array<() => void> = [];
+  const onToggle = () => {
+    const s = ctrl.getState();
+    if (s === 'idle' || (s === 'editing' && !ctrl.isCameraRunning())) {
+      void ctrl.startSession().catch(() => {});
+    } else if (s !== 'saving') {
+      ctrl.stopSession();
+      syncButtons();
+    }
+  };
+  const onCapture = () => {
+    void ctrl.captureFace().then(() => syncButtons());
+  };
+  const onRetake = () => {
+    ctrl.retake();
+    syncButtons();
+  };
+  dom.cameraToggleBtn.addEventListener('click', onToggle);
+  dom.capBtn.addEventListener('click', onCapture);
+  dom.retakeBtn.addEventListener('click', onRetake);
+  disposers.push(
+    () => dom.cameraToggleBtn.removeEventListener('click', onToggle),
+    () => dom.capBtn.removeEventListener('click', onCapture),
+    () => dom.retakeBtn.removeEventListener('click', onRetake),
+  );
+  return disposers;
+}
+
 export function createEnrollmentSyncHandlers(
   dom: AdminEnrollmentCaptureMount,
   rt: GateRuntime,
@@ -49,25 +82,11 @@ export function bindAdminEnrollmentSessionUi(
   useStubEnrollment: boolean,
   syncButtons: () => void,
   refreshRoster: () => Promise<void>,
-): void {
-  dom.cameraToggleBtn.addEventListener('click', () => {
-    const s = ctrl.getState();
-    if (s === 'idle' || (s === 'editing' && !ctrl.isCameraRunning())) {
-      void ctrl.startSession().catch(() => {});
-    } else if (s !== 'saving') {
-      ctrl.stopSession();
-      syncButtons();
-    }
-  });
-  dom.capBtn.addEventListener('click', () => {
-    void ctrl.captureFace().then(() => syncButtons());
-  });
-  dom.retakeBtn.addEventListener('click', () => {
-    ctrl.retake();
-    syncButtons();
-  });
+): () => void {
+  const disposers: Array<() => void> = [...bindCaptureButtons(dom, ctrl, syncButtons)];
+
   if (!useStubEnrollment) {
-    bindCameraDevicePreferenceChange({
+    const unbindDevicePreference = bindCameraDevicePreferenceChange({
       deviceSelect: dom.cameraDeviceSelect,
       settingsRepo: persistence.settingsRepo,
       preferenceKey: ENROLL_CAMERA_PREFERENCE_KEY,
@@ -81,6 +100,12 @@ export function bindAdminEnrollmentSessionUi(
         /* surface via controller */
       },
     });
+    disposers.push(unbindDevicePreference);
   }
-  bindEnrollUserSaveOnClick(dom, ctrl, rt, syncButtons, refreshRoster);
+  const unbindSave = bindEnrollUserSaveOnClick(dom, ctrl, rt, syncButtons, refreshRoster);
+  disposers.push(unbindSave);
+
+  return () => {
+    for (const dispose of disposers.splice(0)) dispose();
+  };
 }

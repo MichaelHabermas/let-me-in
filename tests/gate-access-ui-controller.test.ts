@@ -15,7 +15,7 @@ describe('createGateAccessUiController', () => {
     const ui = createGateAccessUiController(host, FALLBACK_GATE_ACCESS_UI_STRINGS);
     const blob = new Blob(['x']);
     ui.present({
-      policy: {
+      verdict: {
         decision: 'GRANTED',
         userId: 'u1',
         label: 'Matched user',
@@ -39,7 +39,7 @@ describe('createGateAccessUiController', () => {
     const host = document.createElement('div');
     const ui = createGateAccessUiController(host, FALLBACK_GATE_ACCESS_UI_STRINGS);
     ui.present({
-      policy: {
+      verdict: {
         decision: 'DENIED',
         userId: null,
         label: 'Unknown',
@@ -63,7 +63,7 @@ describe('createGateAccessUiController', () => {
     const ui = createGateAccessUiController(host, gateAccessUiStrings);
 
     ui.present({
-      policy: {
+      verdict: {
         decision: 'GRANTED',
         userId: 'u1',
         label: 'Matched user',
@@ -81,7 +81,7 @@ describe('createGateAccessUiController', () => {
 
     host.replaceChildren();
     ui.present({
-      policy: {
+      verdict: {
         decision: 'DENIED',
         userId: null,
         label: 'Unknown',

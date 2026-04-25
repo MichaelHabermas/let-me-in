@@ -16,9 +16,9 @@ export const FALLBACK_GATE_ACCESS_UI_STRINGS: GateAccessUiStrings = {
   tryAgain: 'Please try again',
 };
 
-function variantFor(policy: GateAccessEvaluation['policy']): DecisionBannerVariant {
-  if (policy.decision === 'GRANTED') return 'granted';
-  if (policy.decision === 'UNCERTAIN') return 'uncertain';
+function variantFor(verdict: GateAccessEvaluation['verdict']): DecisionBannerVariant {
+  if (verdict.decision === 'GRANTED') return 'granted';
+  if (verdict.decision === 'UNCERTAIN') return 'uncertain';
   return 'denied';
 }
 
@@ -27,13 +27,13 @@ function similarityPct(score: number): number {
 }
 
 function titleFor(strings: GateAccessUiStrings, ev: GateAccessEvaluation): string {
-  const { policy } = ev;
-  const pct = similarityPct(policy.bestScore);
-  if (policy.decision === 'GRANTED') {
+  const { verdict } = ev;
+  const pct = similarityPct(verdict.bestScore);
+  if (verdict.decision === 'GRANTED') {
     const name = ev.displayName ?? '';
     return strings.formatGranted(name, pct);
   }
-  if (policy.decision === 'UNCERTAIN') return strings.tryAgain;
+  if (verdict.decision === 'UNCERTAIN') return strings.tryAgain;
   return strings.formatDenied(pct);
 }
 
@@ -54,7 +54,7 @@ export function createGateAccessUiController(
 
   const present = (ev: GateAccessEvaluation) => {
     clear();
-    const variant = variantFor(ev.policy);
+    const variant = variantFor(ev.verdict);
     const banner = renderDecisionBanner({
       variant,
       title: titleFor(strings, ev),
@@ -62,14 +62,14 @@ export function createGateAccessUiController(
     host.appendChild(banner);
     host.appendChild(
       renderConfidenceMeter({
-        similarity01: ev.policy.bestScore,
+        similarity01: ev.verdict.bestScore,
         strong: ev.bandThresholds.strong,
         weak: ev.bandThresholds.weak,
       }),
     );
 
     const showCompare =
-      (ev.policy.decision === 'GRANTED' || ev.policy.decision === 'UNCERTAIN') &&
+      (ev.verdict.decision === 'GRANTED' || ev.verdict.decision === 'UNCERTAIN') &&
       ev.referenceImageBlob;
 
     if (showCompare && ev.referenceImageBlob) {
@@ -81,7 +81,7 @@ export function createGateAccessUiController(
         const side = renderSideBySide({
           referenceObjectUrl: refUrl,
           liveObjectUrl: liveUrl,
-          similarityLine: `${similarityPct(ev.policy.bestScore)}% match`,
+          similarityLine: `${similarityPct(ev.verdict.bestScore)}% match`,
         });
         host.appendChild(side);
       } catch (error) {

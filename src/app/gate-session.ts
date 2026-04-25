@@ -92,7 +92,7 @@ export function wireGatePreviewSession(
     defaultConstraints: deps.getDefaultVideoConstraintsForCamera(),
   });
 
-  camera.onError((err) => {
+  const unsubError = camera.onError((err) => {
     const msg = deps.getCameraUserFacingMessage(err.code);
     if (msg) statusEl.textContent = msg;
   });
@@ -103,6 +103,7 @@ export function wireGatePreviewSession(
   return () => {
     stopControls();
     unsubFps();
+    unsubError();
     void deps.yoloDetector?.dispose();
     void deps.faceEmbedder?.dispose();
     camera.stop();

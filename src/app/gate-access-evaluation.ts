@@ -5,7 +5,7 @@ export type BandThresholdsSlice = { strong: number; weak: number };
 
 /** Rich access outcome passed from policy through the detection pipeline to UI and logging. */
 export type GateAccessEvaluation = {
-  policy: GateAccessVerdict;
+  verdict: GateAccessVerdict;
   /** Shown on GRANTED only; UNCERTAIN/DENIED omit name per PRD E7.S1. */
   displayName: string | null;
   referenceImageBlob: Blob | null;
@@ -24,11 +24,6 @@ export type MaybePromise<T> = T | Promise<T>;
 export type EvaluateGateAccessFn = (
   input: GateAccessEvaluationInput,
 ) => MaybePromise<GateAccessEvaluation | null>;
-
-export function policyDecisionForCooldown(policy: GateAccessVerdict): 'GRANTED' | 'DENIED' | null {
-  if (policy.decision === 'GRANTED' || policy.decision === 'DENIED') return policy.decision;
-  return null;
-}
 
 /** Encode live frame as PNG for access log and side-by-side. */
 export async function imageDataToPngBlob(frame: ImageData): Promise<Blob> {

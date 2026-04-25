@@ -127,6 +127,9 @@ function createDetectorApi(
     },
 
     async infer(imageData: ImageData) {
+      if (!runtime.loaded) {
+        throw new Error('detector.load() must be called before infer()');
+      }
       const { width, height, data } = imageData;
       const rgba = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
       const msg: YoloHostToWorkerInfer = {
@@ -141,7 +144,7 @@ function createDetectorApi(
 
     async dispose() {
       await runtime.inferQueue.drain();
-      state.pending.clear();
+      rejectAllPending(state, new Error('detector disposed'));
       state.worker.terminate();
       runtime.loaded = false;
       runtime.inferQueue.reset();

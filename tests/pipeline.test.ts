@@ -33,7 +33,7 @@ const testBands = { strong: 0.85, weak: 0.65 };
 
 function evalGranted() {
   return {
-    policy: {
+    verdict: {
       decision: 'GRANTED' as const,
       userId: 'u1',
       label: 'Matched user',
@@ -50,7 +50,7 @@ function evalGranted() {
 
 function evalDenied() {
   return {
-    policy: {
+    verdict: {
       decision: 'DENIED' as const,
       userId: null,
       label: 'Unknown' as const,
@@ -67,7 +67,7 @@ function evalDenied() {
 
 function evalUncertain() {
   return {
-    policy: {
+    verdict: {
       decision: 'UNCERTAIN' as const,
       userId: 'u1',
       label: 'Matched user',

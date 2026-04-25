@@ -186,4 +186,30 @@ describe('mountLogPageIntoApp', () => {
     await Dexie.delete(dbName);
     document.body.removeChild(app);
   });
+
+  it('teardown removes toolbar listeners', async () => {
+    const dbName = `log-page-teardown-${crypto.randomUUID()}`;
+    const persistence = createDexiePersistence(dbName);
+    const rt = createTestGateRuntime();
+    await persistence.initDatabase(rt.databaseSeedSettings!);
+    const app = document.createElement('div');
+    document.body.appendChild(app);
+
+    const teardown = await mountLogPageIntoApp(app, { persistence, rt });
+    const exportBtn = app.querySelector<HTMLButtonElement>('[data-testid="log-export-csv"]');
+    const createUrl = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
+    const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+    teardown();
+    exportBtn?.click();
+    expect(clickSpy).not.toHaveBeenCalled();
+
+    createUrl.mockRestore();
+    revoke.mockRestore();
+    clickSpy.mockRestore();
+    await persistence.resetIndexedDbClientForTests();
+    await Dexie.delete(dbName);
+    document.body.removeChild(app);
+  });
 });

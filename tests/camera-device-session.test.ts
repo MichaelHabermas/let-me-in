@@ -47,6 +47,11 @@ describe('bindCameraDevicePreferenceChange', () => {
 
     const putOrder = vi.mocked(settingsRepo.put).mock.invocationCallOrder[0];
     const restartOrder = restartCamera.mock.invocationCallOrder[0];
+    expect(putOrder).toBeDefined();
+    expect(restartOrder).toBeDefined();
+    if (putOrder === undefined || restartOrder === undefined) {
+      throw new Error('expected call order for settings write and restart');
+    }
     expect(putOrder).toBeLessThan(restartOrder);
   });
 

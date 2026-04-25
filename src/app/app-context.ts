@@ -15,7 +15,7 @@ export type AppContext = {
 };
 
 /** Shared composition helper used by all page mounts and bootstrap. */
-export function resolveAppContext(options: Required<AppContextOptions>): AppContext {
+export function resolveAppContext(options?: AppContextOptions): AppContext {
   return {
     rt: options?.rt ?? resolveGateRuntime(),
     persistence: resolvePersistence({

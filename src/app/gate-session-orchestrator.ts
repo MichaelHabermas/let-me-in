@@ -5,6 +5,7 @@ import {
   createCameraStartOptionsState,
   refreshVideoInputDeviceListAfterStart,
 } from './camera-device-session';
+import { createCameraSessionLifecycle } from './camera-session-lifecycle';
 import { createCooldown } from './cooldown';
 import { createDetectionPipeline } from './detection-pipeline';
 import { readCameraPreference } from './camera-preference-persistence';
@@ -108,8 +109,26 @@ export function wireCameraControls(
     }
   };
 
-  const lifecycle = createGateSessionLifecycle(camera, cameraToggleBtn, state, onStart);
-  cameraToggleBtn.addEventListener('click', lifecycle.onToggleClick);
+  const lifecycle = createCameraSessionLifecycle({
+    camera,
+    onStart,
+    onStop: () => {
+      state.stopPipeline?.();
+      state.stopPipeline = undefined;
+      syncCameraToggleUi(cameraToggleBtn, 'idle');
+    },
+    onStartError: () => {
+      syncCameraToggleUi(cameraToggleBtn, 'idle');
+    },
+  });
+  const onToggleClick = () => {
+    if (camera.isRunning()) {
+      lifecycle.stop();
+      return;
+    }
+    void lifecycle.start();
+  };
+  cameraToggleBtn.addEventListener('click', onToggleClick);
 
   const unbindDevicePreferenceChange =
     deviceSelect && settingsRepo
@@ -125,41 +144,10 @@ export function wireCameraControls(
       : undefined;
 
   return () => {
+    cameraToggleBtn.removeEventListener('click', onToggleClick);
     unbindDevicePreferenceChange?.();
     state.stopPipeline?.();
     state.stopPipeline = undefined;
   };
 }
 /* eslint-enable max-lines-per-function */
-
-function createGateSessionLifecycle(
-  camera: Camera,
-  cameraToggleBtn: HTMLButtonElement,
-  state: DetectorGateState,
-  start: () => Promise<void>,
-): {
-  onToggleClick: () => void;
-  restart: () => void;
-} {
-  const stop = () => {
-    state.stopPipeline?.();
-    state.stopPipeline = undefined;
-    camera.stop();
-    syncCameraToggleUi(cameraToggleBtn, 'idle');
-  };
-
-  const onToggleClick = () => {
-    if (camera.isRunning()) {
-      stop();
-      return;
-    }
-    void start();
-  };
-
-  const restart = () => {
-    stop();
-    void start();
-  };
-
-  return { onToggleClick, restart };
-}

@@ -4,11 +4,11 @@ import { appendAccessLogIfNeeded, type FramePipelineOpts } from '../src/app/dete
 import type { GateAccessEvaluation } from '../src/app/gate-access-evaluation';
 
 function baseEval(
-  policy: GateAccessEvaluation['policy'],
+  verdict: GateAccessEvaluation['verdict'],
   captured: Blob = new Blob(),
 ): GateAccessEvaluation {
   return {
-    policy,
+    verdict,
     displayName: null,
     referenceImageBlob: null,
     capturedFrameBlob: captured,

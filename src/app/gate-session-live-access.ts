@@ -1,4 +1,5 @@
 import { createAccessDecisionEvaluator, type LiveAccessDecisionUi } from './access-decision-engine';
+import { createAccessDecisionContext } from './access-decision-context';
 import { createAccessAudioCues } from './audio';
 import {
   createGateAccessUiController,
@@ -21,7 +22,7 @@ export function createLiveAccessOnDecision(
   return {
     onDecision: (event) => {
       accessUi?.present(event);
-      audioCues.play(event.policy.decision);
+      audioCues.play(event.verdict.decision);
     },
   };
 }
@@ -45,10 +46,12 @@ export async function withLiveAccessDeps(
   const persistence = deps.persistence;
   const uiStrings = deps.accessUiStrings ?? FALLBACK_GATE_ACCESS_UI_STRINGS;
   const onDecision = createLiveAccessOnDecision(elements.decisionEl, uiStrings);
+  const context = await createAccessDecisionContext(persistence, deps.databaseSeedFallback);
   const evaluateDecision = await createAccessDecisionEvaluator(
     persistence,
     deps.databaseSeedFallback,
     onDecision,
+    context,
   );
   return {
     ...deps,

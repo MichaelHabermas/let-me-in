@@ -14,7 +14,7 @@ import type { FaceEmbedder } from '../../infra/embedder-ort';
 import type { DexiePersistence } from '../../infra/persistence';
 import type { User } from '../../domain/types';
 import type { ModelLoadStatusController } from '../model-load-status-ui';
-import { loadDetectorAndEmbedderParallel } from '../parallel-model-load';
+import { createModelLoadOrchestrator } from '../model-load-orchestrator';
 
 export type EnrollmentControllerOptions = {
   camera: Camera;
@@ -153,11 +153,19 @@ export function createEnrollmentController(
         loadGeneration += 1;
         const gen = loadGeneration;
         try {
-          await loadDetectorAndEmbedderParallel({
-            detector: opts.detector,
-            embedder: opts.embedder,
+          const modelLoad = createModelLoadOrchestrator({
+            targets: [
+              { key: 'detector', enabled: true, load: () => opts.detector.load() },
+              { key: 'embedder', enabled: true, load: () => opts.embedder.load() },
+            ],
             modelLoadUi: opts.modelLoadUi,
+            failedMessage: opts.modelLoadFailedMessage ?? 'Model load failed',
+            onFailed: () => {
+              console.error('[enrollment] model load failed');
+            },
           });
+          const loaded = await modelLoad.run();
+          if (!loaded) return;
           if (gen !== loadGeneration) return;
           const dc = opts.defaultVideoConstraints;
           const getOpts = () => opts.getCameraStartOptions?.() ?? { facingMode: dc.facingMode };
@@ -271,6 +279,7 @@ export function createEnrollmentController(
     },
 
     dispose() {
+      loadGeneration += 1;
       unsubFrame?.();
       unsubFrame = null;
       opts.camera.stop();

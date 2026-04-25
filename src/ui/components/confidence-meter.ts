@@ -5,8 +5,14 @@ export type ConfidenceBand = 'strong' | 'weak' | 'reject';
 export type BandCutoffs = { strong: number; weak: number };
 
 /** Maps similarity to display band. Uses runtime cutoffs when given (policy/settings); else `config.thresholds`. */
-export function confidenceBandForScore(similarity01: number, cutoffs?: BandCutoffs): ConfidenceBand {
-  const { strong, weak } = cutoffs ?? { strong: config.thresholds.strong, weak: config.thresholds.weak };
+export function confidenceBandForScore(
+  similarity01: number,
+  cutoffs?: BandCutoffs,
+): ConfidenceBand {
+  const { strong, weak } = cutoffs ?? {
+    strong: config.thresholds.strong,
+    weak: config.thresholds.weak,
+  };
   if (similarity01 >= strong) return 'strong';
   if (similarity01 >= weak) return 'weak';
   return 'reject';

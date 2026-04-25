@@ -21,6 +21,55 @@ export type MountAdminEnrollmentOptions = {
   useStubEnrollment?: boolean;
 };
 
+function createCoordinatorTeardown(params: {
+  dom: ReturnType<typeof createAdminEnrollmentDom>;
+  onLogout: () => void;
+  abortController: AbortController;
+  roster: ReturnType<typeof createAdminEnrollmentRosterController>;
+  ctrl: NonNullable<EnrollmentControllerRef['ctrl']>;
+  disposeSessionUi: () => void;
+  disposeImport: () => void;
+}): () => void {
+  return () => {
+    params.dom.logoutBtn.removeEventListener('click', params.onLogout);
+    params.abortController.abort();
+    params.roster.dispose();
+    params.ctrl.dispose();
+    params.disposeSessionUi();
+    params.disposeImport();
+  };
+}
+
+function wireEnrollmentSession(params: {
+  dom: ReturnType<typeof createAdminEnrollmentDom>;
+  enrollmentRef: EnrollmentControllerRef;
+  rt: GateRuntime;
+  persistence: DexiePersistence;
+  useStubEnrollment: boolean;
+  syncButtons: () => void;
+  refreshRoster: () => Promise<void>;
+}): { ctrl: NonNullable<EnrollmentControllerRef['ctrl']>; disposeSessionUi: () => void } {
+  const ctrl = createAdminEnrollmentSessionController({
+    dom: params.dom,
+    rt: params.rt,
+    persistence: params.persistence,
+    useStubEnrollment: params.useStubEnrollment,
+    onStateChange: params.syncButtons,
+  });
+  params.enrollmentRef.ctrl = ctrl;
+  params.syncButtons();
+  const disposeSessionUi = bindAdminEnrollmentSessionUi(
+    params.dom,
+    ctrl,
+    params.rt,
+    params.persistence,
+    params.useStubEnrollment,
+    params.syncButtons,
+    params.refreshRoster,
+  );
+  return { ctrl, disposeSessionUi };
+}
+
 /**
  * Composes roster, CSV import, enrollment session, and button sync — single mount boundary.
  */
@@ -36,33 +85,21 @@ export function mountAuthenticatedAdminEnrollmentCoordinator(
   const { syncButtons, beginEdit } = createEnrollmentSyncHandlers(dom, rt, enrollmentRef);
   const roster = createAdminEnrollmentRosterController({ dom, rt, persistence, beginEdit });
 
-  dom.logoutBtn.addEventListener('click', () => {
+  const onLogout = () => {
     auth.logout();
     rerender();
-  });
+  };
+  dom.logoutBtn.addEventListener('click', onLogout);
 
-  enrollmentRef.ctrl = createAdminEnrollmentSessionController({
+  const { ctrl, disposeSessionUi } = wireEnrollmentSession({
     dom,
-    rt,
-    persistence,
-    useStubEnrollment,
-    onStateChange: syncButtons,
-  });
-  const ctrl = enrollmentRef.ctrl;
-  if (ctrl === null) {
-    throw new Error('Enrollment controller failed to initialize');
-  }
-
-  syncButtons();
-  bindAdminEnrollmentSessionUi(
-    dom,
-    ctrl,
+    enrollmentRef,
     rt,
     persistence,
     useStubEnrollment,
     syncButtons,
-    roster.refresh,
-  );
+    refreshRoster: roster.refresh,
+  });
   const disposeImport = bindAdminEnrollmentImportController({
     dom,
     rt,
@@ -77,10 +114,13 @@ export function mountAuthenticatedAdminEnrollmentCoordinator(
 
   void roster.refresh();
 
-  return () => {
-    ac.abort();
-    roster.dispose();
-    ctrl.dispose();
-    disposeImport();
-  };
+  return createCoordinatorTeardown({
+    dom,
+    onLogout,
+    abortController: ac,
+    roster,
+    ctrl,
+    disposeSessionUi,
+    disposeImport,
+  });
 }

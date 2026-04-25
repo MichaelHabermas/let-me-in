@@ -12,8 +12,8 @@ export function bindEnrollUserSaveOnClick(
   rt: GateRuntime,
   syncButtons: () => void,
   refreshRoster: () => Promise<void>,
-): void {
-  dom.saveBtn.addEventListener('click', () => {
+): () => void {
+  const onSave = () => {
     const name = dom.nameInput.value.trim();
     const ui = rt.runtimeSlices.admin.ui;
     if (!name) {
@@ -43,5 +43,7 @@ export function bindEnrollUserSaveOnClick(
         dom.statusEl.textContent = msg;
         syncButtons();
       });
-  });
+  };
+  dom.saveBtn.addEventListener('click', onSave);
+  return () => dom.saveBtn.removeEventListener('click', onSave);
 }

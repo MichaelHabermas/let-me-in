@@ -4,7 +4,7 @@ import type { GateAccessEvaluation, GateAccessEvaluationInput } from './gate-acc
 import { imageDataToPngBlob } from './gate-access-evaluation';
 import { matchOne, type EnrolledEmbedding } from '../domain/embedding-match';
 import { evaluateGateAccessMatch } from '../domain/gate-decision';
-import { readAccessThresholdsFromSettings } from './access-thresholds-store';
+import type { AccessDecisionContext } from './access-decision-context';
 
 export type LiveAccessDecisionUi = {
   onDecision(evaluation: GateAccessEvaluation): void;
@@ -18,12 +18,12 @@ export async function createAccessDecisionEvaluator(
   dataStores: AccessDecisionDataStores,
   seedFallback: DatabaseSeedSettings,
   ui?: LiveAccessDecisionUi,
+  context?: AccessDecisionContext,
 ): Promise<(input: GateAccessEvaluationInput) => Promise<GateAccessEvaluation | null>> {
   return async (input) => {
-    const [users, thresholds] = await Promise.all([
-      dataStores.usersRepo.toArray(),
-      readAccessThresholdsFromSettings(dataStores.settingsRepo, seedFallback),
-    ]);
+    const snapshot = context?.getSnapshot();
+    const users = snapshot?.users ?? (await dataStores.usersRepo.toArray());
+    const thresholds = snapshot?.thresholds ?? { ...seedFallback.thresholds };
     if (users.length === 0) return null;
 
     const enrolled: EnrolledEmbedding[] = users.map((u) => ({
@@ -44,7 +44,7 @@ export async function createAccessDecisionEvaluator(
     const capturedFrameBlob = await imageDataToPngBlob(input.frame);
     const user = policy.userId != null ? usersById.get(policy.userId) : undefined;
     const evaluation: GateAccessEvaluation = {
-      policy,
+      verdict: policy,
       displayName: policy.decision === 'GRANTED' ? (user?.name ?? null) : null,
       referenceImageBlob: policy.decision === 'DENIED' ? null : (user?.referenceImageBlob ?? null),
       capturedFrameBlob,

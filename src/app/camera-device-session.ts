@@ -126,7 +126,9 @@ export async function refreshVideoInputDeviceListAfterStart(
 }
 
 /** Persists select changes as camera preference and restarts the active session when needed. */
-export function bindCameraDevicePreferenceChange(p: BindCameraDevicePreferenceChangeParams): () => void {
+export function bindCameraDevicePreferenceChange(
+  p: BindCameraDevicePreferenceChangeParams,
+): () => void {
   const onChange = () => {
     const selectedDeviceId = p.deviceSelect.value.trim();
     const preference = selectedDeviceId

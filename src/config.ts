@@ -157,7 +157,8 @@ export const DEFAULT_UI_STRINGS: UiStringsConfig = {
   cameraStart: 'Start camera',
   cameraStop: 'Stop camera',
   detectorLoading: 'Loading face detector…',
-  detectorLoadFailed: 'Models could not load. Check your connection and use Retry, or reload the page.',
+  detectorLoadFailed:
+    'Models could not load. Check your connection and use Retry, or reload the page.',
   modelLoadStageDetector: 'Detector',
   modelLoadStageEmbedder: 'Embedder',
   modelLoadRetry: 'Retry',

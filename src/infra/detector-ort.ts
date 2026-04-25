@@ -7,7 +7,6 @@ import { createOrtSession, type OrtSessionBundle } from './ort-session-factory';
 import { runYoloDetectorInference } from './yolo-ort-inference';
 import { createDetectorInferQueue } from './detector-infer-queue';
 
-/* eslint-disable max-lines-per-function -- ORT load + infer + dispose on one surface */
 function createYoloMainThreadDetector(
   settings: DetectorRuntimeSettings,
   options?: {
@@ -62,7 +61,6 @@ function createYoloMainThreadDetector(
     },
   };
 }
-/* eslint-enable max-lines-per-function */
 
 export type CreateYoloDetectorOptions = {
   modelUrl?: string;

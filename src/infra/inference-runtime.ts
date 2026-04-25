@@ -1,5 +1,6 @@
 import type { YoloDetector } from './detector-core';
 import type { FaceEmbedder } from './embedder-ort';
+import { disposeSafely } from './safe-dispose';
 
 /**
  * Shared detector + embedder lifecycle for gate, enrollment, and bulk import.
@@ -24,7 +25,10 @@ export function createDetectorEmbedderRuntime(params: {
       await Promise.all([detector.load(), embedder.load()]);
     },
     async disposeAll() {
-      await Promise.all([detector.dispose().catch(() => {}), embedder.dispose().catch(() => {})]);
+      await Promise.all([
+        disposeSafely('detector-runtime', () => detector.dispose()),
+        disposeSafely('embedder-runtime', () => embedder.dispose()),
+      ]);
     },
   };
 }
