@@ -23,10 +23,12 @@ export type AdminUiStrings = {
   rosterDelete: string;
   rosterThumbnailAlt: string;
   rosterBulkImport: string;
+  rosterExportJson: string;
   rosterImportPick: string;
   rosterImportConfirmDuplicates: string;
   rosterImportProgress: string;
   rosterImportDone: string;
+  rosterExportDone: string;
   rosterDeleteConfirm: string;
   enrollTitle: string;
   enrollStartCamera: string;
@@ -127,10 +129,12 @@ function adminStringsFromConfig(cfg: GateUiConfigSlice): AdminUiStrings {
     rosterDelete: s.rosterDelete,
     rosterThumbnailAlt: s.rosterThumbnailAlt,
     rosterBulkImport: s.rosterBulkImport,
+    rosterExportJson: s.rosterExportJson,
     rosterImportPick: s.rosterImportPick,
     rosterImportConfirmDuplicates: s.rosterImportConfirmDuplicates,
     rosterImportProgress: s.rosterImportProgress,
     rosterImportDone: s.rosterImportDone,
+    rosterExportDone: s.rosterExportDone,
     rosterDeleteConfirm: s.rosterDeleteConfirm,
     enrollTitle: s.enrollTitle,
     enrollStartCamera: s.enrollStartCamera,

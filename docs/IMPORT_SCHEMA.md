@@ -30,3 +30,35 @@ Rows with the same `name` after **trim + case-insensitive** comparison are flagg
 ## Processing
 
 For each valid row the app decodes the image, runs the same **detect → single-face crop → embed → persist** path as interactive admin enrollment.
+
+## Export format (Epic E17)
+
+Roster export is a JSON **array** that keeps import compatibility while adding optional backup fidelity.
+
+- The required import-compatible fields remain:
+  - `name` (string)
+  - `role` (string)
+  - `imageBase64` (string)
+- Export also adds a `backup` object for restore/audit metadata.
+- Existing import parsing ignores unknown fields, so exported rows can be re-imported directly.
+
+### Export row shape
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `name` | string | yes | Display name. |
+| `role` | string | yes | Canonical role label. |
+| `imageBase64` | string | yes | Base64 image payload for import symmetry. |
+| `backup.schemaVersion` | number | yes | Export schema version (current `1`). |
+| `backup.userId` | string | yes | Original persisted user id. |
+| `backup.createdAt` | number | yes | Original Unix timestamp (ms). |
+| `backup.referenceImageBase64` | string | yes | Base64 bytes from `referenceImageBlob`. |
+| `backup.embedding.encoding` | string | yes | Always `float32le-base64`. |
+| `backup.embedding.dimensions` | number | yes | Vector length. |
+| `backup.embedding.base64` | string | yes | Raw Float32 bytes, little-endian, base64 encoded. |
+
+### Canonicalization notes
+
+- `imageBase64` and `backup.referenceImageBase64` are the same bytes.
+- Embeddings are serialized from the exact in-memory `Float32Array` byte view; no rounding or text conversion.
+- JSON is emitted in stable key order by object construction and pretty-printed with 2-space indentation.

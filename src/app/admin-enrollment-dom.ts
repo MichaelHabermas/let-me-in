@@ -9,6 +9,7 @@ export type AdminEnrollmentDom = {
   importToolbar: HTMLElement;
   importFileInput: HTMLInputElement;
   importButton: HTMLButtonElement;
+  exportButton: HTMLButtonElement;
   importStatusEl: HTMLElement;
   thresholdSection: HTMLElement;
   thresholdStatusEl: HTMLElement;
@@ -87,6 +88,7 @@ function buildImportToolbar(rt: GateRuntime): {
   toolbar: HTMLElement;
   importFileInput: HTMLInputElement;
   importButton: HTMLButtonElement;
+  exportButton: HTMLButtonElement;
   importStatusEl: HTMLElement;
 } {
   const copy = rt.runtimeSlices.admin.ui;
@@ -107,6 +109,12 @@ function buildImportToolbar(rt: GateRuntime): {
   importButton.textContent = copy.rosterBulkImport;
   importButton.setAttribute('data-testid', 'admin-import-trigger');
 
+  const exportButton = document.createElement('button');
+  exportButton.type = 'button';
+  exportButton.className = 'btn';
+  exportButton.textContent = copy.rosterExportJson;
+  exportButton.setAttribute('data-testid', 'admin-export-trigger');
+
   const importStatusEl = document.createElement('p');
   importStatusEl.className = 'admin-import-toolbar__status';
   importStatusEl.setAttribute('data-testid', 'admin-import-status');
@@ -116,8 +124,8 @@ function buildImportToolbar(rt: GateRuntime): {
   fileLabel.htmlFor = importFileInput.id;
   fileLabel.textContent = copy.rosterImportPick;
 
-  toolbar.append(fileLabel, importFileInput, importButton, importStatusEl);
-  return { toolbar, importFileInput, importButton, importStatusEl };
+  toolbar.append(fileLabel, importFileInput, importButton, exportButton, importStatusEl);
+  return { toolbar, importFileInput, importButton, exportButton, importStatusEl };
 }
 
 function buildAccessThresholdSection(rt: GateRuntime): {
@@ -225,6 +233,7 @@ export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
     importToolbar: importUi.toolbar,
     importFileInput: importUi.importFileInput,
     importButton: importUi.importButton,
+    exportButton: importUi.exportButton,
     importStatusEl: importUi.importStatusEl,
     thresholdSection: thr.section,
     thresholdStatusEl: thr.statusEl,

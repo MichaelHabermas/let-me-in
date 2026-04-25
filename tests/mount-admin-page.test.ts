@@ -147,6 +147,49 @@ describe('mountAdminView', () => {
     await waitForRosterRows(3);
   });
 
+  it('renders export control and triggers JSON download', async () => {
+    const storage = createMemoryStorage();
+    const auth = createAdminAuth({
+      storage,
+      nowMs: () => 1_700_000_000_000,
+      admin: { user: 'u', pass: 'p' },
+    });
+    expect(auth.login('u', 'p')).toBe(true);
+
+    const persistence = createTestPersistence();
+    await persistence.initDatabase(testRt.databaseSeedSettings!);
+    await persistence.usersRepo.put({
+      id: 'id-1',
+      name: 'User 1',
+      role: 'Staff',
+      referenceImageBlob: new Blob(['ref'], { type: 'image/jpeg' }),
+      embedding: embeddingVectorFilled(0.02),
+      createdAt: 1_700_000_000_000,
+    });
+
+    const createObjectUrlSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test');
+    const revokeObjectUrlSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+
+    mountAdminView({
+      rt: testRt,
+      persistence,
+      auth,
+    });
+
+    const exportButton = document.querySelector<HTMLButtonElement>('[data-testid="admin-export-trigger"]');
+    expect(exportButton).not.toBeNull();
+    const createCallsBefore = createObjectUrlSpy.mock.calls.length;
+    const revokeCallsBefore = revokeObjectUrlSpy.mock.calls.length;
+    exportButton?.click();
+    for (let i = 0; i < 20; i += 1) {
+      if (createObjectUrlSpy.mock.calls.length > createCallsBefore) break;
+      await new Promise((r) => setTimeout(r, 0));
+    }
+
+    expect(createObjectUrlSpy.mock.calls.length).toBeGreaterThan(createCallsBefore);
+    expect(revokeObjectUrlSpy.mock.calls.length).toBeGreaterThanOrEqual(revokeCallsBefore);
+  });
+
   it('logout uses injected auth storage only', async () => {
     const storage = createMemoryStorage();
     const auth = createAdminAuth({

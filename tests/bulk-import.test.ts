@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { parseBulkImportJson, runBulkImport } from '../src/app/bulk-import';
+import { exportRosterJson } from '../src/app/roster-json-export';
 import { createDexiePersistence } from '../src/infra/persistence';
 
 import { DEFAULT_TEST_DATABASE_SEED } from './support/create-test-gate-runtime';
@@ -100,6 +101,47 @@ describe('runBulkImport', () => {
     });
     expect(res.proceededAfterDuplicateConfirm).toBe(false);
     expect((await p.usersRepo.toArray()).length).toBe(0);
+    await p.resetIndexedDbClientForTests();
+    await Dexie.delete(dbName);
+  });
+
+  it('round-trips import contract and includes backup fields on export', async () => {
+    const dbName = `bulk-import-export-${crypto.randomUUID()}`;
+    const p = createDexiePersistence(dbName);
+    await p.initDatabase(seed);
+    const rows = [
+      { name: 'Ada', role: 'Staff', imageBase64: png1x1 },
+      { name: 'Bob', role: 'Visitor', imageBase64: png1x1 },
+    ];
+    await runBulkImport(p, JSON.stringify(rows), {
+      useStubEnrollment: true,
+      onProgress: () => {},
+      confirmDuplicateNames: async () => true,
+    });
+
+    const exportedJson = await exportRosterJson(p);
+    const exported = JSON.parse(exportedJson) as Array<{
+      name: string;
+      role: string;
+      imageBase64: string;
+      backup?: {
+        referenceImageBase64: string;
+        embedding: { encoding: string; dimensions: number; base64: string };
+      };
+    }>;
+    const parsed = parseBulkImportJson(exportedJson);
+
+    expect(parsed.errors).toHaveLength(0);
+    expect(parsed.valid).toHaveLength(2);
+    expect(parsed.valid.map((row) => row.name)).toEqual(exported.map((row) => row.name));
+    expect(parsed.valid.map((row) => row.role)).toEqual(exported.map((row) => row.role));
+    expect(parsed.valid.map((row) => row.imageBase64)).toEqual(exported.map((row) => row.imageBase64));
+    expect(exported.every((row) => row.backup?.embedding.encoding === 'float32le-base64')).toBe(true);
+    expect(
+      exported.every((row) => row.backup && row.backup.referenceImageBase64 === row.imageBase64),
+    ).toBe(true);
+    expect(exported.every((row) => (row.backup?.embedding.dimensions ?? 0) > 0)).toBe(true);
+
     await p.resetIndexedDbClientForTests();
     await Dexie.delete(dbName);
   });

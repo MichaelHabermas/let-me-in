@@ -84,10 +84,12 @@ export interface Config {
       rosterDelete: string;
       rosterThumbnailAlt: string;
       rosterBulkImport: string;
+      rosterExportJson: string;
       rosterImportPick: string;
       rosterImportConfirmDuplicates: string;
       rosterImportProgress: string;
       rosterImportDone: string;
+      rosterExportDone: string;
       rosterDeleteConfirm: string;
       enrollTitle: string;
       enrollStartCamera: string;
@@ -178,10 +180,12 @@ export const DEFAULT_UI_STRINGS: UiStringsConfig = {
   rosterDelete: 'Delete',
   rosterThumbnailAlt: 'Reference face',
   rosterBulkImport: 'Import JSON',
+  rosterExportJson: 'Export roster JSON',
   rosterImportPick: 'Choose JSON file…',
   rosterImportConfirmDuplicates: 'Duplicate names found. Import anyway?',
   rosterImportProgress: 'Importing {current} / {total}…',
   rosterImportDone: 'Import finished.',
+  rosterExportDone: 'Export finished.',
   rosterDeleteConfirm: 'Delete this user? Their log entries will show as Unknown.',
   enrollTitle: 'Enroll a user',
   enrollStartCamera: 'Start camera',

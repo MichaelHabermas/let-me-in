@@ -529,7 +529,7 @@ flowchart LR
 
 ---
 
-### Epic E17: Roster JSON export — [ ]
+### Epic E17: Roster JSON export — [x]
 
 **Goal:** Optional JSON **export** symmetric to bulk import, per SPECS storage backend.
 
@@ -537,31 +537,31 @@ flowchart LR
 
 **Epic DoD:**
 
-- [ ] Admin can export roster JSON including embeddings per [`docs/IMPORT_SCHEMA.md`](IMPORT_SCHEMA.md).
-- [ ] Cross-linked from README or ARCHITECTURE.
-- [ ] All E17 Tasks `- [x]`.
+- [x] Admin can export roster JSON including embeddings per [`docs/IMPORT_SCHEMA.md`](IMPORT_SCHEMA.md).
+- [x] Cross-linked from README or ARCHITECTURE.
+- [x] All E17 Tasks `- [x]`.
 
-#### User Story E17.S1: As an admin, I can download a backup JSON of all users — [ ]
+#### User Story E17.S1: As an admin, I can download a backup JSON of all users — [x]
 
-##### Feature E17.S1.F1: Export pipeline — [ ]
+##### Feature E17.S1.F1: Export pipeline — [x]
 
 **Files:** new `src/app/roster-json-export.ts` (suggested), admin UI handler, [`docs/IMPORT_SCHEMA.md`](IMPORT_SCHEMA.md).
 
-###### Task E17.S1.F1.T1: Implement `exportRosterJson()` from Dexie users store — [ ]
+###### Task E17.S1.F1.T1: Implement `exportRosterJson()` from Dexie users store — [x]
 
 - **Preconditions:** none
 - **Steps:** Serialize users + embeddings per schema; redact secrets none.
 - **Acceptance test:** Unit test round-trip import → export → structural equality (golden).
 - **SPEC cite:** L98–L98.
 
-###### Task E17.S1.F1.T2: Add Admin UI control “Export roster JSON” — [ ]
+###### Task E17.S1.F1.T2: Add Admin UI control “Export roster JSON” — [x]
 
 - **Preconditions:** E17.S1.F1.T1 done
 - **Steps:** Button triggers download blob; filename dated.
 - **Acceptance test:** Playwright or manual checklist entry in DEMO.
 - **SPEC cite:** L98.
 
-###### Task E17.S1.F1.T3: Document export in IMPORT_SCHEMA + README link — [ ]
+###### Task E17.S1.F1.T3: Document export in IMPORT_SCHEMA + README link — [x]
 
 - **Preconditions:** E17.S1.F1.T2 done
 - **Steps:** Add subsection “Export format” mirroring import.
@@ -772,7 +772,7 @@ Update the `(x/y tasks)` counts when Tasks flip to `- [x]`.
 | E14 | Decision UI + threshold semantics | - [x] (4/4 tasks) |
 | E15 | Multi-face overlay | - [x] (2/2 tasks) |
 | E16 | Measured compliance | - [ ] (8/9 tasks) |
-| E17 | Roster JSON export | - [ ] (0/3 tasks) |
+| E17 | Roster JSON export | - [x] (3/3 tasks) |
 | E18 | AI + production cost docs | - [ ] (0/3 tasks) |
 | E19 | Submission closure | - [ ] (0/4 tasks) |
 | E20 | Exceed (optional) | - [ ] (0/6 tasks, skip unless selected) |

@@ -26,7 +26,7 @@ export type AdminEnrollmentCaptureMount = Pick<
 /** CSV import toolbar wiring. */
 export type AdminEnrollmentImportDomPort = Pick<
   AdminEnrollmentDom,
-  'importFileInput' | 'importButton' | 'importStatusEl'
+  'importFileInput' | 'importButton' | 'exportButton' | 'importStatusEl'
 >;
 
 /** User roster table body. */
