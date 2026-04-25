@@ -129,6 +129,107 @@ export interface Config {
   };
 }
 
+export type CameraConfig = Config['camera'];
+export type ThresholdConfig = Config['thresholds'];
+export type UiStringsConfig = Config['ui']['strings'];
+
+export const DEFAULT_CAMERA_CONFIG: CameraConfig = {
+  idealWidth: 1280,
+  idealHeight: 720,
+  defaultFacingMode: 'user',
+};
+
+export const DEFAULT_THRESHOLD_CONFIG: ThresholdConfig = {
+  strong: 0.85,
+  weak: 0.65,
+  unknown: 0.65,
+  margin: 0.05,
+};
+
+export const DEFAULT_UI_STRINGS: UiStringsConfig = {
+  unknown: 'Unknown',
+  noFace: 'No face detected',
+  multiFace: 'Multiple faces detected. Please ensure only one person is in frame.',
+  cameraPermissionDenied:
+    'Camera access is required. Allow the camera in your browser settings, then try again.',
+  cameraNoDevice: 'No camera was found. Connect a camera and refresh the page.',
+  cameraUnknownError: 'The camera could not be started. Try again or use a different browser.',
+  cameraStart: 'Start camera',
+  cameraStop: 'Stop camera',
+  detectorLoading: 'Loading face detector…',
+  detectorLoadFailed: 'Models could not load. Check your connection and use Retry, or reload the page.',
+  modelLoadStageDetector: 'Detector',
+  modelLoadStageEmbedder: 'Embedder',
+  modelLoadRetry: 'Retry',
+  adminLoginHeading: 'Admin sign-in',
+  adminLoginUsername: 'Username',
+  adminLoginPassword: 'Password',
+  adminLoginSubmit: 'Sign in',
+  adminLoginError: 'Invalid username or password.',
+  adminLogout: 'Sign out',
+  rosterTitle: 'Enrolled users',
+  rosterColPhoto: 'Photo',
+  rosterColName: 'Name',
+  rosterColRole: 'Role',
+  rosterColCreated: 'Added',
+  rosterColActions: 'Actions',
+  rosterEdit: 'Edit',
+  rosterDelete: 'Delete',
+  rosterThumbnailAlt: 'Reference face',
+  rosterBulkImport: 'Import JSON',
+  rosterImportPick: 'Choose JSON file…',
+  rosterImportConfirmDuplicates: 'Duplicate names found. Import anyway?',
+  rosterImportProgress: 'Importing {current} / {total}…',
+  rosterImportDone: 'Import finished.',
+  rosterDeleteConfirm: 'Delete this user? Their log entries will show as Unknown.',
+  enrollTitle: 'Enroll a user',
+  enrollStartCamera: 'Start camera',
+  enrollCapture: 'Capture',
+  enrollRetake: 'Retake',
+  enrollSave: 'Save',
+  enrollNameLabel: 'Name',
+  enrollRoleLabel: 'Role',
+  enrollRolePlaceholder: 'Select a role…',
+  enrollRoleRequired: 'Role is required.',
+  enrollRoleLegacySuffix: ' (legacy)',
+  enrollSuccess: 'User saved.',
+  enrollNameRequired: 'Name is required.',
+  accessGrantedBanner: '{name} — {similarity}%',
+  accessDeniedBanner: '{unknown} — {similarity}%',
+  accessTryAgain: 'Please try again',
+  consentTitle: 'Face verification',
+  consentIntro: 'Before we use your camera, please confirm you understand the following:',
+  consentBulletPurpose:
+    'Live video is processed in your browser to verify identity for access control. Nothing is sent to our servers for recognition.',
+  consentBulletStored:
+    'Embeddings and a reference face image are stored only in this browser (IndexedDB). They can be inspected with developer tools on this device.',
+  consentBulletRetention:
+    'Data remains until an administrator deletes your enrollment from this deployment.',
+  consentBulletRefuse:
+    'You may refuse by closing this tab; the camera will not start without your consent.',
+  consentAccept: 'I understand — continue',
+  consentDecline: 'Decline',
+  logExportCsv: 'Export CSV',
+  cameraSelectAriaLabel: 'Camera for verification',
+  cameraDefaultDeviceOption: 'Default',
+  cameraUnnamedFormat: 'Camera {n}',
+  adminAccessThresholdsTitle: 'Match thresholds',
+  adminAccessThresholdsStatus: 'strong={strong} · weak={weak} · margin={margin}',
+  adminAccessThresholdsApplySpec075: 'Apply SPECS 0.75 strong floor',
+};
+
+export function createCameraConfig(overrides: Partial<CameraConfig> = {}): CameraConfig {
+  return { ...DEFAULT_CAMERA_CONFIG, ...overrides };
+}
+
+export function createThresholdConfig(overrides: Partial<ThresholdConfig> = {}): ThresholdConfig {
+  return { ...DEFAULT_THRESHOLD_CONFIG, ...overrides };
+}
+
+export function createUiStrings(overrides: Partial<UiStringsConfig> = {}): UiStringsConfig {
+  return { ...DEFAULT_UI_STRINGS, ...overrides };
+}
+
 function resolveAdminCredentials(): Pick<Config, 'adminCredentialSource' | 'admin'> {
   const user = import.meta.env.VITE_ADMIN_USER as string | undefined;
   const pass = import.meta.env.VITE_ADMIN_PASS as string | undefined;
@@ -146,23 +247,14 @@ function resolveAdminCredentials(): Pick<Config, 'adminCredentialSource' | 'admi
 const { adminCredentialSource, admin } = resolveAdminCredentials();
 
 export const config: Config = {
-  camera: {
-    idealWidth: 1280,
-    idealHeight: 720,
-    defaultFacingMode: 'user',
-  },
+  camera: createCameraConfig(),
   org: {
     name: 'Gatekeeper',
     logoUrl: '',
     tagline:
       'A browser-only facial-recognition “door” that verifies who is at the camera and grants or denies entry without sending video to a server or requiring dedicated hardware.',
   },
-  thresholds: {
-    strong: 0.85,
-    weak: 0.65,
-    unknown: 0.65,
-    margin: 0.05,
-  },
+  thresholds: createThresholdConfig(),
   cooldownMs: 3000,
   modelUrls: {
     /** YOLOv8n single-class face, `images` + `output0` [1,5,8400] (E13). */
@@ -176,78 +268,7 @@ export const config: Config = {
   devLogEmbeddingTimings: import.meta.env.VITE_LOG_EMBEDDING_TIMINGS === 'true',
   audioEnabled: true,
   ui: {
-    strings: {
-      unknown: 'Unknown',
-      noFace: 'No face detected',
-      multiFace: 'Multiple faces detected. Please ensure only one person is in frame.',
-      cameraPermissionDenied:
-        'Camera access is required. Allow the camera in your browser settings, then try again.',
-      cameraNoDevice: 'No camera was found. Connect a camera and refresh the page.',
-      cameraUnknownError: 'The camera could not be started. Try again or use a different browser.',
-      cameraStart: 'Start camera',
-      cameraStop: 'Stop camera',
-      detectorLoading: 'Loading face detector…',
-      detectorLoadFailed:
-        'Models could not load. Check your connection and use Retry, or reload the page.',
-      modelLoadStageDetector: 'Detector',
-      modelLoadStageEmbedder: 'Embedder',
-      modelLoadRetry: 'Retry',
-      adminLoginHeading: 'Admin sign-in',
-      adminLoginUsername: 'Username',
-      adminLoginPassword: 'Password',
-      adminLoginSubmit: 'Sign in',
-      adminLoginError: 'Invalid username or password.',
-      adminLogout: 'Sign out',
-      rosterTitle: 'Enrolled users',
-      rosterColPhoto: 'Photo',
-      rosterColName: 'Name',
-      rosterColRole: 'Role',
-      rosterColCreated: 'Added',
-      rosterColActions: 'Actions',
-      rosterEdit: 'Edit',
-      rosterDelete: 'Delete',
-      rosterThumbnailAlt: 'Reference face',
-      rosterBulkImport: 'Import JSON',
-      rosterImportPick: 'Choose JSON file…',
-      rosterImportConfirmDuplicates: 'Duplicate names found. Import anyway?',
-      rosterImportProgress: 'Importing {current} / {total}…',
-      rosterImportDone: 'Import finished.',
-      rosterDeleteConfirm: 'Delete this user? Their log entries will show as Unknown.',
-      enrollTitle: 'Enroll a user',
-      enrollStartCamera: 'Start camera',
-      enrollCapture: 'Capture',
-      enrollRetake: 'Retake',
-      enrollSave: 'Save',
-      enrollNameLabel: 'Name',
-      enrollRoleLabel: 'Role',
-      enrollRolePlaceholder: 'Select a role…',
-      enrollRoleRequired: 'Role is required.',
-      enrollRoleLegacySuffix: ' (legacy)',
-      enrollSuccess: 'User saved.',
-      enrollNameRequired: 'Name is required.',
-      accessGrantedBanner: '{name} — {similarity}%',
-      accessDeniedBanner: '{unknown} — {similarity}%',
-      accessTryAgain: 'Please try again',
-      consentTitle: 'Face verification',
-      consentIntro: 'Before we use your camera, please confirm you understand the following:',
-      consentBulletPurpose:
-        'Live video is processed in your browser to verify identity for access control. Nothing is sent to our servers for recognition.',
-      consentBulletStored:
-        'Embeddings and a reference face image are stored only in this browser (IndexedDB). They can be inspected with developer tools on this device.',
-      consentBulletRetention:
-        'Data remains until an administrator deletes your enrollment from this deployment.',
-      consentBulletRefuse:
-        'You may refuse by closing this tab; the camera will not start without your consent.',
-      consentAccept: 'I understand — continue',
-      consentDecline: 'Decline',
-      logExportCsv: 'Export CSV',
-      cameraSelectAriaLabel: 'Camera for verification',
-      cameraDefaultDeviceOption: 'Default',
-      cameraUnnamedFormat: 'Camera {n}',
-      adminAccessThresholdsTitle: 'Match thresholds',
-      adminAccessThresholdsStatus: 'strong={strong} · weak={weak} · margin={margin}',
-      adminAccessThresholdsApplySpec075: 'Apply SPECS 0.75 strong floor',
-    },
+    strings: createUiStrings(),
   },
 };
 
