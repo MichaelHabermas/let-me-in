@@ -1,6 +1,16 @@
 import { applySpec075StrongPreset, readAccessThresholds } from './admin-threshold-preset';
+import {
+  renderAdminCalibrationExplainability,
+  type CalibrationExplainabilityDom,
+} from './admin-calibration-explainability-ui';
 import { createAccessLogReviewService } from './access-log-review-service';
-import { readThresholdCalibrationMeta } from './access-threshold-calibration';
+import {
+  applyThresholdCalibrationShadow,
+  clearThresholdCalibrationShadow,
+  readThresholdCalibrationMeta,
+  readThresholdCalibrationShadow,
+  runAutomaticThresholdCalibration,
+} from './access-threshold-calibration';
 import type { AccessThresholds } from '../domain/access-policy';
 import type { AccessLogRow, DexiePersistence, ReviewedDecision } from '../infra/persistence';
 import type { GateRuntime } from './gate-runtime';
@@ -9,6 +19,17 @@ type ThresholdDom = {
   thresholdStatusEl: HTMLElement;
   thresholdCalibrationStatusEl: HTMLElement;
   thresholdApplySpec075Btn: HTMLButtonElement;
+  calibrationExplainSummaryEl: HTMLElement;
+  calibrationExplainSamplesEl: HTMLElement;
+  calibrationExplainDeltasEl: HTMLElement;
+  calibrationExplainProjectionEl: HTMLElement;
+  calibrationShadowSummaryEl: HTMLElement;
+  calibrationShadowSamplesEl: HTMLElement;
+  calibrationShadowDeltasEl: HTMLElement;
+  calibrationShadowProjectionEl: HTMLElement;
+  calibrationShadowPreviewBtn: HTMLButtonElement;
+  calibrationShadowApplyBtn: HTMLButtonElement;
+  calibrationShadowDismissBtn: HTMLButtonElement;
   reviewQueueTbody: HTMLTableSectionElement;
   reviewQueueRefreshBtn: HTMLButtonElement;
   reviewQueueStatusEl: HTMLElement;
@@ -39,6 +60,100 @@ function formatTimestamp(ts: number): string {
   } catch {
     return String(ts);
   }
+}
+
+function toCalibrationExplainabilityDom(dom: ThresholdDom): CalibrationExplainabilityDom {
+  return {
+    calibrationExplainSummaryEl: dom.calibrationExplainSummaryEl,
+    calibrationExplainSamplesEl: dom.calibrationExplainSamplesEl,
+    calibrationExplainDeltasEl: dom.calibrationExplainDeltasEl,
+    calibrationExplainProjectionEl: dom.calibrationExplainProjectionEl,
+    calibrationShadowSummaryEl: dom.calibrationShadowSummaryEl,
+    calibrationShadowSamplesEl: dom.calibrationShadowSamplesEl,
+    calibrationShadowDeltasEl: dom.calibrationShadowDeltasEl,
+    calibrationShadowProjectionEl: dom.calibrationShadowProjectionEl,
+    calibrationShadowApplyBtn: dom.calibrationShadowApplyBtn,
+  };
+}
+
+async function doThresholdPanelRefresh(p: {
+  dom: ThresholdDom;
+  template: string;
+  persistence: DexiePersistence;
+  rt: GateRuntime;
+  reviewService: ReturnType<typeof createAccessLogReviewService>;
+  signal: AbortSignal;
+  onAfterReview: () => Promise<void>;
+}): Promise<void> {
+  const [t, meta, shadow] = await Promise.all([
+    readAccessThresholds(p.persistence, p.rt.databaseSeedSettings),
+    readThresholdCalibrationMeta(p.persistence.settingsRepo),
+    readThresholdCalibrationShadow(p.persistence.settingsRepo),
+  ]);
+  p.dom.thresholdStatusEl.textContent = formatThresholdStatus(t, p.template);
+  p.dom.thresholdCalibrationStatusEl.textContent = formatCalibrationStatus(meta, Date.now());
+  renderAdminCalibrationExplainability(toCalibrationExplainabilityDom(p.dom), meta, shadow);
+  try {
+    const reviewRows = await p.reviewService.listCandidates(8);
+    renderReviewQueueRows({
+      rows: reviewRows,
+      tbody: p.dom.reviewQueueTbody,
+      signal: p.signal,
+      onReview: (timestamp, reviewedDecision) => {
+        void (async () => {
+          await p.reviewService.setReviewedDecision({ timestamp, reviewedDecision });
+          await p.onAfterReview();
+        })();
+      },
+    });
+    p.dom.reviewQueueStatusEl.textContent = `Review queue: ${reviewRows.length} pending`;
+  } catch {
+    p.dom.reviewQueueTbody.replaceChildren();
+    p.dom.reviewQueueStatusEl.textContent = 'Review queue unavailable.';
+  }
+}
+
+function bindShadowCalibrationControls(
+  dom: ThresholdDom,
+  persistence: DexiePersistence,
+  rt: GateRuntime,
+  signal: AbortSignal,
+  refresh: () => Promise<void>,
+): void {
+  dom.calibrationShadowPreviewBtn.addEventListener(
+    'click',
+    () => {
+      void (async () => {
+        await runAutomaticThresholdCalibration({
+          persistence,
+          seedFallback: rt.databaseSeedSettings,
+          applyThresholds: false,
+        });
+        await refresh();
+      })();
+    },
+    { signal },
+  );
+  dom.calibrationShadowApplyBtn.addEventListener(
+    'click',
+    () => {
+      void (async () => {
+        await applyThresholdCalibrationShadow(persistence);
+        await refresh();
+      })();
+    },
+    { signal },
+  );
+  dom.calibrationShadowDismissBtn.addEventListener(
+    'click',
+    () => {
+      void (async () => {
+        await clearThresholdCalibrationShadow(persistence.settingsRepo);
+        await refresh();
+      })();
+    },
+    { signal },
+  );
 }
 
 function renderReviewQueueRows(params: {
@@ -92,32 +207,16 @@ export function bindAdminEnrollmentThresholdController(
 ): void {
   const template = rt.runtimeSlices.admin.ui.adminAccessThresholdsStatus;
   const reviewService = createAccessLogReviewService(persistence);
-
   const refresh = async (): Promise<void> => {
-    const [t, meta] = await Promise.all([
-      readAccessThresholds(persistence, rt.databaseSeedSettings),
-      readThresholdCalibrationMeta(persistence.settingsRepo),
-    ]);
-    dom.thresholdStatusEl.textContent = formatThresholdStatus(t, template);
-    dom.thresholdCalibrationStatusEl.textContent = formatCalibrationStatus(meta, Date.now());
-    try {
-      const reviewRows = await reviewService.listCandidates(8);
-      renderReviewQueueRows({
-        rows: reviewRows,
-        tbody: dom.reviewQueueTbody,
-        signal,
-        onReview: (timestamp, reviewedDecision) => {
-          void (async () => {
-            await reviewService.setReviewedDecision({ timestamp, reviewedDecision });
-            await refresh();
-          })();
-        },
-      });
-      dom.reviewQueueStatusEl.textContent = `Review queue: ${reviewRows.length} pending`;
-    } catch {
-      dom.reviewQueueTbody.replaceChildren();
-      dom.reviewQueueStatusEl.textContent = 'Review queue unavailable.';
-    }
+    await doThresholdPanelRefresh({
+      dom,
+      template,
+      persistence,
+      rt,
+      reviewService,
+      signal,
+      onAfterReview: refresh,
+    });
   };
 
   dom.thresholdApplySpec075Btn.addEventListener(
@@ -137,6 +236,8 @@ export function bindAdminEnrollmentThresholdController(
     },
     { signal },
   );
+
+  bindShadowCalibrationControls(dom, persistence, rt, signal, () => refresh());
 
   void refresh();
 }

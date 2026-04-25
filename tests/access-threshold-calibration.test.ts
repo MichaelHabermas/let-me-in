@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   THRESHOLD_CALIBRATION_META_KEY,
+  THRESHOLD_CALIBRATION_SHADOW_KEY,
   runAutomaticThresholdCalibration,
 } from '../src/app/access-threshold-calibration';
 import { createDexiePersistence } from '../src/infra/persistence';
@@ -37,6 +38,7 @@ describe('runAutomaticThresholdCalibration', () => {
     });
     expect(result.applied).toBe(false);
     expect(result.meta.reason).toBe('skipped_insufficient_data');
+    expect(result.meta.explainability).toBeUndefined();
   });
 
   it('applies bounded threshold updates and persists metadata', async () => {
@@ -88,6 +90,67 @@ describe('runAutomaticThresholdCalibration', () => {
       rawSamplesUsed: 24,
     });
     expect(result.meta.maxDriftApplied).toBeLessThanOrEqual(0.01);
+    expect(result.meta.explainability).toBeDefined();
+    expect(result.meta.explainability).toMatchObject({
+      deniedP95: expect.any(Number),
+      grantedP10: expect.any(Number),
+      projectedFalseGrantBefore: expect.any(Number),
+      projectedFalseGrantAfter: expect.any(Number),
+      projectedFalseDenyBefore: expect.any(Number),
+      projectedFalseDenyAfter: expect.any(Number),
+    });
+  });
+
+  it('shadow mode stores preview without changing live thresholds or live meta', async () => {
+    const persistence = createDexiePersistence(dbName);
+    const rt = createTestGateRuntime();
+    await persistence.initDatabase(rt.databaseSeedSettings);
+    let ts = 10_000;
+    for (let i = 0; i < 12; i += 1) {
+      await persistence.accessLogRepo.appendDecision({
+        userId: `g-${i}`,
+        similarity01: 0.9 + i * 0.001,
+        decision: 'GRANTED',
+        capturedFrameBlob: new Blob(),
+        timestamp: ts++,
+      });
+    }
+    for (let i = 0; i < 12; i += 1) {
+      await persistence.accessLogRepo.appendDecision({
+        userId: null,
+        similarity01: 0.55 + i * 0.001,
+        decision: 'DENIED',
+        capturedFrameBlob: new Blob(),
+        timestamp: ts++,
+      });
+    }
+
+    const before = await persistence.settingsRepo.get('thresholds');
+    const beforeMeta = await persistence.settingsRepo.get(THRESHOLD_CALIBRATION_META_KEY);
+    const result = await runAutomaticThresholdCalibration({
+      persistence,
+      seedFallback: rt.databaseSeedSettings,
+      nowMs: ts + 10,
+      applyThresholds: false,
+      options: {
+        minSamples: 20,
+        minGrantedSamples: 6,
+        minDeniedSamples: 6,
+        lookbackWindowMs: 100_000,
+        maxDriftPerRun: 0.01,
+      },
+    });
+    const after = await persistence.settingsRepo.get('thresholds');
+    const liveMetaAfter = await persistence.settingsRepo.get(THRESHOLD_CALIBRATION_META_KEY);
+    const shadow = await persistence.settingsRepo.get(THRESHOLD_CALIBRATION_SHADOW_KEY);
+
+    expect(after?.value).toEqual(before?.value);
+    expect(liveMetaAfter?.value).toEqual(beforeMeta?.value);
+    expect(result.applied).toBe(false);
+    expect(result.meta.reason).toBe('applied');
+    expect(shadow?.value).toMatchObject({
+      meta: { reason: 'applied', sampleCount: 24 },
+    });
   });
 
   it('prioritizes reviewed decisions when collecting calibration samples', async () => {

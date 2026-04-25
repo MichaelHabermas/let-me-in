@@ -85,6 +85,15 @@ class GatekeeperDB extends Dexie {
 
 type EnsureDbReady = () => Promise<void>;
 
+const REVIEW_QUEUE_DEFAULT_LIMIT = 20;
+const REVIEW_QUEUE_MIN_DENIED_SIM = 0.7;
+
+function isAccessLogReviewCandidate(row: AccessLogRow, minDeniedSimilarity01: number): boolean {
+  if (row.reviewedDecision) return false;
+  if (row.decision === 'UNCERTAIN') return true;
+  return row.decision === 'DENIED' && row.similarity01 >= minDeniedSimilarity01;
+}
+
 async function seedSettingsIfEmpty(db: GatekeeperDB, seed: DatabaseSeedSettings): Promise<void> {
   const n = await db.settings.count();
   if (n > 0) return;
@@ -125,16 +134,39 @@ function makeUsersRepo(db: GatekeeperDB, ensureDbReady: EnsureDbReady) {
   };
 }
 
-function makeAccessLogRepo(db: GatekeeperDB, ensureDbReady: EnsureDbReady) {
-  const DEFAULT_REVIEW_LIMIT = 20;
-  const DEFAULT_MIN_DENIED_SIMILARITY = 0.7;
-
-  function isReviewCandidate(row: AccessLogRow, minDeniedSimilarity01: number): boolean {
-    if (row.reviewedDecision) return false;
-    if (row.decision === 'UNCERTAIN') return true;
-    return row.decision === 'DENIED' && row.similarity01 >= minDeniedSimilarity01;
+async function accessLogAppendDecision(
+  db: GatekeeperDB,
+  ensureDbReady: EnsureDbReady,
+  payload: {
+    userId: string | null;
+    similarity01: number;
+    decision: Decision;
+    capturedFrameBlob: Blob;
+    timestamp?: number;
+  },
+): Promise<void> {
+  await ensureDbReady();
+  let timestamp = payload.timestamp ?? Date.now();
+  while (await db.accessLog.get(timestamp)) {
+    timestamp += 1;
   }
+  const row: AccessLogRow = {
+    timestamp,
+    userId: payload.userId,
+    similarity01: payload.similarity01,
+    decision: payload.decision,
+    capturedFrameBlob: payload.capturedFrameBlob,
+  };
+  await db.accessLog.put(row);
+}
 
+function makeAccessLogCrud(
+  db: GatekeeperDB,
+  ensureDbReady: EnsureDbReady,
+): Pick<
+  AccessLogStore,
+  'put' | 'get' | 'delete' | 'toArray' | 'whereTimestampBetween' | 'appendDecision'
+> {
   return {
     async put(row: AccessLogRow): Promise<number> {
       await ensureDbReady();
@@ -156,27 +188,17 @@ function makeAccessLogRepo(db: GatekeeperDB, ensureDbReady: EnsureDbReady) {
       await ensureDbReady();
       return db.accessLog.where('timestamp').between(fromMs, toMs, true, true).toArray();
     },
-    async appendDecision(payload: {
-      userId: string | null;
-      similarity01: number;
-      decision: Decision;
-      capturedFrameBlob: Blob;
-      timestamp?: number;
-    }): Promise<void> {
-      await ensureDbReady();
-      let timestamp = payload.timestamp ?? Date.now();
-      while (await db.accessLog.get(timestamp)) {
-        timestamp += 1;
-      }
-      const row: AccessLogRow = {
-        timestamp,
-        userId: payload.userId,
-        similarity01: payload.similarity01,
-        decision: payload.decision,
-        capturedFrameBlob: payload.capturedFrameBlob,
-      };
-      await db.accessLog.put(row);
+    async appendDecision(payload) {
+      await accessLogAppendDecision(db, ensureDbReady, payload);
     },
+  };
+}
+
+function makeAccessLogReview(
+  db: GatekeeperDB,
+  ensureDbReady: EnsureDbReady,
+): Pick<AccessLogStore, 'setReviewDecision' | 'listReviewCandidates'> {
+  return {
     async setReviewDecision(payload: {
       timestamp: number;
       reviewedDecision: ReviewedDecision;
@@ -195,16 +217,20 @@ function makeAccessLogRepo(db: GatekeeperDB, ensureDbReady: EnsureDbReady) {
       minDeniedSimilarity01?: number;
     }): Promise<AccessLogRow[]> {
       await ensureDbReady();
-      const limit = options?.limit ?? DEFAULT_REVIEW_LIMIT;
-      const minDeniedSimilarity01 = options?.minDeniedSimilarity01 ?? DEFAULT_MIN_DENIED_SIMILARITY;
+      const limit = options?.limit ?? REVIEW_QUEUE_DEFAULT_LIMIT;
+      const minDeniedSimilarity01 = options?.minDeniedSimilarity01 ?? REVIEW_QUEUE_MIN_DENIED_SIM;
       return db.accessLog
         .orderBy('timestamp')
         .reverse()
-        .filter((row) => isReviewCandidate(row, minDeniedSimilarity01))
+        .filter((row) => isAccessLogReviewCandidate(row, minDeniedSimilarity01))
         .limit(limit)
         .toArray();
     },
   };
+}
+
+function makeAccessLogRepo(db: GatekeeperDB, ensureDbReady: EnsureDbReady): AccessLogStore {
+  return { ...makeAccessLogCrud(db, ensureDbReady), ...makeAccessLogReview(db, ensureDbReady) };
 }
 
 function makeSettingsRepo(db: GatekeeperDB, ensureDbReady: EnsureDbReady) {

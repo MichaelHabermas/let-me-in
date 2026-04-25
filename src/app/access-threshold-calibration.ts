@@ -1,40 +1,39 @@
 import type { AccessThresholds } from '../domain/access-policy';
 import type { DatabaseSeedSettings } from '../domain/database-seed';
 import { collectCalibrationSamples } from '../domain/access-log-review';
+import type { AccessLogRow } from '../domain/types';
+import type { CalibrationExplainability } from '../domain/threshold-calibration-explain';
+import {
+  buildMetaApplied,
+  buildMetaIbalanced,
+  buildMetaNoChange,
+  buildMetaInsufficient,
+  thresholdsUnchanged,
+} from './access-threshold-calibration-meta';
+import {
+  deriveCandidateThresholds,
+  type DriftTuningOptions,
+  maybeExplainability,
+} from './access-threshold-calibration-math';
+import {
+  type ThresholdCalibrationMeta,
+  type ThresholdCalibrationOptions,
+  type ThresholdCalibrationShadow,
+  THRESHOLD_CALIBRATION_META_KEY,
+  THRESHOLD_CALIBRATION_SHADOW_KEY,
+} from './access-threshold-calibration-types';
 import type { DexiePersistence, SettingsStore } from '../infra/persistence';
 import {
   readAccessThresholdsFromSettings,
   writeAccessThresholdsToSettings,
 } from './access-thresholds-store';
 
-export const THRESHOLD_CALIBRATION_META_KEY = 'thresholdCalibrationMeta';
-
-export type ThresholdCalibrationMeta = {
-  lastRunAtMs: number;
-  reason:
-    | 'applied'
-    | 'skipped_insufficient_data'
-    | 'skipped_imbalanced_labels'
-    | 'skipped_no_change';
-  sampleCount: number;
-  previous: AccessThresholds | null;
-  next: AccessThresholds | null;
-  maxDriftApplied: number;
-  reviewedSamplesUsed: number;
-  rawSamplesUsed: number;
-};
-
-export type ThresholdCalibrationOptions = {
-  lookbackWindowMs?: number;
-  minSamples?: number;
-  minGrantedSamples?: number;
-  minDeniedSamples?: number;
-  maxDriftPerRun?: number;
-  minGap?: number;
-  minWeak?: number;
-  maxStrong?: number;
-  minMargin?: number;
-  maxMargin?: number;
+export {
+  THRESHOLD_CALIBRATION_META_KEY,
+  THRESHOLD_CALIBRATION_SHADOW_KEY,
+  type ThresholdCalibrationMeta,
+  type ThresholdCalibrationShadow,
+  type ThresholdCalibrationOptions,
 };
 
 const DEFAULTS: Required<ThresholdCalibrationOptions> = {
@@ -50,50 +49,18 @@ const DEFAULTS: Required<ThresholdCalibrationOptions> = {
   maxMargin: 0.12,
 };
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
+function toDriftOpts(o: Required<ThresholdCalibrationOptions>): DriftTuningOptions {
+  return {
+    minGap: o.minGap,
+    minWeak: o.minWeak,
+    maxStrong: o.maxStrong,
+    maxDriftPerRun: o.maxDriftPerRun,
+    minMargin: o.minMargin,
+    maxMargin: o.maxMargin,
+  };
 }
 
-function percentile(values: number[], p: number): number {
-  const sorted = [...values].sort((a, b) => a - b);
-  if (sorted.length === 0) return 0;
-  const idx = (sorted.length - 1) * p;
-  const lo = Math.floor(idx);
-  const hi = Math.ceil(idx);
-  if (lo === hi) return sorted[lo] ?? 0;
-  const low = sorted[lo] ?? 0;
-  const high = sorted[hi] ?? low;
-  return low + (high - low) * (idx - lo);
-}
-
-function round4(value: number): number {
-  return Number(value.toFixed(4));
-}
-
-function clampDrift(next: number, current: number, maxDrift: number): number {
-  return clamp(next, current - maxDrift, current + maxDrift);
-}
-
-function deriveCandidateThresholds(
-  current: AccessThresholds,
-  grantedScores: number[],
-  deniedScores: number[],
-  opts: Required<ThresholdCalibrationOptions>,
-): AccessThresholds {
-  const weakFromDenied = percentile(deniedScores, 0.95);
-  const strongFromGranted = percentile(grantedScores, 0.1);
-  const nextWeakPre = clamp(weakFromDenied, opts.minWeak, opts.maxStrong - opts.minGap);
-  const nextStrongPre = clamp(strongFromGranted, nextWeakPre + opts.minGap, opts.maxStrong);
-  const nextWeak = clampDrift(nextWeakPre, current.weak, opts.maxDriftPerRun);
-  const nextStrong = clampDrift(nextStrongPre, current.strong, opts.maxDriftPerRun);
-  const strong = clamp(round4(nextStrong), nextWeak + opts.minGap, opts.maxStrong);
-  const weak = clamp(round4(nextWeak), opts.minWeak, strong - opts.minGap);
-  const candidateMargin = clamp((strong - weak) * 0.5, opts.minMargin, opts.maxMargin);
-  const margin = round4(clampDrift(candidateMargin, current.margin, opts.maxDriftPerRun));
-  return { strong: round4(strong), weak: round4(weak), unknown: round4(weak), margin };
-}
-
-async function writeCalibrationMeta(
+async function writeLiveCalibrationMeta(
   settingsRepo: SettingsStore,
   meta: ThresholdCalibrationMeta,
 ): Promise<void> {
@@ -108,14 +75,137 @@ export async function readThresholdCalibrationMeta(
   return row.value as ThresholdCalibrationMeta;
 }
 
+export async function readThresholdCalibrationShadow(
+  settingsRepo: SettingsStore,
+): Promise<ThresholdCalibrationShadow | null> {
+  const row = await settingsRepo.get(THRESHOLD_CALIBRATION_SHADOW_KEY);
+  if (!row?.value || typeof row.value !== 'object') return null;
+  return row.value as ThresholdCalibrationShadow;
+}
+
+async function writeShadowCalibration(
+  settingsRepo: SettingsStore,
+  shadow: ThresholdCalibrationShadow,
+): Promise<void> {
+  await settingsRepo.put({ key: THRESHOLD_CALIBRATION_SHADOW_KEY, value: shadow });
+}
+
+export async function clearThresholdCalibrationShadow(settingsRepo: SettingsStore): Promise<void> {
+  await settingsRepo.delete(THRESHOLD_CALIBRATION_SHADOW_KEY);
+}
+
+async function persistCalibrationResult(
+  settingsRepo: SettingsStore,
+  apply: boolean,
+  meta: ThresholdCalibrationMeta,
+): Promise<void> {
+  if (apply) {
+    await writeLiveCalibrationMeta(settingsRepo, meta);
+  } else {
+    await writeShadowCalibration(settingsRepo, { previewedAtMs: meta.lastRunAtMs, meta });
+  }
+}
+
+async function persistNewCandidateThresholds(p: {
+  settingsRepo: SettingsStore;
+  persistence: DexiePersistence;
+  nowMs: number;
+  apply: boolean;
+  current: AccessThresholds;
+  next: AccessThresholds;
+  samples: ReturnType<typeof collectCalibrationSamples>;
+  logCount: number;
+  explainability: CalibrationExplainability | undefined;
+}): Promise<{ applied: boolean; meta: ThresholdCalibrationMeta }> {
+  if (p.apply) {
+    await writeAccessThresholdsToSettings(p.persistence.settingsRepo, p.next);
+  }
+  const maxDr = Math.max(
+    Math.abs(p.next.strong - p.current.strong),
+    Math.abs(p.next.weak - p.current.weak),
+    Math.abs(p.next.margin - p.current.margin),
+  );
+  const meta = buildMetaApplied(
+    { nowMs: p.nowMs, current: p.current, next: p.next, samples: p.samples },
+    p.logCount,
+    maxDr,
+    p.explainability,
+  );
+  if (p.apply) {
+    await writeLiveCalibrationMeta(p.settingsRepo, meta);
+    await clearThresholdCalibrationShadow(p.settingsRepo);
+  } else {
+    await writeShadowCalibration(p.settingsRepo, { previewedAtMs: p.nowMs, meta });
+  }
+  return { applied: p.apply, meta };
+}
+
+async function runAfterSampleGate(params: {
+  settingsRepo: SettingsStore;
+  persistence: DexiePersistence;
+  nowMs: number;
+  apply: boolean;
+  opts: Required<ThresholdCalibrationOptions>;
+  current: AccessThresholds;
+  logs: AccessLogRow[];
+}): Promise<{ applied: boolean; meta: ThresholdCalibrationMeta }> {
+  const { settingsRepo, persistence, nowMs, apply, opts, current, logs } = params;
+  const samples = collectCalibrationSamples(logs);
+  const { grantedScores, deniedScores } = samples;
+  if (
+    grantedScores.length < opts.minGrantedSamples ||
+    deniedScores.length < opts.minDeniedSamples
+  ) {
+    const explainability = maybeExplainability({
+      grantedScores,
+      deniedScores,
+      previous: current,
+      next: null,
+    });
+    const meta = buildMetaIbalanced({ nowMs, current, samples }, logs.length, explainability);
+    await persistCalibrationResult(settingsRepo, apply, meta);
+    return { applied: false, meta };
+  }
+  const next = deriveCandidateThresholds(current, grantedScores, deniedScores, toDriftOpts(opts));
+  const explainability = maybeExplainability({
+    grantedScores,
+    deniedScores,
+    previous: current,
+    next,
+  });
+  if (thresholdsUnchanged(next, current)) {
+    const meta = buildMetaNoChange({ nowMs, current, next, samples }, logs.length, explainability);
+    await persistCalibrationResult(settingsRepo, apply, meta);
+    return { applied: false, meta };
+  }
+  return persistNewCandidateThresholds({
+    settingsRepo,
+    persistence,
+    nowMs,
+    apply,
+    current,
+    next,
+    samples,
+    logCount: logs.length,
+    explainability,
+  });
+}
+
+/**
+ * @param applyThresholds When false, shadow mode: do not change persisted thresholds or live
+ *   calibration meta; only write `thresholdCalibrationShadow` for admin preview.
+ */
 export async function runAutomaticThresholdCalibration(params: {
   persistence: DexiePersistence;
   seedFallback: DatabaseSeedSettings;
   nowMs?: number;
   options?: ThresholdCalibrationOptions;
+  applyThresholds?: boolean;
 }): Promise<{ applied: boolean; meta: ThresholdCalibrationMeta }> {
   const nowMs = params.nowMs ?? Date.now();
   const opts = { ...DEFAULTS, ...(params.options ?? {}) };
+  const apply = params.applyThresholds !== false;
+  const { settingsRepo } = params.persistence;
   const current = await readAccessThresholdsFromSettings(
     params.persistence.settingsRepo,
     params.seedFallback,
@@ -124,77 +214,38 @@ export async function runAutomaticThresholdCalibration(params: {
     nowMs - opts.lookbackWindowMs,
     nowMs,
   );
-  const sampleCount = logs.length;
-  if (sampleCount < opts.minSamples) {
-    const meta: ThresholdCalibrationMeta = {
-      lastRunAtMs: nowMs,
-      reason: 'skipped_insufficient_data',
-      sampleCount,
-      previous: current,
-      next: null,
-      maxDriftApplied: 0,
-      reviewedSamplesUsed: 0,
-      rawSamplesUsed: 0,
-    };
-    await writeCalibrationMeta(params.persistence.settingsRepo, meta);
+  if (logs.length < opts.minSamples) {
+    const meta = buildMetaInsufficient(nowMs, current, logs.length);
+    await persistCalibrationResult(settingsRepo, apply, meta);
     return { applied: false, meta };
   }
-  const samples = collectCalibrationSamples(logs);
-  const grantedScores = samples.grantedScores;
-  const deniedScores = samples.deniedScores;
-  if (
-    grantedScores.length < opts.minGrantedSamples ||
-    deniedScores.length < opts.minDeniedSamples
-  ) {
-    const meta: ThresholdCalibrationMeta = {
-      lastRunAtMs: nowMs,
-      reason: 'skipped_imbalanced_labels',
-      sampleCount,
-      previous: current,
-      next: null,
-      maxDriftApplied: 0,
-      reviewedSamplesUsed: samples.reviewedUsed,
-      rawSamplesUsed: samples.rawUsed,
-    };
-    await writeCalibrationMeta(params.persistence.settingsRepo, meta);
-    return { applied: false, meta };
-  }
-  const next = deriveCandidateThresholds(current, grantedScores, deniedScores, opts);
-  const unchanged =
-    next.strong === current.strong &&
-    next.weak === current.weak &&
-    next.unknown === current.unknown &&
-    next.margin === current.margin;
-  if (unchanged) {
-    const meta: ThresholdCalibrationMeta = {
-      lastRunAtMs: nowMs,
-      reason: 'skipped_no_change',
-      sampleCount,
-      previous: current,
-      next,
-      maxDriftApplied: 0,
-      reviewedSamplesUsed: samples.reviewedUsed,
-      rawSamplesUsed: samples.rawUsed,
-    };
-    await writeCalibrationMeta(params.persistence.settingsRepo, meta);
-    return { applied: false, meta };
-  }
-  await writeAccessThresholdsToSettings(params.persistence.settingsRepo, next);
-  const maxDriftApplied = Math.max(
-    Math.abs(next.strong - current.strong),
-    Math.abs(next.weak - current.weak),
-    Math.abs(next.margin - current.margin),
-  );
+  return runAfterSampleGate({
+    settingsRepo,
+    persistence: params.persistence,
+    nowMs,
+    apply,
+    opts,
+    current,
+    logs,
+  });
+}
+
+/** Promote a shadow preview into live thresholds and live calibration metadata. */
+export async function applyThresholdCalibrationShadow(persistence: DexiePersistence): Promise<{
+  ok: boolean;
+}> {
+  const sh = await readThresholdCalibrationShadow(persistence.settingsRepo);
+  if (!sh?.meta.next || sh.meta.reason !== 'applied') return { ok: false };
+  const next = sh.meta.next;
+  await writeAccessThresholdsToSettings(persistence.settingsRepo, next);
   const meta: ThresholdCalibrationMeta = {
-    lastRunAtMs: nowMs,
+    ...sh.meta,
+    lastRunAtMs: Date.now(),
     reason: 'applied',
-    sampleCount,
-    previous: current,
+    previous: sh.meta.previous,
     next,
-    maxDriftApplied: round4(maxDriftApplied),
-    reviewedSamplesUsed: samples.reviewedUsed,
-    rawSamplesUsed: samples.rawUsed,
   };
-  await writeCalibrationMeta(params.persistence.settingsRepo, meta);
-  return { applied: true, meta };
+  await writeLiveCalibrationMeta(persistence.settingsRepo, meta);
+  await clearThresholdCalibrationShadow(persistence.settingsRepo);
+  return { ok: true };
 }

@@ -1,4 +1,9 @@
+import {
+  buildCalibrationExplainabilitySection,
+  buildReviewQueueSection,
+} from './admin-enrollment-extra-sections';
 import { buildFormColumn } from './admin-enrollment-form-dom';
+import { buildPreviewColumn } from './admin-enrollment-preview-dom';
 import type { GateRuntime } from './gate-runtime';
 
 export type AdminEnrollmentDom = {
@@ -15,6 +20,18 @@ export type AdminEnrollmentDom = {
   thresholdStatusEl: HTMLElement;
   thresholdCalibrationStatusEl: HTMLElement;
   thresholdApplySpec075Btn: HTMLButtonElement;
+  calibrationExplainSection: HTMLElement;
+  calibrationExplainSummaryEl: HTMLElement;
+  calibrationExplainSamplesEl: HTMLElement;
+  calibrationExplainDeltasEl: HTMLElement;
+  calibrationExplainProjectionEl: HTMLElement;
+  calibrationShadowSummaryEl: HTMLElement;
+  calibrationShadowSamplesEl: HTMLElement;
+  calibrationShadowDeltasEl: HTMLElement;
+  calibrationShadowProjectionEl: HTMLElement;
+  calibrationShadowPreviewBtn: HTMLButtonElement;
+  calibrationShadowApplyBtn: HTMLButtonElement;
+  calibrationShadowDismissBtn: HTMLButtonElement;
   reviewQueueSection: HTMLElement;
   reviewQueueTbody: HTMLTableSectionElement;
   reviewQueueRefreshBtn: HTMLButtonElement;
@@ -166,124 +183,43 @@ function buildAccessThresholdSection(rt: GateRuntime): {
   return { section, statusEl, calibrationStatusEl, applySpec075Btn };
 }
 
-function buildReviewQueueSection(): {
-  section: HTMLElement;
-  tbody: HTMLTableSectionElement;
-  refreshBtn: HTMLButtonElement;
-  statusEl: HTMLElement;
-} {
-  const section = document.createElement('section');
-  section.className = 'admin-review-queue';
-  section.setAttribute('data-testid', 'admin-review-queue');
+type AdminEnrollmentBuild = {
+  shell: HTMLElement;
+  logoutBtn: HTMLButtonElement;
+  roster: ReturnType<typeof buildUserRosterSection>;
+  importUi: ReturnType<typeof buildImportToolbar>;
+  thr: ReturnType<typeof buildAccessThresholdSection>;
+  calibrationExplain: ReturnType<typeof buildCalibrationExplainabilitySection>;
+  reviewQueue: ReturnType<typeof buildReviewQueueSection>;
+  main: HTMLElement;
+  preview: ReturnType<typeof buildPreviewColumn>;
+  form: ReturnType<typeof buildFormColumn>;
+};
 
-  const h2 = document.createElement('h2');
-  h2.className = 'admin-review-queue__title';
-  h2.textContent = 'Decision review inbox';
-
-  const statusEl = document.createElement('p');
-  statusEl.className = 'admin-review-queue__status';
-  statusEl.setAttribute('data-testid', 'admin-review-queue-status');
-
-  const refreshBtn = document.createElement('button');
-  refreshBtn.type = 'button';
-  refreshBtn.className = 'btn';
-  refreshBtn.textContent = 'Refresh review queue';
-  refreshBtn.setAttribute('data-testid', 'admin-review-queue-refresh');
-
-  const wrap = document.createElement('div');
-  wrap.className = 'admin-review-queue__table-wrap';
-  const table = document.createElement('table');
-  table.className = 'admin-review-queue__table';
-  const thead = document.createElement('thead');
-  const hr = document.createElement('tr');
-  for (const label of ['Time', 'Decision', 'Similarity', 'Review']) {
-    const th = document.createElement('th');
-    th.textContent = label;
-    hr.appendChild(th);
-  }
-  thead.appendChild(hr);
-  const tbody = document.createElement('tbody');
-  tbody.setAttribute('data-testid', 'admin-review-queue-tbody');
-  table.append(thead, tbody);
-  wrap.appendChild(table);
-
-  section.append(h2, statusEl, refreshBtn, wrap);
-  return { section, tbody, refreshBtn, statusEl };
-}
-
-function buildPreviewColumn(rt: GateRuntime): {
-  column: HTMLElement;
-  video: HTMLVideoElement;
-  frameCanvas: HTMLCanvasElement;
-  overlayCanvas: HTMLCanvasElement;
-  modelLoadRoot: HTMLElement;
-  cameraDeviceSelect: HTMLSelectElement;
-  statusEl: HTMLElement;
-} {
-  const ui = rt.runtimeSlices.admin.ui;
-  const column = document.createElement('div');
-  column.className = 'admin-enroll__preview';
-  const previewWrap = document.createElement('div');
-  previewWrap.className = 'admin-enroll__video-wrap';
-
-  const deviceRow = document.createElement('div');
-  deviceRow.className = 'admin-enroll__camera-device';
-  const cameraDeviceSelect = document.createElement('select');
-  cameraDeviceSelect.className = 'admin-enroll__camera-select';
-  cameraDeviceSelect.setAttribute('data-testid', 'enroll-camera-device');
-  cameraDeviceSelect.setAttribute('aria-label', ui.cameraSelectAriaLabel);
-  const defOpt = document.createElement('option');
-  defOpt.value = '';
-  defOpt.textContent = ui.cameraDefaultDeviceOption;
-  cameraDeviceSelect.appendChild(defOpt);
-  deviceRow.appendChild(cameraDeviceSelect);
-
-  const video = document.createElement('video');
-  video.className = 'admin-enroll__video';
-  video.playsInline = true;
-  video.muted = true;
-
-  const frameCanvas = document.createElement('canvas');
-  frameCanvas.className = 'admin-enroll__frame-canvas';
-  frameCanvas.width = rt.previewCanvasWidth;
-  frameCanvas.height = rt.previewCanvasHeight;
-
-  const overlayCanvas = document.createElement('canvas');
-  overlayCanvas.className = 'admin-enroll__overlay';
-  overlayCanvas.width = rt.previewCanvasWidth;
-  overlayCanvas.height = rt.previewCanvasHeight;
-
-  previewWrap.append(video, frameCanvas, overlayCanvas);
-  const modelLoadRoot = document.createElement('div');
-  modelLoadRoot.className = 'admin-enroll__model-load-host';
-  const statusEl = document.createElement('p');
-  statusEl.className = 'admin-enroll__status';
-  statusEl.setAttribute('data-testid', 'enroll-status');
-  column.append(deviceRow, previewWrap, modelLoadRoot, statusEl);
-  return { column, video, frameCanvas, overlayCanvas, modelLoadRoot, cameraDeviceSelect, statusEl };
-}
-
-export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
-  const shell = document.createElement('div');
-  shell.className = 'admin-root admin-root--authed';
-  shell.setAttribute('data-testid', 'admin-enroll-root');
-
-  const { header, logoutBtn } = buildAdminHeader(rt);
-  const roster = buildUserRosterSection(rt);
-  const importUi = buildImportToolbar(rt);
-  const thr = buildAccessThresholdSection(rt);
-  const reviewQueue = buildReviewQueueSection();
-  const main = document.createElement('main');
-  main.className = 'admin-enroll';
-
-  const preview = buildPreviewColumn(rt);
-  const form = buildFormColumn(rt);
-  main.append(preview.column, form.column);
-  shell.append(header, roster.section, importUi.toolbar, thr.section, reviewQueue.section, main);
-
+function pickCalibrationAndShadowHandles(
+  calibrationExplain: AdminEnrollmentBuild['calibrationExplain'],
+) {
   return {
-    shell,
-    logoutBtn,
+    calibrationExplainSection: calibrationExplain.section,
+    calibrationExplainSummaryEl: calibrationExplain.summaryEl,
+    calibrationExplainSamplesEl: calibrationExplain.samplesEl,
+    calibrationExplainDeltasEl: calibrationExplain.deltasEl,
+    calibrationExplainProjectionEl: calibrationExplain.projectionEl,
+    calibrationShadowSummaryEl: calibrationExplain.shadowSummaryEl,
+    calibrationShadowSamplesEl: calibrationExplain.shadowSamplesEl,
+    calibrationShadowDeltasEl: calibrationExplain.shadowDeltasEl,
+    calibrationShadowProjectionEl: calibrationExplain.shadowProjectionEl,
+    calibrationShadowPreviewBtn: calibrationExplain.shadowPreviewBtn,
+    calibrationShadowApplyBtn: calibrationExplain.shadowApplyBtn,
+    calibrationShadowDismissBtn: calibrationExplain.shadowDismissBtn,
+  };
+}
+
+function toAdminEnrollmentDom(p: AdminEnrollmentBuild): AdminEnrollmentDom {
+  const { roster, importUi, thr, reviewQueue, preview, form } = p;
+  return {
+    shell: p.shell,
+    logoutBtn: p.logoutBtn,
     rosterSection: roster.section,
     rosterTbody: roster.tbody,
     importToolbar: importUi.toolbar,
@@ -295,11 +231,12 @@ export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
     thresholdStatusEl: thr.statusEl,
     thresholdCalibrationStatusEl: thr.calibrationStatusEl,
     thresholdApplySpec075Btn: thr.applySpec075Btn,
+    ...pickCalibrationAndShadowHandles(p.calibrationExplain),
     reviewQueueSection: reviewQueue.section,
     reviewQueueTbody: reviewQueue.tbody,
     reviewQueueRefreshBtn: reviewQueue.refreshBtn,
     reviewQueueStatusEl: reviewQueue.statusEl,
-    main,
+    main: p.main,
     video: preview.video,
     frameCanvas: preview.frameCanvas,
     overlayCanvas: preview.overlayCanvas,
@@ -313,4 +250,42 @@ export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
     retakeBtn: form.retakeBtn,
     saveBtn: form.saveBtn,
   };
+}
+
+export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
+  const shell = document.createElement('div');
+  shell.className = 'admin-root admin-root--authed';
+  shell.setAttribute('data-testid', 'admin-enroll-root');
+  const { header, logoutBtn } = buildAdminHeader(rt);
+  const roster = buildUserRosterSection(rt);
+  const importUi = buildImportToolbar(rt);
+  const thr = buildAccessThresholdSection(rt);
+  const calibrationExplain = buildCalibrationExplainabilitySection();
+  const reviewQueue = buildReviewQueueSection();
+  const main = document.createElement('main');
+  main.className = 'admin-enroll';
+  const preview = buildPreviewColumn(rt);
+  const form = buildFormColumn(rt);
+  main.append(preview.column, form.column);
+  shell.append(
+    header,
+    roster.section,
+    importUi.toolbar,
+    thr.section,
+    calibrationExplain.section,
+    reviewQueue.section,
+    main,
+  );
+  return toAdminEnrollmentDom({
+    shell,
+    logoutBtn,
+    roster,
+    importUi,
+    thr,
+    calibrationExplain,
+    reviewQueue,
+    main,
+    preview,
+    form,
+  });
 }

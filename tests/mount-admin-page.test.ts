@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAdminAuth } from '../src/app/auth';
 import type { GateRuntime } from '../src/app/gate-runtime';
+import { runAutomaticThresholdCalibration } from '../src/app/access-threshold-calibration';
 import { mountAdminView } from '../src/app/mount-admin-shell';
 import { createDexiePersistence } from '../src/infra/persistence';
 import { createTestGateRuntime } from './support/create-test-gate-runtime';
@@ -299,5 +300,106 @@ describe('mountAdminView', () => {
 
     expect(auth.isAdmin()).toBe(false);
     expect(document.querySelector('[data-testid="admin-login-modal"]')).not.toBeNull();
+  });
+
+  it('shows calibration explainability panel after a calibration run', async () => {
+    const storage = createMemoryStorage();
+    const auth = createAdminAuth({
+      storage,
+      nowMs: () => 1_700_000_000_000,
+      admin: { user: 'u', pass: 'p' },
+    });
+    expect(auth.login('u', 'p')).toBe(true);
+
+    const persistence = createTestPersistence();
+    await persistence.initDatabase(testRt.databaseSeedSettings!);
+    let ts = 50_000;
+    for (let i = 0; i < 12; i += 1) {
+      await persistence.accessLogRepo.appendDecision({
+        userId: `g-${i}`,
+        similarity01: 0.9 + i * 0.001,
+        decision: 'GRANTED',
+        capturedFrameBlob: new Blob(),
+        timestamp: ts++,
+      });
+    }
+    for (let i = 0; i < 12; i += 1) {
+      await persistence.accessLogRepo.appendDecision({
+        userId: null,
+        similarity01: 0.55 + i * 0.001,
+        decision: 'DENIED',
+        capturedFrameBlob: new Blob(),
+        timestamp: ts++,
+      });
+    }
+    await runAutomaticThresholdCalibration({
+      persistence,
+      seedFallback: testRt.databaseSeedSettings!,
+      nowMs: ts + 10,
+      options: {
+        minSamples: 20,
+        minGrantedSamples: 6,
+        minDeniedSamples: 6,
+        lookbackWindowMs: 100_000,
+        maxDriftPerRun: 0.01,
+      },
+    });
+
+    mountAdminView({ rt: testRt, persistence, auth });
+
+    const projection = document.querySelector<HTMLElement>(
+      '[data-testid="admin-calibration-explain-projection"]',
+    );
+    for (let i = 0; i < 80; i += 1) {
+      if (projection?.textContent?.includes('false-grant')) break;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    expect(projection?.textContent).toMatch(/false-grant\s+\d+→\d+/);
+    expect(document.querySelector('[data-testid="admin-calibration-explainability"]')).not.toBeNull();
+  });
+
+  it('fills shadow explainability after Preview calibration (shadow) without a prior live run', async () => {
+    const storage = createMemoryStorage();
+    const auth = createAdminAuth({
+      storage,
+      nowMs: () => 1_700_000_000_000,
+      admin: { user: 'u', pass: 'p' },
+    });
+    expect(auth.login('u', 'p')).toBe(true);
+
+    const persistence = createTestPersistence();
+    await persistence.initDatabase(testRt.databaseSeedSettings!);
+    const windowAnchor = Date.now() - 120_000;
+    let ts = windowAnchor;
+    for (let i = 0; i < 12; i += 1) {
+      await persistence.accessLogRepo.appendDecision({
+        userId: `g-${i}`,
+        similarity01: 0.9 + i * 0.001,
+        decision: 'GRANTED',
+        capturedFrameBlob: new Blob(),
+        timestamp: ts++,
+      });
+    }
+    for (let i = 0; i < 12; i += 1) {
+      await persistence.accessLogRepo.appendDecision({
+        userId: null,
+        similarity01: 0.55 + i * 0.001,
+        decision: 'DENIED',
+        capturedFrameBlob: new Blob(),
+        timestamp: ts++,
+      });
+    }
+
+    mountAdminView({ rt: testRt, persistence, auth });
+    document.querySelector<HTMLButtonElement>('[data-testid="admin-calibration-shadow-preview"]')?.click();
+
+    const shadowProjection = document.querySelector<HTMLElement>(
+      '[data-testid="admin-calibration-explain-shadow-projection"]',
+    );
+    for (let i = 0; i < 80; i += 1) {
+      if (shadowProjection?.textContent?.includes('false-grant')) break;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    expect(shadowProjection?.textContent).toMatch(/false-grant\s+\d+→\d+/);
   });
 });

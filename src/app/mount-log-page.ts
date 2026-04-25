@@ -7,6 +7,7 @@ import {
   buildLogTable,
   buildLogToolbar,
   createUserNameMap,
+  type LogToolbarControls,
 } from './log-page-dom';
 import type { GateRuntime } from './gate-runtime';
 import { resolveAppContext } from './app-context';
@@ -33,20 +34,43 @@ function createExportHandler(
   };
 }
 
-/**
- * Full access log: filters, sortable columns, all rows (no 20-row cap).
- */
-export async function mountLogPageIntoApp(
-  app: HTMLElement,
-  options: { persistence: DexiePersistence; rt: GateRuntime },
-): Promise<() => void> {
-  const { persistence, rt } = options;
-  const { unknown, logExportCsv } = rt.logPageStrings;
+function addLogPageListeners(
+  controls: LogToolbarControls,
+  onFilter: () => void,
+  onExportClick: () => void,
+): void {
+  controls.dateFrom.addEventListener('change', onFilter);
+  controls.dateTo.addEventListener('change', onFilter);
+  controls.userSelect.addEventListener('change', onFilter);
+  controls.decisionSelect.addEventListener('change', onFilter);
+  controls.reviewSelect.addEventListener('change', onFilter);
+  controls.exportBtn.addEventListener('click', onExportClick);
+}
 
-  const [rows, users] = await Promise.all([
-    persistence.accessLogRepo.toArray(),
-    persistence.usersRepo.toArray(),
-  ]);
+function removeLogPageListeners(
+  controls: LogToolbarControls,
+  onFilter: () => void,
+  onExportClick: () => void,
+): void {
+  controls.dateFrom.removeEventListener('change', onFilter);
+  controls.dateTo.removeEventListener('change', onFilter);
+  controls.userSelect.removeEventListener('change', onFilter);
+  controls.decisionSelect.removeEventListener('change', onFilter);
+  controls.reviewSelect.removeEventListener('change', onFilter);
+  controls.exportBtn.removeEventListener('click', onExportClick);
+}
+
+async function mountLogPageWithData(
+  app: HTMLElement,
+  data: {
+    rows: Awaited<ReturnType<DexiePersistence['accessLogRepo']['toArray']>>;
+    users: Awaited<ReturnType<DexiePersistence['usersRepo']['toArray']>>;
+    rt: GateRuntime;
+    persistence: DexiePersistence;
+  },
+): Promise<() => void> {
+  const { rows, users, rt, persistence } = data;
+  const { unknown, logExportCsv } = rt.logPageStrings;
 
   app.innerHTML = '';
   const main = document.createElement('main');
@@ -76,27 +100,33 @@ export async function mountLogPageIntoApp(
     reviewService,
   });
 
-  const onFilter = () => controller.render();
-  controls.dateFrom.addEventListener('change', onFilter);
-  controls.dateTo.addEventListener('change', onFilter);
-  controls.userSelect.addEventListener('change', onFilter);
-  controls.decisionSelect.addEventListener('change', onFilter);
-  controls.reviewSelect.addEventListener('change', onFilter);
-
+  const onFilter = () => {
+    controller?.render();
+  };
   const onExportClick = createExportHandler(rows, users, unknown);
-  controls.exportBtn.addEventListener('click', onExportClick);
+  addLogPageListeners(controls, onFilter, onExportClick);
 
   main.append(h1, controls.toolbar, tableWrap);
   app.appendChild(main);
   controller.render();
   return () => {
-    controls.dateFrom.removeEventListener('change', onFilter);
-    controls.dateTo.removeEventListener('change', onFilter);
-    controls.userSelect.removeEventListener('change', onFilter);
-    controls.decisionSelect.removeEventListener('change', onFilter);
-    controls.reviewSelect.removeEventListener('change', onFilter);
-    controls.exportBtn.removeEventListener('click', onExportClick);
+    removeLogPageListeners(controls, onFilter, onExportClick);
   };
+}
+
+/**
+ * Full access log: filters, sortable columns, all rows (no 20-row cap).
+ */
+export async function mountLogPageIntoApp(
+  app: HTMLElement,
+  options: { persistence: DexiePersistence; rt: GateRuntime },
+): Promise<() => void> {
+  const { persistence, rt } = options;
+  const [rows, users] = await Promise.all([
+    persistence.accessLogRepo.toArray(),
+    persistence.usersRepo.toArray(),
+  ]);
+  return mountLogPageWithData(app, { rows, users, rt, persistence });
 }
 
 export type MountLogViewOptions = {
