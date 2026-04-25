@@ -98,7 +98,7 @@ Recommended run:
 
 ### Automated (stub gate, Playwright Chromium, port **5199**)
 
-These `pnpm` scripts start `**bench:serve`** via `**start-server-and-test**`, wait for `http://localhost:5199`, run the script(s), then stop Vite. Stub env matches the `webServer` block in [playwright.config.ts](../playwright.config.ts).
+These `pnpm` scripts start **`bench:serve`** via **`start-server-and-test`**, wait for `http://localhost:5199`, run the script(s), then stop Vite. Stub env matches the `webServer` block in [playwright.config.ts](../playwright.config.ts).
 
 
 | Command                    | What it runs                                                                 |
@@ -123,11 +123,11 @@ Each script prints **JSON on stdout** and, on **stderr** (see `tests/accuracy/be
 ## Results table (fill on target hardware)
 
 
-| Metric                         | Budget (SPECS / PRD) | p50                      | p90                      | p99                      | Environment                                          |
-| ------------------------------ | -------------------- | ------------------------ | ------------------------ | ------------------------ | ---------------------------------------------------- |
-| Detector infer                 | <500 ms              | 23.5                     | 24.1                     | 25.3                     | Mac17,9 / macOS 26.4.1 / desktop Chrome (canonical run 2026-04-25) |
-| End-to-end to decision         | <3000 ms             | 1220.3                   | 2161.1                   | 2260.2                   | *same*                                               |
-| Cold navigation → models ready | <8000 ms             | 655.4                    | —                        | —                        | *same*                                               |
+| Metric                         | Budget (SPECS / PRD) | p50    | p90    | p99    | Environment                                                        |
+| ------------------------------ | -------------------- | ------ | ------ | ------ | ------------------------------------------------------------------ |
+| Detector infer                 | <500 ms              | 23.5   | 24.1   | 25.3   | Mac17,9 / macOS 26.4.1 / desktop Chrome (canonical run 2026-04-25) |
+| End-to-end to decision         | <3000 ms             | 1220.3 | 2161.1 | 2260.2 | *same*                                                             |
+| Cold navigation → models ready | <8000 ms             | 655.4  | —      | —      | *same*                                                             |
 
 
 ### Non-canonical helper run (stub gate, port 5199)
@@ -144,14 +144,14 @@ Captured output (2026-04-25):
 
 These values pass quick-check budgets in `tests/accuracy/bench-budgets.ts`, but remain non-canonical evidence.
 
-### Additional E16 rows (helper evidence; canonical run pending)
+### Additional E16 rows (canonical evidence + helper evidence)
 
 
 | Metric                                | Budget (SPECS / PRD)       | Evidence                                                                                       | Environment                       |
 | ------------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------- |
-| Preview FPS while detection runs      | >=15 FPS                   | *PENDING MBP+CHROME OPERATOR RUN*                                                              | Canonical desktop Chrome required |
+| Preview FPS while detection runs      | >=15 FPS                   | Canonical collector run (30s): `n=3600`, `p50=120.48`, `p90=126.58`, `min=106.38`, `max=136.99` | Desktop Chrome on Mac17,9 |
 | 50-user synthetic match latency smoke | 50 users / bounded latency | Existing `tests/match-perf.test.ts` asserts median under budget (`<20 ms` local, `<100 ms` CI) | Vitest, local node runtime        |
-| Memory footprint peak                 | <500 MB                    | *PENDING MBP+CHROME OPERATOR RUN (DevTools Performance/Memory protocol)*                       | Canonical desktop Chrome required |
+| Memory footprint peak                 | <500 MB                    | DevTools Performance memory track (30-36s capture) shows JS heap approx `14.9-19.0 MB` peak; well below budget | Desktop Chrome on Mac17,9 |
 
 
 ## Scenario timing notes for E16.S3
@@ -173,4 +173,4 @@ These values pass quick-check budgets in `tests/accuracy/bench-budgets.ts`, but 
 - Reported summary (all samples): `p50=1220.3`, `p90=2161.1`, `p99=2260.2`
 - Interpretation: all canonical wall-time samples remain below `<3000 ms`; sub-100 ms values are likely warm-session artifacts and retained for transparency.
 
-*Last updated: 2026-04-25. Canonical MBP+desktop Chrome rows still require operator run.*
+*Last updated: 2026-04-25. Epic E16 benchmark evidence is filled; remaining Epic E16 blocker is accuracy trial population in `docs/ACCURACY_RESULTS.md`.*

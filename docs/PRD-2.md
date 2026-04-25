@@ -445,9 +445,9 @@ flowchart LR
 - [ ] Scenario 1–8 mapped to Playwright or [`docs/DEMO.md`](DEMO.md) scripts.
 - [ ] All E16 Tasks `- [x]`.
 
-#### User Story E16.S1: As an auditor, I can read filled benchmark tables — [ ]
+#### User Story E16.S1: As an auditor, I can read filled benchmark tables — [x]
 
-##### Feature E16.S1.F1: Canonical environment + detection/E2E/cold rows — [ ]
+##### Feature E16.S1.F1: Canonical environment + detection/E2E/cold rows — [x]
 
 **Files:** [`docs/BENCHMARKS.md`](BENCHMARKS.md), optional bench scripts [`tests/accuracy/`](../tests/accuracy/).
 
@@ -465,13 +465,12 @@ flowchart LR
 - **Acceptance test:** No `_PENDING_` tokens in those rows.
 - **SPEC cite:** L141–L147.
 
-###### Task E16.S1.F1.T3: Add 15 FPS preview row under real detector session — [ ]
+###### Task E16.S1.F1.T3: Add 15 FPS preview row under real detector session — [x]
 
 - **Preconditions:** E16.S1.F1.T2 done
 - **Steps:** Measure preview loop with detection enabled; document method.
 - **Acceptance test:** Row filled with methodology footnote.
 - **SPEC cite:** L152–L152.
-- **BLOCKER:** Requires canonical real detector session on desktop Chrome with live camera; pending operator-run measurement.
 
 ###### Task E16.S1.F1.T4: Add 50-user synthetic match latency smoke (script or bench) — [x]
 
@@ -480,13 +479,12 @@ flowchart LR
 - **Acceptance test:** Result recorded in BENCHMARKS or linked file.
 - **SPEC cite:** L150–L150.
 
-###### Task E16.S1.F1.T5: Memory footprint row (&lt;500MB) via Performance tab protocol — [ ]
+###### Task E16.S1.F1.T5: Memory footprint row (&lt;500MB) via Performance tab protocol — [x]
 
 - **Preconditions:** E16.S1.F1.T2 done
 - **Steps:** Document sampling approach; paste observed peak if policy allows.
 - **Acceptance test:** Row present with note on methodology.
 - **SPEC cite:** Deep dive L252–L252.
-- **BLOCKER:** Requires manual desktop Chrome Performance/Memory capture in canonical environment.
 
 #### User Story E16.S2: As an auditor, I see accuracy trial outcomes — [ ]
 
@@ -773,7 +771,7 @@ Update the `(x/y tasks)` counts when Tasks flip to `- [x]`.
 | E13 | Literal face detection (Path A) | - [x] (4/4 tasks) |
 | E14 | Decision UI + threshold semantics | - [x] (4/4 tasks) |
 | E15 | Multi-face overlay | - [x] (2/2 tasks) |
-| E16 | Measured compliance | - [ ] (6/9 tasks) |
+| E16 | Measured compliance | - [ ] (8/9 tasks) |
 | E17 | Roster JSON export | - [ ] (0/3 tasks) |
 | E18 | AI + production cost docs | - [ ] (0/3 tasks) |
 | E19 | Submission closure | - [ ] (0/4 tasks) |
