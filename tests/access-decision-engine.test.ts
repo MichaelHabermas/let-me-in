@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createAccessDecisionContext } from '../src/app/access-decision-context';
 import { createAccessDecisionEvaluator } from '../src/app/access-decision-engine';
+import { writeAccessThresholdsToSettings } from '../src/app/access-thresholds-store';
 import { createDexiePersistence } from '../src/infra/persistence';
 
 vi.mock('../src/app/gate-access-evaluation', async (importOriginal) => {
@@ -31,7 +32,7 @@ describe('createAccessDecisionEvaluator', () => {
     await persistence.resetIndexedDbClientForTests();
   });
 
-  it('with context, does not call usersRepo.toArray on each evaluation (snapshot reuse)', async () => {
+  it('with context, reuses snapshot and keeps repeated evaluations behaviorally stable', async () => {
     const persistence = createDexiePersistence(dbName);
     const rt = createTestGateRuntime();
     await persistence.initDatabase(rt.databaseSeedSettings);
@@ -54,9 +55,31 @@ describe('createAccessDecisionEvaluator', () => {
     const frame = new ImageData(2, 2);
     const embedding = embeddingVectorZeros();
     toArray.mockClear();
-    await evalFn({ embedding, frame });
-    await evalFn({ embedding, frame });
+    const first = await evalFn({ embedding, frame });
+    const second = await evalFn({ embedding, frame });
     expect(toArray).not.toHaveBeenCalled();
+    expect(first).not.toBeNull();
+    expect(second).not.toBeNull();
+    expect(second?.verdict).toEqual(first?.verdict);
+    expect(second?.displayName).toBe(first?.displayName);
+    await persistence.resetIndexedDbClientForTests();
+  });
+
+  it('refresh picks up threshold changes from settings', async () => {
+    const persistence = createDexiePersistence(dbName);
+    const rt = createTestGateRuntime();
+    await persistence.initDatabase(rt.databaseSeedSettings);
+    const context = await createAccessDecisionContext(persistence, rt.databaseSeedSettings);
+    expect(context.getSnapshot().thresholds.strong).toBe(rt.databaseSeedSettings.thresholds.strong);
+
+    await writeAccessThresholdsToSettings(persistence.settingsRepo, {
+      strong: 0.75,
+      weak: 0.65,
+      margin: 0.05,
+      unknown: 0.65,
+    });
+    await context.refresh();
+    expect(context.getSnapshot().thresholds.strong).toBe(0.75);
     await persistence.resetIndexedDbClientForTests();
   });
 });

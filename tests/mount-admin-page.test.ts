@@ -99,6 +99,9 @@ describe('mountAdminView', () => {
     mountAdminView({ rt: testRt, persistence, auth });
 
     const status = document.querySelector('[data-testid="admin-thresholds-status"]');
+    const calibrationStatus = document.querySelector(
+      '[data-testid="admin-thresholds-calibration-status"]',
+    );
     for (let i = 0; i < 100; i += 1) {
       if (status?.textContent?.includes('0.85')) break;
       await new Promise((r) => setTimeout(r, 10));
@@ -106,6 +109,7 @@ describe('mountAdminView', () => {
     expect(status?.textContent).toMatch(/0\.85/);
     expect(status?.textContent).toMatch(/0\.65/);
     expect(status?.textContent).toMatch(/0\.05/);
+    expect(calibrationStatus?.textContent).toContain('Auto-calibration');
 
     document.querySelector<HTMLButtonElement>('[data-testid="admin-threshold-apply-spec075"]')?.click();
     for (let i = 0; i < 50; i += 1) {

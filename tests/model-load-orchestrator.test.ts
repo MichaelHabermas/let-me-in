@@ -19,6 +19,16 @@ describe('buildDetectorEmbedderModelLoadTargets', () => {
 });
 
 describe('createModelLoadOrchestrator', () => {
+  function deferred<T>() {
+    let resolve!: (value: T | PromiseLike<T>) => void;
+    let reject!: (reason?: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  }
+
   it('resolves true with no active targets', async () => {
     const o = createModelLoadOrchestrator({
       targets: [],
@@ -95,5 +105,61 @@ describe('createModelLoadOrchestrator', () => {
     });
     o.retry();
     expect(onRetryRequested).toHaveBeenCalled();
+  });
+
+  it('returns false for stale generation when retry starts a newer run', async () => {
+    const first = deferred<void>();
+    const d = { load: vi.fn(() => first.promise) };
+    const o = createModelLoadOrchestrator({
+      targets: buildDetectorEmbedderModelLoadTargets(d, undefined),
+      failedMessage: 'f',
+    });
+
+    const firstRun = o.run();
+    o.retry();
+    first.resolve();
+
+    await expect(firstRun).resolves.toBe(false);
+  });
+
+  it('wires modelLoadUi retry handler to clear error and rerun', async () => {
+    const clearError = vi.fn();
+    const showError = vi.fn();
+    const setRetryHandler = vi.fn();
+    const modelLoadUi = {
+      configure: vi.fn(),
+      markStageComplete: vi.fn(),
+      clearError,
+      setRetryHandler,
+      showLoading: vi.fn(),
+      hide: vi.fn(),
+      showError,
+    };
+    const onRetryRequested = vi.fn();
+    const d = {
+      load: vi
+        .fn()
+        .mockRejectedValueOnce(new Error('first fail'))
+        .mockResolvedValueOnce(undefined),
+    };
+    const o = createModelLoadOrchestrator({
+      targets: buildDetectorEmbedderModelLoadTargets(d, undefined),
+      modelLoadUi: modelLoadUi as never,
+      failedMessage: 'failed',
+      onRetryRequested,
+    });
+
+    await expect(o.run()).resolves.toBe(false);
+    const retry = setRetryHandler.mock.calls.at(-1)?.[0] as (() => void) | null;
+    expect(retry).not.toBeNull();
+    retry?.();
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(clearError).toHaveBeenCalled();
+    expect(onRetryRequested).toHaveBeenCalled();
+    expect(d.load).toHaveBeenCalledTimes(2);
+    expect(showError).toHaveBeenCalledWith('failed');
   });
 });

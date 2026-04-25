@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createCameraStartOptionsState } from '../src/app/camera-device-session';
+import {
+  createCameraStartOptionsState,
+  refreshVideoInputDeviceListAfterStart,
+} from '../src/app/camera-device-session';
+import { startVideoCameraResilient } from '../src/app/camera-resilient-start';
 import { runGatePreviewStartSequence } from '../src/app/gate-preview-start-sequence';
 import type { GatePreviewElements, GatePreviewSessionDeps } from '../src/app/gate-session';
 import type { DetectorGateState } from '../src/app/gate-session-detector-load';
@@ -42,11 +46,14 @@ function minimalDetectorEmbedder() {
 }
 
 describe('runGatePreviewStartSequence', () => {
-  beforeEach(() => {
-    createDetectionPipelineMock.mockClear();
-  });
-
-  it('calls resolveLiveAccess and createDetectionPipeline when models are ready', async () => {
+  function createHarness(): {
+    resolveLive: ReturnType<typeof vi.fn>;
+    startOpts: ReturnType<typeof createCameraStartOptionsState>;
+    camera: Camera;
+    elements: GatePreviewElements;
+    deps: GatePreviewSessionDeps;
+    state: DetectorGateState;
+  } {
     const resolveLive = vi.fn(async (_el: unknown, d: GatePreviewSessionDeps) => d);
     const gateRt = createTestGateRuntime();
     const { yolo, face } = minimalDetectorEmbedder();
@@ -101,6 +108,17 @@ describe('runGatePreviewStartSequence', () => {
       loadState: 'ready',
       embedderLoadState: 'ready',
     };
+    return { resolveLive, startOpts, camera, elements, deps, state };
+  }
+
+  beforeEach(() => {
+    createDetectionPipelineMock.mockClear();
+    vi.mocked(startVideoCameraResilient).mockClear();
+    vi.mocked(refreshVideoInputDeviceListAfterStart).mockResolvedValue(false);
+  });
+
+  it('calls resolveLiveAccess and createDetectionPipeline when models are ready', async () => {
+    const { resolveLive, startOpts, camera, elements, deps, state } = createHarness();
 
     await runGatePreviewStartSequence(
       {
@@ -119,5 +137,74 @@ describe('runGatePreviewStartSequence', () => {
 
     expect(resolveLive).toHaveBeenCalled();
     expect(createDetectionPipelineMock).toHaveBeenCalled();
+  });
+
+  it('hydrates loaded preference when prefRead resolves', async () => {
+    const { resolveLive, startOpts, camera, elements, deps, state } = createHarness();
+    const setLoadedPreference = vi.spyOn(startOpts, 'setLoadedPreference');
+    const pref = { facingMode: 'user' as const };
+
+    await runGatePreviewStartSequence(
+      {
+        camera,
+        elements,
+        deps,
+        state,
+        getStartOptions: () => ({ facingMode: 'environment' }),
+        startOpts,
+        prefRead: Promise.resolve(pref),
+        deviceSelect: undefined,
+        settingsRepo: undefined,
+      },
+      resolveLive,
+    );
+
+    expect(setLoadedPreference).toHaveBeenCalledWith(pref);
+  });
+
+  it('marks list populated only when device list refresh returns true', async () => {
+    vi.mocked(refreshVideoInputDeviceListAfterStart).mockResolvedValueOnce(true);
+    const { resolveLive, startOpts, camera, elements, deps, state } = createHarness();
+    const setListPopulated = vi.spyOn(startOpts, 'setListPopulated');
+    const deviceSelect = document.createElement('select');
+
+    await runGatePreviewStartSequence(
+      {
+        camera,
+        elements,
+        deps,
+        state,
+        getStartOptions: () => ({ facingMode: 'environment' }),
+        startOpts,
+        prefRead: null,
+        deviceSelect,
+        settingsRepo: undefined,
+      },
+      resolveLive,
+    );
+
+    expect(setListPopulated).toHaveBeenCalledWith(true);
+  });
+
+  it('does not create detection pipeline when gate state is not ready', async () => {
+    const { resolveLive, startOpts, camera, elements, deps, state } = createHarness();
+    state.loadState = 'loading';
+
+    await runGatePreviewStartSequence(
+      {
+        camera,
+        elements,
+        deps,
+        state,
+        getStartOptions: () => ({ facingMode: 'environment' }),
+        startOpts,
+        prefRead: null,
+        deviceSelect: undefined,
+        settingsRepo: undefined,
+      },
+      resolveLive,
+    );
+
+    expect(createDetectionPipelineMock).not.toHaveBeenCalled();
   });
 });

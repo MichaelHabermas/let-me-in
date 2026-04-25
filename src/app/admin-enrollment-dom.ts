@@ -13,6 +13,7 @@ export type AdminEnrollmentDom = {
   importStatusEl: HTMLElement;
   thresholdSection: HTMLElement;
   thresholdStatusEl: HTMLElement;
+  thresholdCalibrationStatusEl: HTMLElement;
   thresholdApplySpec075Btn: HTMLButtonElement;
   main: HTMLElement;
   video: HTMLVideoElement;
@@ -131,6 +132,7 @@ function buildImportToolbar(rt: GateRuntime): {
 function buildAccessThresholdSection(rt: GateRuntime): {
   section: HTMLElement;
   statusEl: HTMLElement;
+  calibrationStatusEl: HTMLElement;
   applySpec075Btn: HTMLButtonElement;
 } {
   const copy = rt.runtimeSlices.admin.ui;
@@ -146,14 +148,18 @@ function buildAccessThresholdSection(rt: GateRuntime): {
   statusEl.className = 'admin-thresholds__status';
   statusEl.setAttribute('data-testid', 'admin-thresholds-status');
 
+  const calibrationStatusEl = document.createElement('p');
+  calibrationStatusEl.className = 'admin-thresholds__status';
+  calibrationStatusEl.setAttribute('data-testid', 'admin-thresholds-calibration-status');
+
   const applySpec075Btn = document.createElement('button');
   applySpec075Btn.type = 'button';
   applySpec075Btn.className = 'btn';
   applySpec075Btn.setAttribute('data-testid', 'admin-threshold-apply-spec075');
   applySpec075Btn.textContent = copy.adminAccessThresholdsApplySpec075;
 
-  section.append(h2, statusEl, applySpec075Btn);
-  return { section, statusEl, applySpec075Btn };
+  section.append(h2, statusEl, calibrationStatusEl, applySpec075Btn);
+  return { section, statusEl, calibrationStatusEl, applySpec075Btn };
 }
 
 function buildPreviewColumn(rt: GateRuntime): {
@@ -237,6 +243,7 @@ export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
     importStatusEl: importUi.importStatusEl,
     thresholdSection: thr.section,
     thresholdStatusEl: thr.statusEl,
+    thresholdCalibrationStatusEl: thr.calibrationStatusEl,
     thresholdApplySpec075Btn: thr.applySpec075Btn,
     main,
     video: preview.video,
