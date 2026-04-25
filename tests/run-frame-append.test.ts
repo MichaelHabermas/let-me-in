@@ -12,6 +12,7 @@ function baseEval(
     displayName: null,
     referenceImageBlob: null,
     capturedFrameBlob: captured,
+    bandThresholds: { strong: 0.85, weak: 0.65 },
   };
 }
 

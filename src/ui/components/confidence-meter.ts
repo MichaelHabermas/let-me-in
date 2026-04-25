@@ -2,9 +2,11 @@ import { config } from '../../config';
 
 export type ConfidenceBand = 'strong' | 'weak' | 'reject';
 
-/** Maps similarity to display band using the same cutoffs as decision policy thresholds (DRY). */
-export function confidenceBandForScore(similarity01: number): ConfidenceBand {
-  const { strong, weak } = config.thresholds;
+export type BandCutoffs = { strong: number; weak: number };
+
+/** Maps similarity to display band. Uses runtime cutoffs when given (policy/settings); else `config.thresholds`. */
+export function confidenceBandForScore(similarity01: number, cutoffs?: BandCutoffs): ConfidenceBand {
+  const { strong, weak } = cutoffs ?? { strong: config.thresholds.strong, weak: config.thresholds.weak };
   if (similarity01 >= strong) return 'strong';
   if (similarity01 >= weak) return 'weak';
   return 'reject';
@@ -13,13 +15,20 @@ export function confidenceBandForScore(similarity01: number): ConfidenceBand {
 export type ConfidenceMeterModel = {
   /** Top-1 cosine similarity in 0–1 (same unit as policy score). */
   similarity01: number;
+  /** When set, must match the thresholds used for the same access decision (E14). */
+  strong?: number;
+  weak?: number;
 };
 
 /**
  * Full-width bar; fill width = score × 100%. Color class follows strong / weak / reject bands.
  */
 export function renderConfidenceMeter(model: ConfidenceMeterModel): HTMLDivElement {
-  const band = confidenceBandForScore(model.similarity01);
+  const cutoffs =
+    model.strong !== undefined && model.weak !== undefined
+      ? { strong: model.strong, weak: model.weak }
+      : undefined;
+  const band = confidenceBandForScore(model.similarity01, cutoffs);
   const pct = Math.max(0, Math.min(100, Math.round(model.similarity01 * 100)));
 
   const root = document.createElement('div');

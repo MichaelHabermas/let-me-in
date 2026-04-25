@@ -43,6 +43,9 @@ export type AdminUiStrings = {
   cameraDefaultDeviceOption: string;
   cameraSelectAriaLabel: string;
   cameraUnnamedFormat: (indexOneBased: number) => string;
+  adminAccessThresholdsTitle: string;
+  adminAccessThresholdsStatus: string;
+  adminAccessThresholdsApplySpec075: string;
 };
 
 /** Log page copy — keep mounts off raw `config.ui.strings`. */
@@ -144,6 +147,9 @@ function adminStringsFromConfig(cfg: GateUiConfigSlice): AdminUiStrings {
     cameraDefaultDeviceOption: s.cameraDefaultDeviceOption,
     cameraSelectAriaLabel: s.cameraSelectAriaLabel,
     cameraUnnamedFormat: (i: number) => s.cameraUnnamedFormat.replaceAll('{n}', String(i)),
+    adminAccessThresholdsTitle: s.adminAccessThresholdsTitle,
+    adminAccessThresholdsStatus: s.adminAccessThresholdsStatus,
+    adminAccessThresholdsApplySpec075: s.adminAccessThresholdsApplySpec075,
   };
 }
 

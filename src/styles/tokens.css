@@ -9,6 +9,14 @@
   --color-text: #f1f5f9;
   --color-text-muted: #94a3b8;
 
+  /* Gate decision banner — solid fills + high-contrast text (WCAG AA for ~1rem body) */
+  --color-banner-granted-bg: #14532d;
+  --color-banner-granted-fg: #f0fdf4;
+  --color-banner-uncertain-bg: #713f12;
+  --color-banner-uncertain-fg: #fffbeb;
+  --color-banner-denied-bg: #7f1d1d;
+  --color-banner-denied-fg: #fef2f2;
+
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;

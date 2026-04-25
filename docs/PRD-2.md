@@ -339,7 +339,7 @@ flowchart LR
 
 ---
 
-### Epic E14: Decision UI and threshold semantics — [ ]
+### Epic E14: Decision UI and threshold semantics — [x]
 
 **Goal:** GRANTED/DENIED colors per SPECS; **similarity score** visible on grant/deny; threshold language aligned with **default ≥ 0.75** in docs and/or config.
 
@@ -347,45 +347,47 @@ flowchart LR
 
 **Epic DoD:**
 
-- [ ] Banner variants: green / red / distinct amber (UNCERTAIN).
-- [ ] Score shown for GRANTED and DENIED paths per SPECS access display.
-- [ ] ARCHITECTURE explains band mapping vs 0.75 default.
-- [ ] All E14 Tasks `- [x]`.
+- [x] Banner variants: green / red / distinct amber (UNCERTAIN).
+- [x] Score shown for GRANTED and DENIED paths per SPECS access display.
+- [x] ARCHITECTURE explains band mapping vs 0.75 default.
+- [x] All E14 Tasks `- [x]`.
 
-#### User Story E14.S1: As a visitor, I see SPEC-accurate decision styling — [ ]
+**End-of-Epic report (E14):** Decision banners use solid tokenized backgrounds with WCAG-AA-checked fg/bg pairs (`tests/banner-wcag-contract.test.ts`); `GateAccessEvaluation` carries `bandThresholds` so the confidence meter matches IndexedDB `settings.thresholds`. Docs: [docs/ARCHITECTURE.md](ARCHITECTURE.md) “Threshold rationale”. Admin “Apply SPECS 0.75 strong floor” writes `strong: 0.75` to `settings` ([`src/app/admin-threshold-preset.ts`](../src/app/admin-threshold-preset.ts)). Benchmark delta: N/A (CSS + small UI).
 
-##### Feature E14.S1.F1: Banner colors and copy audit — [ ]
+#### User Story E14.S1: As a visitor, I see SPEC-accurate decision styling — [x]
+
+##### Feature E14.S1.F1: Banner colors and copy audit — [x]
 
 **Files:** [`src/ui/components/decision-banner.ts`](../src/ui/components/decision-banner.ts), [`src/styles/`](../src/styles/) (banner classes), call sites in gate pipeline.
 
-###### Task E14.S1.F1.T1: Audit and fix GRANTED/DENIED/UNCERTAIN color contrast — [ ]
+###### Task E14.S1.F1.T1: Audit and fix GRANTED/DENIED/UNCERTAIN color contrast — [x]
 
 - **Preconditions:** none
 - **Steps:** Ensure CSS meets intent: green / red / amber distinct; WCAG AA where feasible.
 - **Acceptance test:** Visual or computed style test / Storybook-style HTML snapshot.
 - **SPEC cite:** L112–L112.
 
-###### Task E14.S1.F1.T2: Ensure similarity score appears in title/copy for grant and deny — [ ]
+###### Task E14.S1.F1.T2: Ensure similarity score appears in title/copy for grant and deny — [x]
 
 - **Preconditions:** E14.S1.F1.T1 done
 - **Steps:** Trace all decision branches; add score to model string where missing.
 - **Acceptance test:** Unit test on `renderDecisionBanner` / controller with mocked decisions.
 - **SPEC cite:** L112 (name + confidence score).
 
-#### User Story E14.S2: As an auditor, I understand default 0.75 vs bands — [ ]
+#### User Story E14.S2: As an auditor, I understand default 0.75 vs bands — [x]
 
-##### Feature E14.S2.F1: Documentation and optional preset — [ ]
+##### Feature E14.S2.F1: Documentation and optional preset — [x]
 
 **Files:** [`docs/ARCHITECTURE.md`](ARCHITECTURE.md), [`src/config.ts`](../src/config.ts), optional admin settings UI.
 
-###### Task E14.S2.F1.T1: Document `strong`/`weak` mapping to SPEC 0.75 language — [ ]
+###### Task E14.S2.F1.T1: Document `strong`/`weak` mapping to SPEC 0.75 language — [x]
 
 - **Preconditions:** none
 - **Steps:** Add subsection “Threshold rationale”; state default `strong ≥ 0.75` or equivalent proof.
 - **Acceptance test:** ARCHITECTURE section exists and quotes SPEC default.
 - **SPEC cite:** L82–L82.
 
-###### Task E14.S2.F1.T2: Optional admin “single-threshold preset” from 0.75 — [ ]
+###### Task E14.S2.F1.T2: Optional admin “single-threshold preset” from 0.75 — [x]
 
 - **Preconditions:** E14.S2.F1.T1 done
 - **Steps:** If product wants preset button, write bands to `settings`; else mark Task N/A with `BLOCKER: descoped` after human ok.
@@ -764,7 +766,7 @@ Update the `(x/y tasks)` counts when Tasks flip to `- [x]`.
 | E11 | Model load progress + graceful failure | - [x] (4/4 tasks) |
 | E12 | Front/rear camera selection | - [x] (3/3 tasks) |
 | E13 | Literal face detection (Path A) | - [x] (4/4 tasks) |
-| E14 | Decision UI + threshold semantics | - [ ] (0/4 tasks) |
+| E14 | Decision UI + threshold semantics | - [x] (4/4 tasks) |
 | E15 | Multi-face overlay | - [ ] (0/2 tasks) |
 | E16 | Measured compliance | - [ ] (0/9 tasks) |
 | E17 | Roster JSON export | - [ ] (0/3 tasks) |

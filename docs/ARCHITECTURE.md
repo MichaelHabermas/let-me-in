@@ -24,6 +24,14 @@ flowchart LR
 2. **Embedding:** square crop + 112² preprocess → 512-D L2-normalized vector (`src/app/crop.ts`, `src/infra/embedder-ort.ts`).
 3. **Matching:** brute-force cosine similarity01 vs enrolled rows; thresholds in `src/domain/access-policy.ts` via `src/app/policy.ts`.
 
+## Threshold rationale (E14, SPECS L82 and L112)
+
+- **SPECS (course) — [docs/SPECS.txt](SPECS.txt) L82:** “Threshold Logic — Configurable similarity threshold (default **≥ 0.75**); return best match above threshold.” The write-up describes a **single** similarity gate for a simple 1:1 match story.
+- **SPECS L112 (access display):** GRANTED (green) or DENIED (red) with the matched person’s name and **confidence score**; the running app uses the same score unit as matching (top-1 **cosine similarity in 0–1**, shown as a percent in the decision banner and confidence meter).
+- **This repository’s policy** ([`src/domain/access-policy.ts`](../src/domain/access-policy.ts)) is stricter: **`GRANTED`** only if the top-1 score is in the **strong** band **and** the top-1 vs top-2 margin is at least **`margin`**; otherwise, if the score is still at or above **`weak`**, the decision is **`UNCERTAIN`**; below **`weak`** is **`DENIED`**. That maps the course’s “one threshold” to a **strong floor** (what “above threshold” means for a high-confidence open) plus an **ambiguity** band, not a single hard cutoff.
+- **Defaults in code** (seed + `config` when IndexedDB is empty; persisted under **`settings.thresholds`**) in [`src/config.ts`](../src/config.ts): **`strong` 0.85**, **`weak` 0.65**, **`unknown` 0.65**, **`margin` 0.05**. The course’s **0.75** is therefore **not** the same number as the shipped `strong` default: **0.75** is the course baseline; **0.85** is this demo’s stricter “clear grant” line. To align the **strong** floor with the course number, use the **admin “SPECS 0.75” preset** (writes `strong: 0.75` into `settings`, leaves `weak` / `margin` unchanged unless you change them in code) or adjust seed/config and re-seed.
+- **UI:** Banner colors and copy are in [`src/ui/components/decision-banner.ts`](../src/ui/components/decision-banner.ts) and styles; the confidence meter uses the **same** `strong` / `weak` as the live policy (via `bandThresholds` on the access evaluation) so the bar matches the access decision.
+
 ## Face detection (E13)
 
 The running artifact is **`yolov8n-face.onnx`** ([`deepghs/yolo-face` on Hugging Face](https://huggingface.co/deepghs/yolo-face) — WIDER-style face data, YOLOv8-nano, **single face class**). It replaces the earlier COCO “person + head band” proxy so **boxes are on faces**, matching **SPECS** *Face Detection* and the deep-dive *YOLO* pipeline narrative.

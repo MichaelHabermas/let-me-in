@@ -85,6 +85,36 @@ describe('mountAdminView', () => {
     expect(document.querySelector('[data-testid="admin-logout"]')).not.toBeNull();
   });
 
+  it('E14: threshold status and SPECS 0.75 preset update settings', async () => {
+    const storage = createMemoryStorage();
+    const auth = createAdminAuth({
+      storage,
+      nowMs: () => 1_700_000_000_000,
+      admin: { user: 'u', pass: 'p' },
+    });
+    expect(auth.login('u', 'p')).toBe(true);
+
+    const persistence = createTestPersistence();
+    await persistence.initDatabase(testRt.databaseSeedSettings!);
+    mountAdminView({ rt: testRt, persistence, auth });
+
+    const status = document.querySelector('[data-testid="admin-thresholds-status"]');
+    for (let i = 0; i < 100; i += 1) {
+      if (status?.textContent?.includes('0.85')) break;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    expect(status?.textContent).toMatch(/0\.85/);
+    expect(status?.textContent).toMatch(/0\.65/);
+    expect(status?.textContent).toMatch(/0\.05/);
+
+    document.querySelector<HTMLButtonElement>('[data-testid="admin-threshold-apply-spec075"]')?.click();
+    for (let i = 0; i < 50; i += 1) {
+      if (status?.textContent?.includes('0.75')) break;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    expect(status?.textContent).toMatch(/0\.75/);
+  });
+
   it('lists seeded users in roster table', async () => {
     const storage = createMemoryStorage();
     const auth = createAdminAuth({

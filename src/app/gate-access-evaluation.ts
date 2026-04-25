@@ -1,5 +1,8 @@
 import type { PolicyDecision } from './policy';
 
+/** Strong/weak cutoffs (from settings) — use for UI bands so the meter matches policy. */
+export type BandThresholdsSlice = { strong: number; weak: number };
+
 /** Rich access outcome passed from policy through the detection pipeline to UI and logging. */
 export type GateAccessEvaluation = {
   policy: PolicyDecision;
@@ -7,6 +10,8 @@ export type GateAccessEvaluation = {
   displayName: string | null;
   referenceImageBlob: Blob | null;
   capturedFrameBlob: Blob;
+  /** Same as policy’s runtime thresholds; confidence meter and banners stay aligned with IndexedDB settings. */
+  bandThresholds: BandThresholdsSlice;
 };
 
 export type GateAccessEvaluationInput = {

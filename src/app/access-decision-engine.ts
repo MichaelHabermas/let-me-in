@@ -51,6 +51,7 @@ export async function createAccessDecisionEvaluator(
       displayName: policy.decision === 'GRANTED' ? (user?.name ?? null) : null,
       referenceImageBlob: policy.decision === 'DENIED' ? null : (user?.referenceImageBlob ?? null),
       capturedFrameBlob,
+      bandThresholds: { strong: thresholds.strong, weak: thresholds.weak },
     };
     ui?.onDecision(evaluation);
     return evaluation;

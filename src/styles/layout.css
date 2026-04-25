@@ -501,18 +501,21 @@ body {
 }
 
 .banner--granted {
-  background: rgb(22 163 74 / 0.16);
+  background: var(--color-banner-granted-bg);
   border: 1px solid var(--color-granted);
+  color: var(--color-banner-granted-fg);
 }
 
 .banner--uncertain {
-  background: rgb(217 119 6 / 0.18);
+  background: var(--color-banner-uncertain-bg);
   border: 1px solid var(--color-uncertain);
+  color: var(--color-banner-uncertain-fg);
 }
 
 .banner--denied {
-  background: rgb(220 38 38 / 0.14);
+  background: var(--color-banner-denied-bg);
   border: 1px solid var(--color-denied);
+  color: var(--color-banner-denied-fg);
 }
 
 .confidence-meter {
@@ -1015,6 +1018,31 @@ body {
   flex: 1 1 12rem;
   font-size: 0.875rem;
   color: var(--color-text-muted);
+}
+
+.admin-thresholds {
+  padding: 0 var(--space-6) var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-thresholds__title {
+  width: 100%;
+  margin: 0 0 var(--space-1);
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+
+.admin-thresholds__status {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  flex: 1 1 auto;
+  min-width: 12rem;
 }
 
 .log-toolbar {

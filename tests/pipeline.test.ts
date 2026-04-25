@@ -29,12 +29,15 @@ function createOverlayCtx(
   } as unknown as CanvasRenderingContext2D;
 }
 
+const testBands = { strong: 0.85, weak: 0.65 };
+
 function evalGranted() {
   return {
     policy: { decision: 'GRANTED' as const, userId: 'u1', score: 0.9 },
     displayName: 'Alex',
     referenceImageBlob: null,
     capturedFrameBlob: sampleBlob,
+    bandThresholds: testBands,
   };
 }
 
@@ -44,6 +47,7 @@ function evalDenied() {
     displayName: null,
     referenceImageBlob: null,
     capturedFrameBlob: sampleBlob,
+    bandThresholds: testBands,
   };
 }
 
@@ -53,6 +57,7 @@ function evalUncertain() {
     displayName: null,
     referenceImageBlob: null,
     capturedFrameBlob: sampleBlob,
+    bandThresholds: testBands,
   };
 }
 

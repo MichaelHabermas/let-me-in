@@ -13,6 +13,11 @@ describe('confidenceBandForScore', () => {
     expect(confidenceBandForScore(0.65)).toBe('weak');
     expect(confidenceBandForScore(0.64)).toBe('reject');
   });
+
+  it('uses runtime cutoffs when provided (matches policy settings vs static config)', () => {
+    expect(confidenceBandForScore(0.8, { strong: 0.75, weak: 0.65 })).toBe('strong');
+    expect(confidenceBandForScore(0.8)).toBe('weak');
+  });
 });
 
 describe('renderConfidenceMeter', () => {
@@ -28,5 +33,10 @@ describe('renderConfidenceMeter', () => {
     const el = renderConfidenceMeter({ similarity01: 1.05 });
     const fill = el.querySelector('.confidence-meter__fill') as HTMLDivElement;
     expect(fill.style.width).toBe('100%');
+  });
+
+  it('uses strong/weak from model for band class when provided', () => {
+    const el = renderConfidenceMeter({ similarity01: 0.8, strong: 0.75, weak: 0.65 });
+    expect(el.classList.contains('confidence-meter--strong')).toBe(true);
   });
 });

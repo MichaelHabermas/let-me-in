@@ -15,6 +15,9 @@ export type AdminEnrollmentDom = {
   importFileInput: HTMLInputElement;
   importButton: HTMLButtonElement;
   importStatusEl: HTMLElement;
+  thresholdSection: HTMLElement;
+  thresholdStatusEl: HTMLElement;
+  thresholdApplySpec075Btn: HTMLButtonElement;
   main: HTMLElement;
   video: HTMLVideoElement;
   frameCanvas: HTMLCanvasElement;
@@ -120,6 +123,34 @@ function buildImportToolbar(rt: GateRuntime): {
 
   toolbar.append(fileLabel, importFileInput, importButton, importStatusEl);
   return { toolbar, importFileInput, importButton, importStatusEl };
+}
+
+function buildAccessThresholdSection(rt: GateRuntime): {
+  section: HTMLElement;
+  statusEl: HTMLElement;
+  applySpec075Btn: HTMLButtonElement;
+} {
+  const copy = rt.runtimeSlices.admin.ui;
+  const section = document.createElement('section');
+  section.className = 'admin-thresholds';
+  section.setAttribute('data-testid', 'admin-access-thresholds');
+
+  const h2 = document.createElement('h2');
+  h2.className = 'admin-thresholds__title';
+  h2.textContent = copy.adminAccessThresholdsTitle;
+
+  const statusEl = document.createElement('p');
+  statusEl.className = 'admin-thresholds__status';
+  statusEl.setAttribute('data-testid', 'admin-thresholds-status');
+
+  const applySpec075Btn = document.createElement('button');
+  applySpec075Btn.type = 'button';
+  applySpec075Btn.className = 'btn';
+  applySpec075Btn.setAttribute('data-testid', 'admin-threshold-apply-spec075');
+  applySpec075Btn.textContent = copy.adminAccessThresholdsApplySpec075;
+
+  section.append(h2, statusEl, applySpec075Btn);
+  return { section, statusEl, applySpec075Btn };
 }
 
 function buildPreviewColumn(rt: GateRuntime): {
@@ -302,13 +333,14 @@ export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
   const { header, logoutBtn } = buildAdminHeader(rt);
   const roster = buildUserRosterSection(rt);
   const importUi = buildImportToolbar(rt);
+  const thr = buildAccessThresholdSection(rt);
   const main = document.createElement('main');
   main.className = 'admin-enroll';
 
   const preview = buildPreviewColumn(rt);
   const form = buildFormColumn(rt);
   main.append(preview.column, form.column);
-  shell.append(header, roster.section, importUi.toolbar, main);
+  shell.append(header, roster.section, importUi.toolbar, thr.section, main);
 
   return {
     shell,
@@ -319,6 +351,9 @@ export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
     importFileInput: importUi.importFileInput,
     importButton: importUi.importButton,
     importStatusEl: importUi.importStatusEl,
+    thresholdSection: thr.section,
+    thresholdStatusEl: thr.statusEl,
+    thresholdApplySpec075Btn: thr.applySpec075Btn,
     main,
     video: preview.video,
     frameCanvas: preview.frameCanvas,

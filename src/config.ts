@@ -120,6 +120,11 @@ export interface Config {
       cameraDefaultDeviceOption: string;
       /** E12: label when `label` is empty, e.g. "Camera {n}" */
       cameraUnnamedFormat: string;
+      /** E14: admin access-threshold block */
+      adminAccessThresholdsTitle: string;
+      /** E14: placeholders {strong} {weak} {margin} */
+      adminAccessThresholdsStatus: string;
+      adminAccessThresholdsApplySpec075: string;
     };
   };
 }
@@ -239,6 +244,9 @@ export const config: Config = {
       cameraSelectAriaLabel: 'Camera for verification',
       cameraDefaultDeviceOption: 'Default',
       cameraUnnamedFormat: 'Camera {n}',
+      adminAccessThresholdsTitle: 'Match thresholds',
+      adminAccessThresholdsStatus: 'strong={strong} · weak={weak} · margin={margin}',
+      adminAccessThresholdsApplySpec075: 'Apply SPECS 0.75 strong floor',
     },
   },
 };

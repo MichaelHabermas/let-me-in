@@ -60,7 +60,13 @@ export function createGateAccessUiController(
       title: titleFor(strings, ev),
     });
     host.appendChild(banner);
-    host.appendChild(renderConfidenceMeter({ similarity01: ev.policy.score }));
+    host.appendChild(
+      renderConfidenceMeter({
+        similarity01: ev.policy.score,
+        strong: ev.bandThresholds.strong,
+        weak: ev.bandThresholds.weak,
+      }),
+    );
 
     const showCompare =
       (ev.policy.decision === 'GRANTED' || ev.policy.decision === 'UNCERTAIN') &&
