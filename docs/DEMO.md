@@ -10,3 +10,5 @@ Record a **3–5 minute** walkthrough covering:
 6. **Export CSV** from the log toolbar.
 
 Save as `docs/demo.mp4` or host externally and link from [`docs/SUBMISSION.md`](SUBMISSION.md).
+
+For SPECS scenario-to-test traceability used by Epic E16, see [`docs/SCENARIO_COVERAGE.md`](SCENARIO_COVERAGE.md).

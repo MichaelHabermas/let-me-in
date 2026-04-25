@@ -451,7 +451,7 @@ flowchart LR
 
 **Files:** [`docs/BENCHMARKS.md`](BENCHMARKS.md), optional bench scripts [`tests/accuracy/`](../tests/accuracy/).
 
-###### Task E16.S1.F1.T1: Record exact MBP + Chrome environment string at top of BENCHMARKS — [ ]
+###### Task E16.S1.F1.T1: Record exact MBP + Chrome environment string at top of BENCHMARKS — [x]
 
 - **Preconditions:** E13 complete
 - **Steps:** Add machine model, macOS version, Chrome version, date.
@@ -464,6 +464,7 @@ flowchart LR
 - **Steps:** Follow SUBMISSION runbook + BENCHMARKS protocol on **5173** canonical session.
 - **Acceptance test:** No `_PENDING_` tokens in those rows.
 - **SPEC cite:** L141–L147.
+- **BLOCKER:** Desktop Chrome app is not installed on this machine; only Playwright Chrome-for-Testing headless evidence is currently available in [`docs/BENCHMARKS.md`](BENCHMARKS.md).
 
 ###### Task E16.S1.F1.T3: Add 15 FPS preview row under real detector session — [ ]
 
@@ -471,6 +472,7 @@ flowchart LR
 - **Steps:** Measure preview loop with detection enabled; document method.
 - **Acceptance test:** Row filled with methodology footnote.
 - **SPEC cite:** L152–L152.
+- **BLOCKER:** Requires canonical real detector session on desktop Chrome with live camera; pending operator-run measurement.
 
 ###### Task E16.S1.F1.T4: Add 50-user synthetic match latency smoke (script or bench) — [ ]
 
@@ -478,6 +480,7 @@ flowchart LR
 - **Steps:** JS loop over N=50 embeddings cosine match; record p99.
 - **Acceptance test:** Result recorded in BENCHMARKS or linked file.
 - **SPEC cite:** L150–L150.
+- **BLOCKER:** Existing helper evidence is recorded from `tests/match-perf.test.ts`, but Task precondition requires T2 canonical run first.
 
 ###### Task E16.S1.F1.T5: Memory footprint row (&lt;500MB) via Performance tab protocol — [ ]
 
@@ -485,6 +488,7 @@ flowchart LR
 - **Steps:** Document sampling approach; paste observed peak if policy allows.
 - **Acceptance test:** Row present with note on methodology.
 - **SPEC cite:** Deep dive L252–L252.
+- **BLOCKER:** Requires manual desktop Chrome Performance/Memory capture in canonical environment.
 
 #### User Story E16.S2: As an auditor, I see accuracy trial outcomes — [ ]
 
@@ -498,6 +502,7 @@ flowchart LR
 - **Steps:** Follow ACCURACY_TRIAL; do not retune thresholds without before/after matrix per PRE-WORK.
 - **Acceptance test:** ≥20 identities documented; meets or waives ≥85% TPR @ ≤5% FPR with rationale.
 - **SPEC cite:** L148–L149.
+- **BLOCKER:** Requires operator-run participant trial (>=20 identities) per consent protocol.
 
 #### User Story E16.S3: As a TA, I can map SPECS tests to runnable checks — [ ]
 
@@ -505,21 +510,21 @@ flowchart LR
 
 **Files:** [`docs/DEMO.md`](DEMO.md), [`tests/scenarios/`](../tests/scenarios/), PR comment optional.
 
-###### Task E16.S3.F1.T1: Map scenarios 1–8 to Playwright test names or manual DEMO steps — [ ]
+###### Task E16.S3.F1.T1: Map scenarios 1–8 to Playwright test names or manual DEMO steps — [x]
 
 - **Preconditions:** none
 - **Steps:** Table in DEMO.md or new `docs/SCENARIO_COVERAGE.md` linking scenario → command/steps.
 - **Acceptance test:** Every row in §3 has at least one link target.
 - **SPEC cite:** L124–L137.
 
-###### Task E16.S3.F1.T2: Permission-to-preview ≤2s measurement doc — [ ]
+###### Task E16.S3.F1.T2: Permission-to-preview ≤2s measurement doc — [x]
 
 - **Preconditions:** E16.S1.F1.T1 done
 - **Steps:** Add stopwatch protocol to BENCHMARKS or DEMO; if fail, file tuning Task under gate-session with cross-link.
 - **Acceptance test:** Documented number or explicit tuning Task id.
 - **SPEC cite:** L127.
 
-###### Task E16.S3.F1.T3: Deep dive total pipeline &lt;2s evidence or optimization tasks filed — [ ]
+###### Task E16.S3.F1.T3: Deep dive total pipeline &lt;2s evidence or optimization tasks filed — [x]
 
 - **Preconditions:** E16.S1.F1.T2 done
 - **Steps:** Measure staged latency; if above budget, list bottleneck + follow-up (may spawn new Tasks).
@@ -770,7 +775,7 @@ Update the `(x/y tasks)` counts when Tasks flip to `- [x]`.
 | E13 | Literal face detection (Path A) | - [x] (4/4 tasks) |
 | E14 | Decision UI + threshold semantics | - [x] (4/4 tasks) |
 | E15 | Multi-face overlay | - [x] (2/2 tasks) |
-| E16 | Measured compliance | - [ ] (0/9 tasks) |
+| E16 | Measured compliance | - [ ] (4/9 tasks) |
 | E17 | Roster JSON export | - [ ] (0/3 tasks) |
 | E18 | AI + production cost docs | - [ ] (0/3 tasks) |
 | E19 | Submission closure | - [ ] (0/4 tasks) |

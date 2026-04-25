@@ -1,6 +1,12 @@
-# Accuracy trial results (Epic E10.S2.F1.T2)
+# Accuracy trial results (Epic E10.S2.F1.T2, E16.S2.F1.T1)
 
 **Status:** Pending operator-run trial (>=20 identities) per `docs/ACCURACY_TRIAL.md`.
+
+## Epic E16 blocker note
+
+- The E16 requirement needs real participant trial data (>=20 identities, TP/FP/FN/TN) captured with consent process from `docs/ACCURACY_TRIAL.md`.
+- No synthetic or stub run is being substituted for this matrix.
+- Until the operator-run trial is completed, E16.S2.F1.T1 remains open.
 
 ## Threshold used
 
