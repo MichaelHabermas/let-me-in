@@ -1,4 +1,3 @@
-import type { AdminAuthCredentials } from './app/admin-auth-types';
 import { ORT_EP_ORDER_BROWSER } from './infra/ort-execution-defaults';
 
 /**
@@ -35,8 +34,6 @@ export interface Config {
     detector: string;
     embedder: string;
   };
-  adminCredentialSource: 'env' | 'dev-default';
-  admin: AdminAuthCredentials;
   /**
    * Base URL for onnxruntime-web WASM assets (default: jsDelivr).
    * For strict CSP / air-gapped deploys, vendor `dist/*.wasm` under `/ort/` and point here.
@@ -235,22 +232,6 @@ export function createUiStrings(overrides: Partial<UiStringsConfig> = {}): UiStr
   return { ...DEFAULT_UI_STRINGS, ...overrides };
 }
 
-function resolveAdminCredentials(): Pick<Config, 'adminCredentialSource' | 'admin'> {
-  const user = import.meta.env.VITE_ADMIN_USER as string | undefined;
-  const pass = import.meta.env.VITE_ADMIN_PASS as string | undefined;
-
-  if (user && pass) {
-    return { adminCredentialSource: 'env', admin: { user, pass } };
-  }
-
-  console.warn(
-    '[Gatekeeper] No VITE_ADMIN_USER/VITE_ADMIN_PASS set — using dev-default credentials. Do NOT use in production.',
-  );
-  return { adminCredentialSource: 'dev-default', admin: { user: 'admin', pass: 'admin' } };
-}
-
-const { adminCredentialSource, admin } = resolveAdminCredentials();
-
 export const config: Config = {
   camera: createCameraConfig(),
   org: {
@@ -266,8 +247,6 @@ export const config: Config = {
     detector: '/models/yolov8n-face.onnx',
     embedder: '/models/w600k_mbf.onnx',
   },
-  adminCredentialSource,
-  admin,
   ortWasmBase: 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/',
   detectorUseWorker: true,
   devLogEmbeddingTimings: import.meta.env.VITE_LOG_EMBEDDING_TIMINGS === 'true',

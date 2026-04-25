@@ -76,7 +76,7 @@ Open:
 ## Configuration
 
 - All org-tunable values live in `[src/config.ts](src/config.ts)`.
-- Admin credentials for production builds: set `VITE_ADMIN_USER` and `VITE_ADMIN_PASS` at build time (see `[.env.example](.env.example)`). If unset, the app warns and uses dev defaults (`admin` / `admin`).
+- **Admin** credentials are resolved in `[src/app/admin-credentials.ts](src/app/admin-credentials.ts)` (imported from the admin entry only, not the gate or log bundles). For **production** (`pnpm run build` / Vite `PROD`), both `VITE_ADMIN_USER` and `VITE_ADMIN_PASS` must be set to non-empty values in the build environment, or the admin app throws at load (see `[.env.example](.env.example)`). In **development**, if they are missing, a console warning is shown and defaults `admin` / `admin` are used. The main and log pages do not embed those defaults from `config` anymore.
 
 ## Deploy (Netlify)
 

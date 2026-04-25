@@ -72,4 +72,33 @@ describe('createAdminAuth', () => {
     const auth = createAdminAuth(deps);
     expect(auth.isAdmin()).toBe(false);
   });
+
+  it('rejects all logins while lockout is active, even with correct password', () => {
+    const t0 = 1_000_000_000_000;
+    let now = t0;
+    const { deps } = makeDeps({ nowMs: () => now, admin: { user: 'u', pass: 'p' } });
+    const auth = createAdminAuth(deps);
+    for (let i = 0; i < 8; i += 1) {
+      expect(auth.login('u', 'bad')).toBe(false);
+    }
+    now += 1;
+    expect(auth.login('u', 'p')).toBe(false);
+    now = t0 + 15 * 60 * 1000;
+    expect(auth.login('u', 'p')).toBe(true);
+  });
+
+  it('resets failed-attempt state after a successful login', () => {
+    const t0 = 2_000_000_000_000;
+    let now = t0;
+    const { deps } = makeDeps({ nowMs: () => now, admin: { user: 'u', pass: 'p' } });
+    const auth = createAdminAuth(deps);
+    for (let i = 0; i < 7; i += 1) {
+      expect(auth.login('u', 'bad')).toBe(false);
+    }
+    expect(auth.login('u', 'p')).toBe(true);
+    for (let i = 0; i < 7; i += 1) {
+      expect(auth.login('u', 'bad')).toBe(false);
+    }
+    expect(auth.login('u', 'p')).toBe(true);
+  });
 });

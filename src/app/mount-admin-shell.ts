@@ -1,11 +1,11 @@
 import { mountAdminLoginModal } from './admin-login-modal';
 import { createAdminAuth, type AdminAuth } from './auth';
+import { resolveAdminCredentialsForShell } from './admin-credentials';
 import { mountAuthenticatedAdminEnrollmentCoordinator } from './admin-enrollment-mount-coordinator';
-import { config } from '../config';
 import { AppContextOptions, resolveAppContext } from './app-context';
 
 export type MountAdminShellOptions = AppContextOptions & {
-  /** When omitted, uses `localStorage` and `config.admin`. */
+  /** When omitted, uses `localStorage` and credentials from {@link resolveAdminCredentialsForShell}. */
   auth?: AdminAuth;
   useStubEnrollment?: boolean;
 };
@@ -21,7 +21,7 @@ export function mountAdminShell(root: HTMLElement, options?: MountAdminShellOpti
     createAdminAuth({
       storage: localStorage,
       nowMs: () => Date.now(),
-      admin: config.admin,
+      admin: resolveAdminCredentialsForShell().admin,
     });
   document.title = rt.adminPageTitle;
 

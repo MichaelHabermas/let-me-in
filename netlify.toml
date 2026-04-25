@@ -5,6 +5,15 @@
 [build.environment]
   NODE_VERSION = "20.19.0"
 
+# Site-wide hardening; must appear before the redirect table so sync-netlify-redirects.mjs does not remove it.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(self)"
+
 # Pretty URLs for the three static HTML entry points (PRD E1 — dev parity via Vite middleware).
 
 [[redirects]]

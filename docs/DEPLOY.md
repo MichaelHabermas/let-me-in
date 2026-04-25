@@ -2,7 +2,7 @@
 
 ## Build-time admin credentials
 
-The admin UI reads credentials from Vite environment variables baked into the client bundle:
+The **admin** entry (`/admin`, `admin.html`) resolves credentials in `src/app/admin-credentials.ts` from Vite environment variables baked into the admin client bundle. The gate and log entry points do not load that module, so they do not embed default admin password material.
 
 | Variable          | Required for public deploy | Description                                      |
 | ----------------- | -------------------------- | ------------------------------------------------ |
@@ -12,7 +12,7 @@ The admin UI reads credentials from Vite environment variables baked into the cl
 ### Netlify UI
 
 1. Open your site → **Site configuration** → **Environment variables** (or **Build & deploy** → **Environment**, depending on Netlify UI version).
-2. Add `VITE_ADMIN_USER` and `VITE_ADMIN_PASS` with your chosen values. Both must be set; otherwise the app falls back to dev defaults and logs a console warning (unsuitable for public demos).
+2. Add `VITE_ADMIN_USER` and `VITE_ADMIN_PASS` with your chosen values. For **production** builds, both must be non-empty or the admin app throws on load. For **local `pnpm dev`**, if either is missing, the dev server uses documented defaults (`admin` / `admin`) and logs a console warning.
 3. Trigger a new deploy (**Deploys** → **Trigger deploy** → **Clear cache and deploy site**) so the bundle picks up the new values.
 
 ### Rotating credentials

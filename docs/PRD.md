@@ -391,21 +391,22 @@ Rule: UI entrypoints call `app/*` composition roots (`mountGateView`, `mountAdmi
 - Files: `src/config.ts`
 - Preconditions: E1.S1.F1.T4 done
 - Steps:
-  1. Declare and export `interface Config` with fields: `org: { name: string; logoUrl: string }`, `thresholds: { strong: number; weak: number; unknown: number; margin: number }`, `cooldownMs: number`, `modelUrls: { detector: string; embedder: string }`, `adminCredentialSource: 'env' | 'dev-default'`, `admin: { user: string; pass: string }`, `ortWasmBase: string`, `audioEnabled: boolean`, `ui: { strings: { unknown: string; noFace: string; multiFace: string } }`.
+  1. Declare and export `interface Config` with fields: `org: { name: string; logoUrl: string }`, `thresholds: { strong: number; weak: number; unknown: number; margin: number }`, `cooldownMs: number`, `modelUrls: { detector: string; embedder: string }`, `ortWasmBase: string`, `audioEnabled: boolean`, `ui: { strings: { unknown: string; noFace: string; multiFace: string } }`. (Admin sign-in credentials are **not** on `Config`; they are resolved only in the admin entry via `src/app/admin-credentials.ts` — see E1.S1.F2.T2.)
   2. Export `const config: Config` with default values: `thresholds.strong=0.85`, `thresholds.weak=0.65`, `thresholds.unknown=0.65`, `thresholds.margin=0.05`, `cooldownMs=3000`, strings from §3 Glossary.
 - Acceptance test: `pnpm run typecheck` passes; `import { config } from './config.ts'` resolves; `config.thresholds.strong === 0.85`.
 - SOLID/DRY note: single source of truth (SRP + DRY); TypeScript enforces the shape.
 
 ###### Task E1.S1.F2.T2: Add env-override for admin credential — [x]
 
-- Files: `src/config.ts`, `.env.example`
+- Files: `src/app/admin-credentials.ts`, `src/app/mount-admin-shell.ts`, `.env.example`
 - Preconditions: E1.S1.F2.T1 done
 - Steps:
-  1. Read `import.meta.env.VITE_ADMIN_USER` and `import.meta.env.VITE_ADMIN_PASS` (both `string | undefined`).
-  2. If both set → `adminCredentialSource = 'env'` and populate `admin`; otherwise fall back to `'dev-default'` with `admin/admin` and `console.warn`.
-  3. Create `.env.example` documenting both vars.
-- Acceptance test: with `.env` absent, console warns "dev-default credentials"; with env set, no warning and `config.admin.user` reflects env.
-- SOLID/DRY note: DIP — consumers read `config.admin`, never `import.meta.env` directly.
+  1. Implement `resolveAdminCredentialsForShell()` in `admin-credentials.ts`: read `import.meta.env.VITE_ADMIN_USER` and `import.meta.env.VITE_ADMIN_PASS` (non-empty username after trim; non-empty password).
+  2. If both are set → use them (`source: 'env'`). If **production** and either is missing → **throw** with a clear error (admin bundle cannot load without build-time credentials). If **development** and either is missing → `console.warn` and dev-default `admin` / `admin` (`source: 'dev-default'`).
+  3. `mount-admin-shell` passes the resolved `{ user, pass }` into `createAdminAuth` when the test harness does not inject `auth` — not via `config`.
+  4. `.env.example` documents both vars.
+- Acceptance test: with `.env` absent in dev, console warns "dev-default credentials"; with both env vars set, no warning and login uses those values. Production build without both vars: admin entry fails at load with a thrown error.
+- SOLID/DRY note: SRP — one module owns admin env resolution; gate and log bundles do not import it; no `import.meta.env` in UI pages beyond that module.
 
 #### User Story E1.S2: As the system, I want a typed IndexedDB schema so that users and logs persist across reloads. — [x]
 
@@ -1120,7 +1121,7 @@ stateDiagram-v2
 
 **Definition of Done:**
 
-- DoD-1: Admin can log in with credentials from `config.admin`.
+- DoD-1: Admin can log in with credentials from `resolveAdminCredentialsForShell()` (env in production; dev defaults or env in local development).
 - DoD-2: Admin can capture a face → embedding → save with name + role. ≥3 users saved.
 - DoD-3: After page refresh, saved users persist (IndexedDB verified).
 - DoD-4: Live gate page matches saved users and shows GRANTED/DENIED per E5 + E7 UI.
@@ -1153,7 +1154,7 @@ stateDiagram-v2
 - Files: `src/app/auth.ts`
 - Preconditions: E1.S1.F2.T2 done
 - Steps:
-  1. Read `config.admin.user` + `config.admin.pass`.
+  1. `createAdminAuth` receives `admin: { user, pass }` from the caller. In production, `mount-admin-shell` supplies values from `resolveAdminCredentialsForShell()` (`src/app/admin-credentials.ts`); tests inject `auth` with explicit credentials.
   2. `login(user, pass)` → if match, set `localStorage.gatekeeper_admin_token = <timestamp>`; expire after 8 h.
   3. `isAdmin()` → boolean; `logout()` → clear token.
 - Acceptance test: login/logout cycle works; expired token treated as logged out.

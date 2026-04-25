@@ -7,6 +7,11 @@ export const ADMIN_TOKEN_STORAGE_KEY = 'gatekeeper_admin_token';
 
 const SESSION_MS = 8 * 60 * 60 * 1000;
 
+/** Client-only brute-force friction; does not replace server rate limits. */
+const MAX_FAILED_ATTEMPTS_IN_WINDOW = 8;
+const FAILURE_WINDOW_MS = 15 * 60 * 1000;
+const LOCKOUT_MS = 15 * 60 * 1000;
+
 export type AdminAuthDeps = {
   storage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
   nowMs: () => number;
@@ -20,11 +25,35 @@ export type AdminAuth = {
 };
 
 export function createAdminAuth(deps: AdminAuthDeps): AdminAuth {
+  let failWindowStart = 0;
+  let failureCount = 0;
+  let lockoutUntil = 0;
+
   return {
     login(user: string, pass: string): boolean {
-      if (user !== deps.admin.user || pass !== deps.admin.pass) return false;
-      deps.storage.setItem(ADMIN_TOKEN_STORAGE_KEY, String(deps.nowMs()));
-      return true;
+      const now = deps.nowMs();
+      if (now < lockoutUntil) return false;
+
+      const match = user === deps.admin.user && pass === deps.admin.pass;
+      if (match) {
+        failWindowStart = 0;
+        failureCount = 0;
+        lockoutUntil = 0;
+        deps.storage.setItem(ADMIN_TOKEN_STORAGE_KEY, String(now));
+        return true;
+      }
+
+      if (now - failWindowStart > FAILURE_WINDOW_MS) {
+        failWindowStart = now;
+        failureCount = 0;
+      }
+      failureCount += 1;
+      if (failureCount >= MAX_FAILED_ATTEMPTS_IN_WINDOW) {
+        lockoutUntil = now + LOCKOUT_MS;
+        failWindowStart = 0;
+        failureCount = 0;
+      }
+      return false;
     },
     logout(): void {
       deps.storage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
