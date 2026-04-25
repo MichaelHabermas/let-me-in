@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { composeGateRuntime } from '../src/app/gate-runtime';
+import { getGateSessionWiring } from '../src/app/gate-runtime-wiring';
 import { createGateUiRuntimeSlice } from '../src/app/gate-ui-runtime';
 import { getDatabaseSeedSettingsFromConfig } from '../src/app/gate-seed-settings';
 import type { Config } from '../src/config';
@@ -154,5 +155,21 @@ describe('composeGateRuntime', () => {
     expect(full.runtimeSlices.gate.pageTitle).toBe(full.gatePageTitle);
     expect(full.runtimeSlices.admin.pageTitle).toBe(full.adminPageTitle);
     expect(full.runtimeSlices.admin.ui).toBe(full.adminUiStrings);
+  });
+
+  it('getGateSessionWiring exposes core + slices consistent with flat runtime', () => {
+    const ui = createGateUiRuntimeSlice(uiCfg, false);
+    const full = composeGateRuntime(ui, () =>
+      getDatabaseSeedSettingsFromConfig({
+        thresholds: { strong: 0.9, weak: 0.7, unknown: 0.55, margin: 0.03 },
+        cooldownMs: 4200,
+      }),
+    );
+    const w = getGateSessionWiring(full);
+    expect(w.core).toBe(full.gatePreviewSessionCoreDeps);
+    expect(w.accessUi).toBe(full.runtimeSlices.gate.accessUi);
+    expect(w.consent).toBe(full.consentModalStrings);
+    expect(w.gatePageTitle).toBe(full.gatePageTitle);
+    expect(w.core.noFaceMessage).toBe(full.noFaceMessage);
   });
 });

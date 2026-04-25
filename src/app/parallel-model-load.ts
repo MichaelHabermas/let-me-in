@@ -1,5 +1,8 @@
 import type { ModelLoadStatusController } from './model-load-status-ui';
-import { createModelLoadOrchestrator } from './model-load-orchestrator';
+import {
+  buildDetectorEmbedderModelLoadTargets,
+  createModelLoadOrchestrator,
+} from './model-load-orchestrator';
 
 export type ParallelModelLoadTarget = {
   load(): Promise<void>;
@@ -14,10 +17,7 @@ export async function loadDetectorAndEmbedderParallel(params: {
   modelLoadUi?: ModelLoadStatusController;
 }): Promise<void> {
   const orchestrator = createModelLoadOrchestrator({
-    targets: [
-      { key: 'detector', enabled: true, load: () => params.detector.load() },
-      { key: 'embedder', enabled: true, load: () => params.embedder.load() },
-    ],
+    targets: buildDetectorEmbedderModelLoadTargets(params.detector, params.embedder),
     modelLoadUi: params.modelLoadUi,
     failedMessage: 'Model load failed',
   });

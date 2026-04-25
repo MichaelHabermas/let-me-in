@@ -1,4 +1,6 @@
 import type { AccessThresholds } from '../domain/access-policy';
+import type { EnrolledEmbedding } from '../domain/embedding-match';
+import type { User } from '../domain/types';
 import type { AccessDecisionDataStores } from '../infra/persistence';
 import type { DatabaseSeedSettings } from '../domain/database-seed';
 import { readAccessThresholdsFromSettings } from './access-thresholds-store';
@@ -6,6 +8,9 @@ import { readAccessThresholdsFromSettings } from './access-thresholds-store';
 export type AccessDecisionSnapshot = {
   users: Awaited<ReturnType<AccessDecisionDataStores['usersRepo']['toArray']>>;
   thresholds: AccessThresholds;
+  /** Filled in `refresh` for hot-path access evaluation (avoid per-frame maps). */
+  enrolled: EnrolledEmbedding[];
+  usersById: Map<string, User>;
 };
 
 export type AccessDecisionContext = {
@@ -20,6 +25,8 @@ export async function createAccessDecisionContext(
   let snapshot: AccessDecisionSnapshot = {
     users: [],
     thresholds: { ...seedFallback.thresholds },
+    enrolled: [],
+    usersById: new Map(),
   };
 
   const refresh = async (): Promise<AccessDecisionSnapshot> => {
@@ -27,7 +34,12 @@ export async function createAccessDecisionContext(
       dataStores.usersRepo.toArray(),
       readAccessThresholdsFromSettings(dataStores.settingsRepo, seedFallback),
     ]);
-    snapshot = { users, thresholds };
+    const enrolled: EnrolledEmbedding[] = users.map((u) => ({
+      userId: u.id,
+      embedding: u.embedding,
+    }));
+    const usersById = new Map(users.map((u) => [u.id, u] as const));
+    snapshot = { users, thresholds, enrolled, usersById };
     return snapshot;
   };
 

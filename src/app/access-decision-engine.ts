@@ -26,11 +26,13 @@ export async function createAccessDecisionEvaluator(
     const thresholds = snapshot?.thresholds ?? { ...seedFallback.thresholds };
     if (users.length === 0) return null;
 
-    const enrolled: EnrolledEmbedding[] = users.map((u) => ({
-      userId: u.id,
-      embedding: u.embedding,
-    }));
-    const usersById = new Map(users.map((u) => [u.id, u]));
+    const enrolled: EnrolledEmbedding[] =
+      snapshot?.enrolled ??
+      users.map((u) => ({
+        userId: u.id,
+        embedding: u.embedding,
+      }));
+    const usersById = snapshot?.usersById ?? new Map(users.map((u) => [u.id, u]));
 
     const ranked = matchOne(input.embedding, enrolled);
     const policy = evaluateGateAccessMatch({

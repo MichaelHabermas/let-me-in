@@ -2,7 +2,10 @@ import type { Camera } from './camera';
 import type { GatePreviewSessionDeps } from './gate-session';
 import type { ModelLoadStatusController } from './model-load-status-ui';
 import { maybeRecordNavigationToDetectorReady } from './gatekeeper-metrics';
-import { createModelLoadOrchestrator } from './model-load-orchestrator';
+import {
+  buildDetectorEmbedderModelLoadTargets,
+  createModelLoadOrchestrator,
+} from './model-load-orchestrator';
 
 export type DetectorGateState = {
   loadState: 'none' | 'pending' | 'ready' | 'failed';
@@ -27,15 +30,7 @@ export function beginDetectorLoad(
   const { statusEl, modelLoadUi } = elements;
   state.loadState = deps.yoloDetector ? 'pending' : 'none';
   state.embedderLoadState = deps.faceEmbedder ? 'pending' : 'none';
-  const targets = [];
-  if (deps.yoloDetector) {
-    const detector = deps.yoloDetector;
-    targets.push({ key: 'detector' as const, enabled: true, load: () => detector.load() });
-  }
-  if (deps.faceEmbedder) {
-    const embedder = deps.faceEmbedder;
-    targets.push({ key: 'embedder' as const, enabled: true, load: () => embedder.load() });
-  }
+  const targets = buildDetectorEmbedderModelLoadTargets(deps.yoloDetector, deps.faceEmbedder);
   const orchestrator = createModelLoadOrchestrator({
     targets,
     modelLoadUi,

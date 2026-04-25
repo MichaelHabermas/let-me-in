@@ -1,116 +1,19 @@
-import { startVideoCameraResilient } from '../camera-resilient-start';
 import type { EnrollFsmEvent, EnrollState } from './enroll-fsm';
 import { transitionEnrollState } from './enroll-fsm';
 import {
   captureEnrollmentFace,
-  paintEnrollmentPreview,
-  runEnrollmentOverlayFrame,
   saveEnrollmentUser,
   type EnrollmentFrameDeps,
 } from './enroll-capture-frames';
 import type { User } from '../../domain/types';
-import { createModelLoadOrchestrator } from '../model-load-orchestrator';
 import type { EnrollmentController, EnrollmentControllerOptions } from './enroll-capture.types';
+import {
+  type EnrollSessionMut,
+  runEnrollmentOverlayInference,
+  runEnrollmentStartAttempt,
+} from './enroll-session-lifecycle';
 
-type EnrollMut = {
-  state: EnrollState;
-  inferenceBusy: boolean;
-  pendingEmbedding: Float32Array | null;
-  pendingReferenceBlob: Blob | null;
-  editingUserId: string | null;
-  loadGeneration: number;
-  unsubFrame: (() => void) | null;
-};
-
-function runOverlayInference(
-  m: EnrollMut,
-  opts: EnrollmentControllerOptions,
-  frameDeps: EnrollmentFrameDeps,
-): void {
-  if (m.state !== 'detecting' || m.inferenceBusy || !opts.camera.isRunning()) return;
-  m.inferenceBusy = true;
-  void (async () => {
-    try {
-      await runEnrollmentOverlayFrame(frameDeps);
-    } catch (err) {
-      console.warn('[enrollment] inference', err);
-    } finally {
-      m.inferenceBusy = false;
-    }
-  })();
-}
-
-/**
- * One attempt: load ORT models, start camera, then subscribe overlay frames.
- * Separated for readability; shares closure with the surrounding controller via `m` and `opts`.
- */
-/* eslint-disable max-lines-per-function -- start path: model orchestrator + camera + frame subscription + retry */
-async function runStartSessionAttempt(
-  m: EnrollMut,
-  opts: EnrollmentControllerOptions,
-  frameDeps: EnrollmentFrameDeps,
-  apply: (e: EnrollFsmEvent) => void,
-  onOverlayFrame: () => void,
-  resetAfterLoadFailure: () => void,
-): Promise<void> {
-  m.loadGeneration += 1;
-  const gen = m.loadGeneration;
-  try {
-    const modelLoad = createModelLoadOrchestrator({
-      targets: [
-        { key: 'detector', enabled: true, load: () => opts.detector.load() },
-        { key: 'embedder', enabled: true, load: () => opts.embedder.load() },
-      ],
-      modelLoadUi: opts.modelLoadUi,
-      failedMessage: opts.modelLoadFailedMessage ?? 'Model load failed',
-      onFailed: () => {
-        console.error('[enrollment] model load failed');
-      },
-    });
-    const loaded = await modelLoad.run();
-    if (!loaded) return;
-    if (gen !== m.loadGeneration) return;
-    const dc = opts.defaultVideoConstraints;
-    const getOpts = () => opts.getCameraStartOptions?.() ?? { facingMode: dc.facingMode };
-    await startVideoCameraResilient(opts.camera, getOpts, dc.facingMode, async (fb) => {
-      await opts.onRecoverStaleEnrollDevice?.(fb);
-    });
-    if (gen !== m.loadGeneration) return;
-    await opts.onAfterCameraStart?.(opts.camera);
-    if (gen !== m.loadGeneration) return;
-    paintEnrollmentPreview(frameDeps);
-    apply({ type: 'ready_detecting' });
-    m.unsubFrame = opts.camera.onFrame(() => {
-      onOverlayFrame();
-    });
-  } catch (e) {
-    if (gen !== m.loadGeneration) return;
-    console.error('[enrollment] start failed', e);
-    resetAfterLoadFailure();
-    const { modelLoadUi, modelLoadFailedMessage: modelLoadFailed } = opts;
-    if (modelLoadUi && modelLoadFailed) {
-      modelLoadUi.showError(modelLoadFailed);
-      modelLoadUi.setRetryHandler(() => {
-        modelLoadUi.clearError();
-        if (m.state !== 'idle' && m.state !== 'editing') return;
-        apply({ type: 'start_camera' });
-        void runStartSessionAttempt(
-          m,
-          opts,
-          frameDeps,
-          apply,
-          onOverlayFrame,
-          resetAfterLoadFailure,
-        ).catch(() => {});
-      });
-      return;
-    }
-    throw e;
-  }
-}
-/* eslint-enable max-lines-per-function */
-
-/** Frame loop + FSM; detection helpers: `enroll-capture-frames`. */
+/** Frame loop + FSM; detection helpers: `enroll-capture-frames`, lifecycle: `enroll-session-lifecycle`. */
 /* eslint-disable max-lines-per-function -- public API: thin methods over shared `m` + `frameDeps` */
 export function createEnrollmentController(
   opts: EnrollmentControllerOptions,
@@ -136,7 +39,7 @@ export function createEnrollmentController(
     persistence: opts.persistence,
   };
 
-  const m: EnrollMut = {
+  const m: EnrollSessionMut = {
     state: 'idle',
     inferenceBusy: false,
     pendingEmbedding: null,
@@ -156,7 +59,7 @@ export function createEnrollmentController(
     if (next !== m.state) setState(next);
   }
 
-  const onOverlay = () => runOverlayInference(m, opts, frameDeps);
+  const onOverlay = () => runEnrollmentOverlayInference(m, opts, frameDeps);
 
   const resetAfterLoadFailure = () => {
     m.pendingEmbedding = null;
@@ -191,7 +94,14 @@ export function createEnrollmentController(
       apply({ type: 'start_camera' });
 
       try {
-        await runStartSessionAttempt(m, opts, frameDeps, apply, onOverlay, resetAfterLoadFailure);
+        await runEnrollmentStartAttempt(
+          m,
+          opts,
+          frameDeps,
+          apply,
+          onOverlay,
+          resetAfterLoadFailure,
+        );
       } catch (e) {
         console.error('[enrollment] start session failed (no recoverable model-load UI path)', e);
       }

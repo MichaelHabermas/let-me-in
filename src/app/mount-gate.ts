@@ -10,6 +10,7 @@ import { createOrtDetectorEmbedderWithLoadProgress } from './ort-detector-embedd
 import { bootstrapGateConsentIfNeeded } from './gate-consent-bootstrap';
 import { wireGatePreviewSession, type GatePreviewSessionDeps } from './gate-session';
 import type { GateRuntime } from './gate-runtime';
+import { getGateSessionWiring } from './gate-runtime-wiring';
 import { resolveGateRuntime } from './gate-runtime';
 import { resolveAppContext } from './app-context';
 
@@ -57,11 +58,12 @@ function maybeBootstrapConsent(
 ): void {
   if (!persistence) return;
   cameraToggleBtn.disabled = true;
+  const wiring = getGateSessionWiring(rt);
   void bootstrapGateConsentIfNeeded({
     persistence,
     cameraToggleBtn,
     shell: main,
-    strings: rt.runtimeSlices.gate.consent,
+    strings: wiring.consent,
   });
 }
 
@@ -72,18 +74,19 @@ function buildSessionDeps(
   faceEmbedder: FaceEmbedder,
   sessionDepsExtras: MountGateHostDeps['sessionDepsExtras'],
 ): GatePreviewSessionDeps {
+  const w = getGateSessionWiring(rt);
   return {
     createCamera: createCam,
     yoloDetector,
     faceEmbedder,
-    ...rt.gatePreviewSessionCoreDeps,
-    accessUiStrings: rt.runtimeSlices.gate.accessUi,
+    ...w.core,
+    accessUiStrings: w.accessUi,
     ...sessionDepsExtras,
   };
 }
 
 function mountGateDomStage(host: HTMLElement, rt: GateRuntime) {
-  document.title = rt.runtimeSlices.gate.pageTitle;
+  document.title = getGateSessionWiring(rt).gatePageTitle;
   host.innerHTML = '';
   const dom = buildGateDom(rt);
   host.appendChild(dom.main);

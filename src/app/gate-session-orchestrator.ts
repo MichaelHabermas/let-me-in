@@ -1,19 +1,24 @@
 import type { Camera, CameraStartOptions } from './camera';
-import { startVideoCameraResilient } from './camera-resilient-start';
 import {
   bindCameraDevicePreferenceChange,
   createCameraStartOptionsState,
-  refreshVideoInputDeviceListAfterStart,
 } from './camera-device-session';
 import { createCameraSessionLifecycle } from './camera-session-lifecycle';
-import { createCooldown } from './cooldown';
-import { createDetectionPipeline } from './detection-pipeline';
 import { readCameraPreference } from './camera-preference-persistence';
 import { syncCameraToggleUi } from './gate-camera-toggle-ui';
 import { GATE_CAMERA_PREFERENCE_KEY } from '../domain/camera-preference';
 import type { GatePreviewElements, GatePreviewSessionDeps } from './gate-session';
 import { beginDetectorLoad, type DetectorGateState } from './gate-session-detector-load';
+import {
+  runGatePreviewStartSequence,
+  type LiveAccessDepsResolver,
+} from './gate-preview-start-sequence';
 import { withLiveAccessDeps } from './gate-session-live-access';
+
+export type WireCameraControlsOptions = {
+  /** Default `withLiveAccessDeps` — inject in tests to avoid live DB. */
+  resolveLiveAccess?: LiveAccessDepsResolver;
+};
 
 /**
  * Camera + model load + live access pipeline orchestration (deep module boundary).
@@ -23,7 +28,9 @@ export function wireCameraControls(
   camera: Camera,
   elements: GatePreviewElements,
   deps: GatePreviewSessionDeps,
+  options?: WireCameraControlsOptions,
 ): () => void {
+  const resolveLiveAccess = options?.resolveLiveAccess ?? withLiveAccessDeps;
   const { cameraToggleBtn, statusEl, modelLoadUi, cameraDeviceSelect: deviceSelect } = elements;
   const loadingMsg = deps.detectorLoadingMessage;
   const failedMsg = deps.detectorLoadFailedMessage;
@@ -55,54 +62,20 @@ export function wireCameraControls(
         return;
       }
       if (!elements.modelLoadUi) statusEl.textContent = '';
-      if (prefRead) {
-        startOpts.setLoadedPreference((await prefRead) ?? undefined);
-      }
-      const attachDeps = await withLiveAccessDeps(elements, deps);
-      const d = deps.getDefaultVideoConstraintsForCamera();
-      await startVideoCameraResilient(camera, getStartOptions, d.facingMode, async (fb) => {
-        await startOpts.recoverFromStaleDevice(settingsRepo, GATE_CAMERA_PREFERENCE_KEY, fb);
-      });
-
-      if (deviceSelect) {
-        const listed = await refreshVideoInputDeviceListAfterStart({
+      await runGatePreviewStartSequence(
+        {
           camera,
+          elements,
+          deps,
+          state,
+          getStartOptions,
+          startOpts,
+          prefRead,
           deviceSelect,
           settingsRepo,
-          preferenceKey: GATE_CAMERA_PREFERENCE_KEY,
-          defaultFacingForPreference: d.facingMode,
-          firstSelectOptionLabel: deps.cameraDefaultDeviceOption,
-          formatUnnamedForListIndex: (i) => deps.formatUnnamedCamera(i + 1),
-        });
-        if (listed) {
-          startOpts.setListPopulated(true);
-        }
-      }
-
-      const overlay = elements.overlayCanvas;
-      const embedderReady = !attachDeps.faceEmbedder || state.embedderLoadState === 'ready';
-      if (attachDeps.yoloDetector && overlay && state.loadState === 'ready' && embedderReady) {
-        const overlayCtx = overlay.getContext('2d');
-        if (overlayCtx) {
-          state.stopPipeline?.();
-          const cooldown = createCooldown(attachDeps.cooldownMs, () => performance.now());
-          state.stopPipeline = createDetectionPipeline({
-            camera,
-            detector: attachDeps.yoloDetector,
-            overlayCtx,
-            overlayWidth: overlay.width,
-            overlayHeight: overlay.height,
-            faceEmbedder: attachDeps.faceEmbedder,
-            logEmbeddingTimings: attachDeps.logEmbeddingTimings,
-            statusEl: elements.statusEl,
-            noFaceMessage: attachDeps.noFaceMessage,
-            multiFaceMessage: attachDeps.multiFaceMessage,
-            cooldown,
-            evaluateDecision: attachDeps.evaluateDecision,
-            appendAccessLog: attachDeps.appendAccessLog,
-          });
-        }
-      }
+        },
+        resolveLiveAccess,
+      );
       syncCameraToggleUi(cameraToggleBtn, 'running');
     } catch {
       syncCameraToggleUi(cameraToggleBtn, 'idle');

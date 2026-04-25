@@ -7,6 +7,27 @@ export type ModelLoadTarget = {
   load: () => Promise<void>;
 };
 
+export type ModelLoadSurface = {
+  load(): Promise<void>;
+};
+
+/**
+ * One place to build detector+embedder parallel targets (gate, enrollment, `parallel-model-load`).
+ */
+export function buildDetectorEmbedderModelLoadTargets(
+  yolo: ModelLoadSurface | undefined,
+  face: ModelLoadSurface | undefined,
+): ModelLoadTarget[] {
+  const out: ModelLoadTarget[] = [];
+  if (yolo) {
+    out.push({ key: 'detector', enabled: true, load: () => yolo.load() });
+  }
+  if (face) {
+    out.push({ key: 'embedder', enabled: true, load: () => face.load() });
+  }
+  return out;
+}
+
 export type ModelLoadOrchestrator = {
   run(): Promise<boolean>;
   retry(): void;

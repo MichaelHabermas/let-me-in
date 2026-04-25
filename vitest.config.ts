@@ -15,6 +15,7 @@ const happyDomTestFiles = [
   'tests/detector-worker-client.test.ts',
   'tests/enroll-e2e-controller.test.ts',
   'tests/gate-access-ui-controller.test.ts',
+  'tests/gate-preview-start-sequence.test.ts',
   'tests/gate-session.test.ts',
   'tests/mount-admin-page.test.ts',
   'tests/mount-gate.test.ts',

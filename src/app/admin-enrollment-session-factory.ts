@@ -19,6 +19,7 @@ import {
   createE2eEnrollmentCamera,
 } from './enrollment/enroll-e2e-doubles';
 import type { GateRuntime } from './gate-runtime';
+import { getGateSessionWiring } from './gate-runtime-wiring';
 import type { Camera } from './camera';
 
 function enrollmentControllerBase(
@@ -57,6 +58,7 @@ function buildEnrollmentModelLoadSessionHandlers(
       console.warn('[enrollment] read camera preference', err);
     },
   );
+  const sessionWiring = getGateSessionWiring(rt);
   return {
     getCameraStartOptions: () => startOpts.getStartOptions(),
     onAfterCameraStart: async (cam: Camera) => {
@@ -66,8 +68,8 @@ function buildEnrollmentModelLoadSessionHandlers(
         settingsRepo: base.persistence.settingsRepo,
         preferenceKey: ENROLL_CAMERA_PREFERENCE_KEY,
         defaultFacingForPreference: dc.facingMode,
-        firstSelectOptionLabel: rt.runtimeSlices.admin.ui.cameraDefaultDeviceOption,
-        formatUnnamedForListIndex: (i) => rt.formatUnnamedCamera(i + 1),
+        firstSelectOptionLabel: sessionWiring.core.cameraDefaultDeviceOption,
+        formatUnnamedForListIndex: (i) => sessionWiring.core.formatUnnamedCamera(i + 1),
       });
       if (ok) {
         startOpts.setListPopulated(true);
@@ -83,11 +85,24 @@ function buildEnrollmentModelLoadSessionHandlers(
   };
 }
 
-function createAdminEnrollmentWithModelLoad(
+type AdminEnrollmentPolicy = 'e2e-stub' | 'ort';
+
+function createEnrollmentForPolicy(
+  policy: AdminEnrollmentPolicy,
   dom: AdminEnrollmentCaptureMount,
   rt: GateRuntime,
   base: ReturnType<typeof enrollmentControllerBase>,
 ): EnrollmentController {
+  if (policy === 'e2e-stub') {
+    const ort = createE2eDetectorEmbedderRuntime();
+    return createEnrollmentController({
+      ...base,
+      defaultVideoConstraints: rt.defaultVideoConstraintsForCamera,
+      camera: createE2eEnrollmentCamera(dom.frameCanvas.width, dom.frameCanvas.height),
+      detector: ort.detector,
+      embedder: ort.embedder,
+    });
+  }
   const modelLoadUi = mountModelLoadForRuntime(dom.modelLoadRoot, rt, 'enroll');
   const ort = createOrtDetectorEmbedderWithLoadProgress((p) => modelLoadUi.onProgress(p));
   const dc = rt.defaultVideoConstraintsForCamera;
@@ -118,16 +133,9 @@ export function createAdminEnrollmentSessionController(params: {
 }): EnrollmentController {
   const { dom, rt, persistence, useStubEnrollment, onStateChange } = params;
   const base = enrollmentControllerBase(dom, rt, persistence, onStateChange);
-  if (useStubEnrollment) {
+  const policy: AdminEnrollmentPolicy = useStubEnrollment ? 'e2e-stub' : 'ort';
+  if (policy === 'e2e-stub') {
     dom.cameraDeviceSelect.hidden = true;
-    const ort = createE2eDetectorEmbedderRuntime();
-    return createEnrollmentController({
-      ...base,
-      defaultVideoConstraints: rt.defaultVideoConstraintsForCamera,
-      camera: createE2eEnrollmentCamera(dom.frameCanvas.width, dom.frameCanvas.height),
-      detector: ort.detector,
-      embedder: ort.embedder,
-    });
   }
-  return createAdminEnrollmentWithModelLoad(dom, rt, base);
+  return createEnrollmentForPolicy(policy, dom, rt, base);
 }
