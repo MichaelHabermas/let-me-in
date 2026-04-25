@@ -61,6 +61,7 @@ Open:
 | `pnpm seed:users`       | Seeds three sample users into IndexedDB (`gatekeeper`) — see `tests/scenarios/seed-3-users.js` |
 | `pnpm sync:netlify`     | Rewrite `netlify.toml` redirect blocks from `multi-page.ts`                                    |
 | `pnpm verify:netlify`   | Fail if redirects drift from `multi-page.ts` (no writes)                                       |
+| `pnpm run sweep` **or** `pnpm run construct` | Full repo verification. Use one, not both; `construct` already includes `sweep` plus `build`. |
 
 ## Source layout (current)
 
@@ -68,6 +69,7 @@ Open:
 - **Gate page:** `[src/app/mount-gate.ts](src/app/mount-gate.ts)` builds DOM and wires the camera preview via `[src/app/gate-session.ts](src/app/gate-session.ts)`.
 - **Admin / enrollment:** `[src/app/mount-admin-shell.ts](src/app/mount-admin-shell.ts)` + `[src/app/mount-admin-enrollment.ts](src/app/mount-admin-enrollment.ts)` — login modal, camera enrollment, IndexedDB save. E2E uses `VITE_E2E_STUB_ENROLL=true` (see Playwright `webServer` env in `[playwright.config.ts](playwright.config.ts)`).
 - **Roster JSON backup:** Admin import/export contract and backup schema are documented in `[docs/IMPORT_SCHEMA.md](docs/IMPORT_SCHEMA.md)`.
+- **Cost projections:** Development AI/tooling spend log and production projections are documented in `[docs/AI_COST_LOG.md](docs/AI_COST_LOG.md)` and `[docs/PRODUCTION_COSTS.md](docs/PRODUCTION_COSTS.md)`.
 - **Runtime copy / seed:** `[src/app/gate-runtime.ts](src/app/gate-runtime.ts)` centralizes config- and env-derived values (page titles, camera strings, preview canvas size, dev FPS overlay).
 - **Deploy routes:** `[multi-page.ts](multi-page.ts)` feeds Vite and `netlify.toml` (keep in sync with `pnpm sync:netlify` or `pnpm verify:netlify`).
 

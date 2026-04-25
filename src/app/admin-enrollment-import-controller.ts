@@ -4,14 +4,21 @@ import type { AdminEnrollmentImportDomPort } from './admin-enrollment-ports';
 import type { GateRuntime } from './gate-runtime';
 import type { DexiePersistence } from '../infra/persistence';
 
+const IMPORT_FAILED_LABEL = 'Import failed.';
+const EXPORT_FAILED_LABEL = 'Export failed.';
+
 async function runExport(params: {
   persistence: DexiePersistence;
   statusEl: HTMLElement;
   doneLabel: string;
 }): Promise<void> {
-  const exported = await exportRosterJson(params.persistence);
-  downloadRosterJson(exported, rosterExportFilename());
-  params.statusEl.textContent = params.doneLabel;
+  try {
+    const exported = await exportRosterJson(params.persistence);
+    downloadRosterJson(exported, rosterExportFilename());
+    params.statusEl.textContent = params.doneLabel;
+  } catch {
+    params.statusEl.textContent = EXPORT_FAILED_LABEL;
+  }
 }
 
 async function runImport(params: {
@@ -22,23 +29,27 @@ async function runImport(params: {
   refreshRoster: () => Promise<void>;
   useStubEnrollment: boolean;
 }): Promise<void> {
-  params.dom.importStatusEl.textContent = '';
-  const copy = params.rt.runtimeSlices.admin.ui;
-  const res = await runBulkImport(params.persistence, params.text, {
-    useStubEnrollment: params.useStubEnrollment,
-    onProgress(current, total) {
-      params.dom.importStatusEl.textContent = copy.rosterImportProgress
-        .replaceAll('{current}', String(current))
-        .replaceAll('{total}', String(total));
-    },
-    confirmDuplicateNames() {
-      return Promise.resolve(window.confirm(copy.rosterImportConfirmDuplicates));
-    },
-  });
-  params.dom.importFileInput.value = '';
-  if (!res.proceededAfterDuplicateConfirm) return;
-  params.dom.importStatusEl.textContent = copy.rosterImportDone;
-  await params.refreshRoster();
+  try {
+    params.dom.importStatusEl.textContent = '';
+    const copy = params.rt.runtimeSlices.admin.ui;
+    const res = await runBulkImport(params.persistence, params.text, {
+      useStubEnrollment: params.useStubEnrollment,
+      onProgress(current, total) {
+        params.dom.importStatusEl.textContent = copy.rosterImportProgress
+          .replaceAll('{current}', String(current))
+          .replaceAll('{total}', String(total));
+      },
+      confirmDuplicateNames() {
+        return Promise.resolve(window.confirm(copy.rosterImportConfirmDuplicates));
+      },
+    });
+    params.dom.importFileInput.value = '';
+    if (!res.proceededAfterDuplicateConfirm) return;
+    params.dom.importStatusEl.textContent = copy.rosterImportDone;
+    await params.refreshRoster();
+  } catch {
+    params.dom.importStatusEl.textContent = IMPORT_FAILED_LABEL;
+  }
 }
 
 function createOnImportFileChange(params: {

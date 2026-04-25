@@ -570,7 +570,7 @@ flowchart LR
 
 ---
 
-### Epic E18: AI and production cost documentation — [ ]
+### Epic E18: AI and production cost documentation — [x]
 
 **Goal:** Complete SPECS AI cost categories + production cost projection table in-repo.
 
@@ -578,37 +578,37 @@ flowchart LR
 
 **Epic DoD:**
 
-- [ ] [`docs/AI_COST_LOG.md`](AI_COST_LOG.md) includes conversion, training, testing compute rows (explicit $0 ok).
-- [ ] [`docs/PRODUCTION_COSTS.md`](PRODUCTION_COSTS.md) exists with SPEC table + assumptions bullets.
-- [ ] All E18 Tasks `- [x]`.
+- [x] [`docs/AI_COST_LOG.md`](AI_COST_LOG.md) includes conversion, training, testing compute rows (explicit $0 ok).
+- [x] [`docs/PRODUCTION_COSTS.md`](PRODUCTION_COSTS.md) exists with SPEC table + assumptions bullets.
+- [x] All E18 Tasks `- [x]`.
 
-#### User Story E18.S1: As an auditor, I see full development cost disclosure — [ ]
+#### User Story E18.S1: As an auditor, I see full development cost disclosure — [x]
 
-##### Feature E18.S1.F1: AI cost log completeness — [ ]
+##### Feature E18.S1.F1: AI cost log completeness — [x]
 
 **Files:** [`docs/AI_COST_LOG.md`](AI_COST_LOG.md).
 
-###### Task E18.S1.F1.T1: Add model conversion / training / testing compute rows — [ ]
+###### Task E18.S1.F1.T1: Add model conversion / training / testing compute rows — [x]
 
 - **Preconditions:** none
 - **Steps:** Document HF download vs train = none; Playwright/bench machine time as testing compute.
 - **Acceptance test:** No placeholder gaps for those headings.
 - **SPEC cite:** L257–L267.
 
-#### User Story E18.S2: As an auditor, I see production cost projections — [ ]
+#### User Story E18.S2: As an auditor, I see production cost projections — [x]
 
-##### Feature E18.S2.F1: Production cost doc — [ ]
+##### Feature E18.S2.F1: Production cost doc — [x]
 
 **Files:** new [`docs/PRODUCTION_COSTS.md`](PRODUCTION_COSTS.md) (or ARCHITECTURE appendix—pick one; default **new file**).
 
-###### Task E18.S2.F1.T1: Create PRODUCTION_COSTS.md with SPEC table 100/1K/10K/100K — [ ]
+###### Task E18.S2.F1.T1: Create PRODUCTION_COSTS.md with SPEC table 100/1K/10K/100K — [x]
 
 - **Preconditions:** none
 - **Steps:** Copy categories from SPECS L273–L285; add assumption bullets L287–L290.
 - **Acceptance test:** Markdown table renders; assumptions section ≥3 bullets.
 - **SPEC cite:** L269–L290.
 
-###### Task E18.S2.F1.T2: Link PRODUCTION_COSTS from README or ARCHITECTURE — [ ]
+###### Task E18.S2.F1.T2: Link PRODUCTION_COSTS from README or ARCHITECTURE — [x]
 
 - **Preconditions:** E18.S2.F1.T1 done
 - **Steps:** One-line cross-link.

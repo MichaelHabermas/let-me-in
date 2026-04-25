@@ -2,8 +2,6 @@ import type { User } from '../domain/types';
 import type { DexiePersistence } from '../infra/persistence';
 
 export const ROSTER_EXPORT_SCHEMA_VERSION = 1;
-const FALLBACK_IMAGE_BASE64 =
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 
 export type RosterExportRow = {
   name: string;
@@ -31,33 +29,64 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
-async function blobToBase64(blob: Blob): Promise<string> {
+function isArrayBufferLike(value: unknown): value is ArrayBuffer {
+  return value instanceof ArrayBuffer;
+}
+
+function isUint8ArrayLike(value: unknown): value is Uint8Array {
+  return value instanceof Uint8Array;
+}
+
+function readEmbeddedBinaryPayload(value: unknown): Uint8Array | null {
+  if (Array.isArray(value) && value.every((item) => typeof item === 'number')) {
+    return Uint8Array.from(value);
+  }
+  if (typeof value !== 'object' || value === null) return null;
+  if ('data' in value && isUint8ArrayLike(value.data)) return value.data;
+  if (
+    'data' in value &&
+    Array.isArray(value.data) &&
+    value.data.every((item) => typeof item === 'number')
+  ) {
+    return Uint8Array.from(value.data);
+  }
+  if ('buffer' in value && isArrayBufferLike(value.buffer)) return new Uint8Array(value.buffer);
+  if (
+    'buffer' in value &&
+    Array.isArray(value.buffer) &&
+    value.buffer.every((item) => typeof item === 'number')
+  ) {
+    return Uint8Array.from(value.buffer);
+  }
+  return null;
+}
+
+async function blobToBase64(blob: unknown): Promise<string> {
+  if (isArrayBufferLike(blob)) {
+    return bytesToBase64(new Uint8Array(blob));
+  }
+  if (isUint8ArrayLike(blob)) {
+    return bytesToBase64(blob);
+  }
+  if (
+    typeof blob === 'object' &&
+    blob !== null &&
+    'arrayBuffer' in blob &&
+    typeof blob.arrayBuffer === 'function'
+  ) {
+    const buffer = await blob.arrayBuffer();
+    return bytesToBase64(new Uint8Array(buffer));
+  }
+  const embeddedBinary = readEmbeddedBinaryPayload(blob);
+  if (embeddedBinary) {
+    return bytesToBase64(embeddedBinary);
+  }
   try {
-    if ('arrayBuffer' in blob && typeof blob.arrayBuffer === 'function') {
-      const buffer = await blob.arrayBuffer();
-      return bytesToBase64(new Uint8Array(buffer));
-    }
-    return await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result;
-        if (typeof result !== 'string') {
-          reject(new Error('Blob read failed'));
-          return;
-        }
-        const marker = 'base64,';
-        const markerIndex = result.indexOf(marker);
-        if (markerIndex === -1) {
-          reject(new Error('Blob base64 payload missing'));
-          return;
-        }
-        resolve(result.slice(markerIndex + marker.length));
-      };
-      reader.onerror = () => reject(reader.error ?? new Error('Blob read failed'));
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    return FALLBACK_IMAGE_BASE64;
+    const buffer = await new Response(blob as BodyInit).arrayBuffer();
+    return bytesToBase64(new Uint8Array(buffer));
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error('Blob read failed');
+    throw err;
   }
 }
 

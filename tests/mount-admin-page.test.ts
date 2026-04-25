@@ -190,6 +190,50 @@ describe('mountAdminView', () => {
     expect(revokeObjectUrlSpy.mock.calls.length).toBeGreaterThanOrEqual(revokeCallsBefore);
   });
 
+  it('shows export failure status when download creation fails', async () => {
+    const storage = createMemoryStorage();
+    const auth = createAdminAuth({
+      storage,
+      nowMs: () => 1_700_000_000_000,
+      admin: { user: 'u', pass: 'p' },
+    });
+    expect(auth.login('u', 'p')).toBe(true);
+
+    const persistence = createTestPersistence();
+    await persistence.initDatabase(testRt.databaseSeedSettings!);
+    await persistence.usersRepo.put({
+      id: 'id-err',
+      name: 'Err User',
+      role: 'Staff',
+      referenceImageBlob: new Blob(['ref'], { type: 'image/jpeg' }),
+      embedding: embeddingVectorFilled(0.03),
+      createdAt: 1_700_000_000_999,
+    });
+
+    mountAdminView({
+      rt: testRt,
+      persistence,
+      auth,
+    });
+
+    const exportButton = document.querySelector<HTMLButtonElement>('[data-testid="admin-export-trigger"]');
+    const statusEl = document.querySelector<HTMLElement>('[data-testid="admin-import-status"]');
+    const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockImplementation((blob: Blob | MediaSource) => {
+      if (blob instanceof Blob && blob.type.includes('application/json')) {
+        throw new Error('boom');
+      }
+      return 'blob:ok';
+    });
+    exportButton?.click();
+    for (let i = 0; i < 20; i += 1) {
+      if (statusEl?.textContent === 'Export failed.') break;
+      await new Promise((r) => setTimeout(r, 0));
+    }
+
+    expect(createObjectURLSpy).toHaveBeenCalled();
+    expect(statusEl?.textContent).toBe('Export failed.');
+  });
+
   it('logout uses injected auth storage only', async () => {
     const storage = createMemoryStorage();
     const auth = createAdminAuth({

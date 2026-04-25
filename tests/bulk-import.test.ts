@@ -5,10 +5,11 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { parseBulkImportJson, runBulkImport } from '../src/app/bulk-import';
-import { exportRosterJson } from '../src/app/roster-json-export';
+import { exportRosterJson, serializeRosterExportRows } from '../src/app/roster-json-export';
 import { createDexiePersistence } from '../src/infra/persistence';
 
 import { DEFAULT_TEST_DATABASE_SEED } from './support/create-test-gate-runtime';
+import { embeddingVectorFilled } from './support/test-embeddings';
 import { stubCanvas2dContext } from './support/stub-canvas-2d-context';
 
 const seed = DEFAULT_TEST_DATABASE_SEED;
@@ -144,5 +145,28 @@ describe('runBulkImport', () => {
 
     await p.resetIndexedDbClientForTests();
     await Dexie.delete(dbName);
+  });
+});
+
+describe('roster-json-export failure semantics', () => {
+  it('fails instead of silently substituting image data when blob conversion fails', async () => {
+    const failingBlob = {
+      arrayBuffer: async () => {
+        throw new Error('blob conversion failed');
+      },
+    } as unknown as Blob;
+
+    await expect(
+      serializeRosterExportRows([
+        {
+          id: 'u-1',
+          name: 'Ada',
+          role: 'Staff',
+          referenceImageBlob: failingBlob,
+          embedding: embeddingVectorFilled(0.02),
+          createdAt: 1_700_000_000_000,
+        },
+      ]),
+    ).rejects.toThrow('blob conversion failed');
   });
 });

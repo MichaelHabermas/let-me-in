@@ -11,4 +11,7 @@ Rolling log for IDE and API spend awareness per [`docs/PRE-WORK.md`](PRE-WORK.md
 | date | tool | task | est tokens in/out | est $ | notes |
 | --- | --- | --- | --- | --- | --- |
 | 2026-04-23 | Cursor | Epic E10 validation — metrics, gate stubs, Playwright scenarios, docs | est. 120k in / 35k out | 0.00 | Large multi-file implementation session; counts approximate. |
-| 2026-04-23 | — | **Totals** | est. 120k in / 35k out | **0.00** | Within free-tier assumptions; adjust if invoiced. |
+| 2026-04-25 | Local tooling | Model conversion compute | — | 0.00 | YOLOv8-face ONNX artifact downloaded directly; no local PyTorch->ONNX->quantized conversion run in this repo. |
+| 2026-04-25 | Local tooling | Training/fine-tuning compute | — | 0.00 | No detector or embedder fine-tuning performed; pre-trained models only. |
+| 2026-04-25 | Playwright + bench scripts | Testing compute | — | 0.00 | Browser profiling, scenario runs, and benchmark scripts executed on local MBP/Chrome; no paid cloud test resources used. |
+| 2026-04-25 | — | **Totals** | est. 120k in / 35k out | **0.00** | Includes AI tooling + conversion/training/testing compute categories; all currently zero-cost under local/free-tier usage. |
