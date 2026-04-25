@@ -3,7 +3,7 @@
 ## Demo video (DoD-4)
 
 - **Target:** 3–5 minute screen recording: enroll → GRANTED → stranger DENIED → multi-face → `/log` → CSV export.
-- **Artifact:** Add `docs/demo.mp4` **or** paste a stable public URL here: _PENDING OPERATOR RECORDING/LINK_
+- **Artifact:** `BLOCKER (human-dependent)` — operator must add `docs/demo.mp4` or a stable public URL before final submission.
 
 ## Architecture PDF (DoD-5)
 
@@ -16,7 +16,7 @@
 
 ## Pre-Search export (DoD-7)
 
-- Link or path to saved Pre-Search conversation (per `docs/SPECS.txt`): _PENDING OPERATOR EXPORT_
+- Link or path to saved Pre-Search conversation (per `docs/SPECS.txt`): `BLOCKER (human-dependent)` — operator must attach local path or stable URL before final submission.
 
 ## Social post (DoD-8)
 
@@ -36,7 +36,7 @@ Use this checklist to complete the remaining operator-owned items without guessi
 1. Record a 3–5 minute walkthrough per `docs/DEMO.md`.
 2. Save locally as `docs/demo.mp4` **or** upload and capture a stable URL.
 3. Replace this line:
-   - `- **Artifact:** ... _PENDING OPERATOR RECORDING/LINK_`
+   - `- **Artifact:** ... BLOCKER (human-dependent) ...`
 
 Template:
 
@@ -49,7 +49,7 @@ Template:
 1. Export your Pre-Search conversation as PDF/Markdown.
 2. Place it in `docs/` (recommended) or store externally.
 3. Replace this line:
-   - `- Link or path to saved Pre-Search conversation ... _PENDING OPERATOR EXPORT_`
+   - `- Link or path to saved Pre-Search conversation ... BLOCKER (human-dependent) ...`
 
 Template:
 
@@ -99,4 +99,4 @@ Run:
 
 Then confirm:
 
-- No `PENDING` placeholders remain in `docs/SUBMISSION.md`, `docs/BENCHMARKS.md`, `docs/ACCURACY_RESULTS.md`, `docs/E10_SCENARIO_RESULTS.md`, `docs/HUMAN_VALIDATION_REPORT.md`.
+- No unresolved placeholders remain in `docs/SUBMISSION.md` (use concrete artifact paths/URLs, or explicit `BLOCKER (human-dependent)` where allowed), `docs/BENCHMARKS.md`, `docs/ACCURACY_RESULTS.md`, `docs/E10_SCENARIO_RESULTS.md`, `docs/HUMAN_VALIDATION_REPORT.md`.

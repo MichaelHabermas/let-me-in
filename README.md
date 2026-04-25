@@ -1,6 +1,6 @@
 # Gatekeeper (let-me-in)
 
-Browser-based facial-recognition door entry — client-side ML only. This repo follows [docs/PRD.md](docs/PRD.md); assignment context is in [docs/SPECS.txt](docs/SPECS.txt). Gaps vs SPECS and closure phases: [docs/PRD-2.md](docs/PRD-2.md).
+Browser-based facial-recognition door entry — client-only ML. Single execution PRD: [docs/PRD.md](docs/PRD.md) — **Part I (E1–E10):** MVP and validation; **Part II (E11–E20):** `SPECS` closure and evidence. Immutable assignment: [docs/SPECS.txt](docs/SPECS.txt).
 
 ## Overview
 
