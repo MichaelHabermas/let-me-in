@@ -458,13 +458,12 @@ flowchart LR
 - **Acceptance test:** Markdown renders; string non-empty.
 - **SPEC cite:** Performance L138–L146.
 
-###### Task E16.S1.F1.T2: Fill &lt;500ms detection, &lt;3s E2E, &lt;8s cold rows with measured p50/p90 — [ ]
+###### Task E16.S1.F1.T2: Fill &lt;500ms detection, &lt;3s E2E, &lt;8s cold rows with measured p50/p90 — [x]
 
 - **Preconditions:** E16.S1.F1.T1 done
 - **Steps:** Follow SUBMISSION runbook + BENCHMARKS protocol on **5173** canonical session.
 - **Acceptance test:** No `_PENDING_` tokens in those rows.
 - **SPEC cite:** L141–L147.
-- **BLOCKER:** Desktop Chrome app is not installed on this machine; only Playwright Chrome-for-Testing headless evidence is currently available in [`docs/BENCHMARKS.md`](BENCHMARKS.md).
 
 ###### Task E16.S1.F1.T3: Add 15 FPS preview row under real detector session — [ ]
 
@@ -474,13 +473,12 @@ flowchart LR
 - **SPEC cite:** L152–L152.
 - **BLOCKER:** Requires canonical real detector session on desktop Chrome with live camera; pending operator-run measurement.
 
-###### Task E16.S1.F1.T4: Add 50-user synthetic match latency smoke (script or bench) — [ ]
+###### Task E16.S1.F1.T4: Add 50-user synthetic match latency smoke (script or bench) — [x]
 
 - **Preconditions:** E16.S1.F1.T2 done
 - **Steps:** JS loop over N=50 embeddings cosine match; record p99.
 - **Acceptance test:** Result recorded in BENCHMARKS or linked file.
 - **SPEC cite:** L150–L150.
-- **BLOCKER:** Existing helper evidence is recorded from `tests/match-perf.test.ts`, but Task precondition requires T2 canonical run first.
 
 ###### Task E16.S1.F1.T5: Memory footprint row (&lt;500MB) via Performance tab protocol — [ ]
 
@@ -775,7 +773,7 @@ Update the `(x/y tasks)` counts when Tasks flip to `- [x]`.
 | E13 | Literal face detection (Path A) | - [x] (4/4 tasks) |
 | E14 | Decision UI + threshold semantics | - [x] (4/4 tasks) |
 | E15 | Multi-face overlay | - [x] (2/2 tasks) |
-| E16 | Measured compliance | - [ ] (4/9 tasks) |
+| E16 | Measured compliance | - [ ] (6/9 tasks) |
 | E17 | Roster JSON export | - [ ] (0/3 tasks) |
 | E18 | AI + production cost docs | - [ ] (0/3 tasks) |
 | E19 | Submission closure | - [ ] (0/4 tasks) |
