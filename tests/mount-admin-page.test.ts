@@ -151,6 +151,46 @@ describe('mountAdminView', () => {
     await waitForRosterRows(3);
   });
 
+  it('shows review queue and applies reviewed decision actions', async () => {
+    const storage = createMemoryStorage();
+    const auth = createAdminAuth({
+      storage,
+      nowMs: () => 1_700_000_000_000,
+      admin: { user: 'u', pass: 'p' },
+    });
+    expect(auth.login('u', 'p')).toBe(true);
+
+    const persistence = createTestPersistence();
+    await persistence.initDatabase(testRt.databaseSeedSettings!);
+    await persistence.accessLogRepo.put({
+      timestamp: 1_700_000_000_100,
+      userId: null,
+      similarity01: 0.72,
+      decision: 'DENIED',
+      capturedFrameBlob: new Blob(),
+    });
+    mountAdminView({ rt: testRt, persistence, auth });
+
+    const queueStatus = document.querySelector<HTMLElement>('[data-testid="admin-review-queue-status"]');
+    for (let i = 0; i < 50; i += 1) {
+      if (queueStatus?.textContent?.includes('1 pending')) break;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    expect(queueStatus?.textContent).toContain('1 pending');
+
+    const grantBtn = document.querySelector<HTMLButtonElement>(
+      '[data-testid="admin-review-grant-1700000000100"]',
+    );
+    grantBtn?.click();
+    for (let i = 0; i < 50; i += 1) {
+      if (queueStatus?.textContent?.includes('0 pending')) break;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    const row = await persistence.accessLogRepo.get(1_700_000_000_100);
+    expect(row?.reviewedDecision).toBe('GRANTED');
+    expect(queueStatus?.textContent).toContain('0 pending');
+  });
+
   it('renders export control and triggers JSON download', async () => {
     const storage = createMemoryStorage();
     const auth = createAdminAuth({

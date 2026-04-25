@@ -5,7 +5,10 @@ import {
   refreshVideoInputDeviceListAfterStart,
 } from '../src/app/camera-device-session';
 import { startVideoCameraResilient } from '../src/app/camera-resilient-start';
-import { runGatePreviewStartSequence } from '../src/app/gate-preview-start-sequence';
+import {
+  runGatePreviewStartSequence,
+  type LiveAccessDepsResolver,
+} from '../src/app/gate-preview-start-sequence';
 import type { GatePreviewElements, GatePreviewSessionDeps } from '../src/app/gate-session';
 import type { DetectorGateState } from '../src/app/gate-session-detector-load';
 import type { Camera } from '../src/app/camera';
@@ -47,14 +50,14 @@ function minimalDetectorEmbedder() {
 
 describe('runGatePreviewStartSequence', () => {
   function createHarness(): {
-    resolveLive: ReturnType<typeof vi.fn>;
+    resolveLive: ReturnType<typeof vi.fn<LiveAccessDepsResolver>>;
     startOpts: ReturnType<typeof createCameraStartOptionsState>;
     camera: Camera;
     elements: GatePreviewElements;
     deps: GatePreviewSessionDeps;
     state: DetectorGateState;
   } {
-    const resolveLive = vi.fn(async (_el: unknown, d: GatePreviewSessionDeps) => d);
+    const resolveLive = vi.fn<LiveAccessDepsResolver>(async (_el, d) => d);
     const gateRt = createTestGateRuntime();
     const { yolo, face } = minimalDetectorEmbedder();
     const startOpts = createCameraStartOptionsState({
@@ -188,7 +191,7 @@ describe('runGatePreviewStartSequence', () => {
 
   it('does not create detection pipeline when gate state is not ready', async () => {
     const { resolveLive, startOpts, camera, elements, deps, state } = createHarness();
-    state.loadState = 'loading';
+    state.loadState = 'pending';
 
     await runGatePreviewStartSequence(
       {

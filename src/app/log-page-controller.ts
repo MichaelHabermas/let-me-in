@@ -1,4 +1,5 @@
 import type { AccessLogRow, User } from '../domain/types';
+import type { AccessLogReviewService } from './access-log-review-service';
 import { filterAndSortLogRows, type LogFilterState, type LogSortKey } from './log-page-table';
 import { renderLogRows, type LogToolbarControls } from './log-page-dom';
 
@@ -10,7 +11,7 @@ type LogPageState = {
 
 function createInitialLogPageState(): LogPageState {
   return {
-    filters: { dateFrom: '', dateTo: '', userId: '', decision: '' },
+    filters: { dateFrom: '', dateTo: '', userId: '', decision: '', review: '' },
     sortKey: 'timestamp',
     sortAsc: false,
   };
@@ -21,6 +22,7 @@ function applyToolbarFilters(state: LogPageState, controls: LogToolbarControls):
   state.filters.dateTo = controls.dateTo.value;
   state.filters.userId = controls.userSelect.value;
   state.filters.decision = controls.decisionSelect.value as LogFilterState['decision'];
+  state.filters.review = controls.reviewSelect.value as LogFilterState['review'];
 }
 
 export function createLogPageController(params: {
@@ -30,9 +32,22 @@ export function createLogPageController(params: {
   tbody: HTMLTableSectionElement;
   controls: LogToolbarControls;
   userNames: Map<string, string>;
+  reviewService?: AccessLogReviewService;
 }) {
-  const { rows, users, unknown, tbody, controls, userNames } = params;
+  const { rows, users, unknown, tbody, controls, userNames, reviewService } = params;
   const state = createInitialLogPageState();
+
+  const onReview = (timestamp: number, reviewedDecision: 'GRANTED' | 'DENIED') => {
+    void (async () => {
+      await reviewService?.setReviewedDecision({ timestamp, reviewedDecision });
+      const row = rows.find((candidate) => candidate.timestamp === timestamp);
+      if (row) {
+        row.reviewedDecision = reviewedDecision;
+        row.reviewedAt = Date.now();
+      }
+      render();
+    })();
+  };
 
   const render = () => {
     applyToolbarFilters(state, controls);
@@ -44,7 +59,7 @@ export function createLogPageController(params: {
       state.sortAsc,
       unknown,
     );
-    renderLogRows(tbody, sortedRows, userNames, unknown);
+    renderLogRows(tbody, sortedRows, userNames, unknown, reviewService ? onReview : undefined);
   };
 
   const onSortHeaderClick = (key: LogSortKey) => {

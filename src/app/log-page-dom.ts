@@ -1,4 +1,5 @@
 import type { AccessLogRow, User } from '../domain/types';
+import type { ReviewedDecision } from '../infra/persistence';
 import type { LogSortKey } from './log-page-table';
 
 function formatTimestamp(ts: number): string {
@@ -15,6 +16,7 @@ export type LogToolbarControls = {
   dateTo: HTMLInputElement;
   userSelect: HTMLSelectElement;
   decisionSelect: HTMLSelectElement;
+  reviewSelect: HTMLSelectElement;
   exportBtn: HTMLButtonElement;
 };
 
@@ -78,8 +80,25 @@ export function buildLogToolbar(unknown: string, exportLabel: string): LogToolba
   exportBtn.setAttribute('data-testid', 'log-export-csv');
   exportBtn.textContent = exportLabel;
 
-  toolbar.append(dfWrap, dtWrap, userWrap, decWrap, exportBtn);
-  return { toolbar, dateFrom, dateTo, userSelect, decisionSelect, exportBtn };
+  const reviewWrap = document.createElement('label');
+  reviewWrap.className = 'log-toolbar__field';
+  reviewWrap.textContent = 'Review ';
+  const reviewSelect = document.createElement('select');
+  reviewSelect.setAttribute('data-testid', 'log-filter-review');
+  for (const [val, label] of [
+    ['', 'All'],
+    ['UNREVIEWED', 'Needs review'],
+    ['REVIEWED', 'Reviewed'],
+  ] as const) {
+    const option = document.createElement('option');
+    option.value = val;
+    option.textContent = label;
+    reviewSelect.appendChild(option);
+  }
+  reviewWrap.appendChild(reviewSelect);
+
+  toolbar.append(dfWrap, dtWrap, userWrap, decWrap, reviewWrap, exportBtn);
+  return { toolbar, dateFrom, dateTo, userSelect, decisionSelect, reviewSelect, exportBtn };
 }
 /* eslint-enable max-lines-per-function */
 
@@ -109,6 +128,9 @@ export function buildLogTable(onHeaderClick: (key: LogSortKey) => void): {
   const tbody = document.createElement('tbody');
   tbody.setAttribute('data-testid', 'log-table-body');
   table.append(thead, tbody);
+  const reviewTh = document.createElement('th');
+  reviewTh.textContent = 'Review';
+  hr.appendChild(reviewTh);
   return { table, tbody };
 }
 
@@ -130,6 +152,7 @@ export function renderLogRows(
   rows: AccessLogRow[],
   userNames: Map<string, string>,
   unknown: string,
+  onReview?: (timestamp: number, reviewedDecision: ReviewedDecision) => void,
 ): void {
   tbody.replaceChildren();
   for (const row of rows) {
@@ -142,7 +165,27 @@ export function renderLogRows(
     tdSim.textContent = `${Math.round(row.similarity01 * 100)}%`;
     const tdDec = document.createElement('td');
     tdDec.textContent = row.decision;
-    tr.append(tdTime, tdUser, tdSim, tdDec);
+    const tdReview = document.createElement('td');
+    if (row.reviewedDecision) {
+      tdReview.textContent = `Reviewed: ${row.reviewedDecision}`;
+    } else if (onReview) {
+      const grantBtn = document.createElement('button');
+      grantBtn.type = 'button';
+      grantBtn.className = 'btn btn--primary';
+      grantBtn.textContent = 'Should grant';
+      grantBtn.setAttribute('data-testid', `log-review-grant-${row.timestamp}`);
+      grantBtn.addEventListener('click', () => onReview(row.timestamp, 'GRANTED'));
+      const denyBtn = document.createElement('button');
+      denyBtn.type = 'button';
+      denyBtn.className = 'btn';
+      denyBtn.textContent = 'Should deny';
+      denyBtn.setAttribute('data-testid', `log-review-deny-${row.timestamp}`);
+      denyBtn.addEventListener('click', () => onReview(row.timestamp, 'DENIED'));
+      tdReview.append(grantBtn, denyBtn);
+    } else {
+      tdReview.textContent = '';
+    }
+    tr.append(tdTime, tdUser, tdSim, tdDec, tdReview);
     tbody.appendChild(tr);
   }
 }

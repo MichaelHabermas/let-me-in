@@ -1,6 +1,7 @@
 /** Domain row and match shapes — persistence maps these; UI and future matching consume them. */
 
 export type Decision = 'GRANTED' | 'UNCERTAIN' | 'DENIED';
+export type ReviewedDecision = 'GRANTED' | 'DENIED';
 
 export interface User {
   id: string;
@@ -17,6 +18,9 @@ export interface AccessLogRow {
   similarity01: number;
   decision: Decision;
   capturedFrameBlob: Blob;
+  reviewedDecision?: ReviewedDecision;
+  reviewedAt?: number;
+  reviewedBy?: string | null;
 }
 
 export interface MatchResult {

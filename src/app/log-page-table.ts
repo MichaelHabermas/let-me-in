@@ -7,6 +7,7 @@ export type LogFilterState = {
   dateTo: string;
   userId: string;
   decision: '' | Decision;
+  review: '' | 'REVIEWED' | 'UNREVIEWED';
 };
 
 export function dayRangeToMs(
@@ -77,6 +78,8 @@ export function filterAndSortLogRows(
       } else if (r.userId !== filters.userId) return false;
     }
     if (filters.decision && r.decision !== filters.decision) return false;
+    if (filters.review === 'REVIEWED' && !r.reviewedDecision) return false;
+    if (filters.review === 'UNREVIEWED' && !!r.reviewedDecision) return false;
     return true;
   });
 

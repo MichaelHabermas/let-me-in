@@ -161,6 +161,56 @@ describe('createDexiePersistence', () => {
     }
   });
 
+  it('supports review candidate listing and review decision updates', async () => {
+    const dbName = `gatekeeper-review-${crypto.randomUUID()}`;
+    const p = createDexiePersistence(dbName);
+    try {
+      await p.initDatabase(defaultTestSeed);
+      await p.accessLogRepo.put({
+        timestamp: 100,
+        userId: null,
+        similarity01: 0.82,
+        decision: 'DENIED',
+        capturedFrameBlob: new Blob(),
+      });
+      await p.accessLogRepo.put({
+        timestamp: 101,
+        userId: null,
+        similarity01: 0.52,
+        decision: 'DENIED',
+        capturedFrameBlob: new Blob(),
+      });
+      await p.accessLogRepo.put({
+        timestamp: 102,
+        userId: null,
+        similarity01: 0.63,
+        decision: 'UNCERTAIN',
+        capturedFrameBlob: new Blob(),
+      });
+
+      const candidates = await p.accessLogRepo.listReviewCandidates({
+        limit: 10,
+        minDeniedSimilarity01: 0.7,
+      });
+      expect(candidates.map((row) => row.timestamp)).toEqual([102, 100]);
+
+      await p.accessLogRepo.setReviewDecision({
+        timestamp: 102,
+        reviewedDecision: 'DENIED',
+        reviewedAt: 123456,
+      });
+      const reviewedRow = await p.accessLogRepo.get(102);
+      expect(reviewedRow?.reviewedDecision).toBe('DENIED');
+      expect(reviewedRow?.reviewedAt).toBe(123456);
+
+      const afterReview = await p.accessLogRepo.listReviewCandidates({ limit: 10 });
+      expect(afterReview.some((row) => row.timestamp === 102)).toBe(false);
+    } finally {
+      await p.resetIndexedDbClientForTests();
+      await Dexie.delete(dbName);
+    }
+  });
+
   it('isolates data by database name', async () => {
     const dbName = `gatekeeper-isolated-${crypto.randomUUID()}`;
     const p = createDexiePersistence(dbName);

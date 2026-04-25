@@ -1,7 +1,7 @@
 import Dexie, { type Table } from 'dexie';
 
 import type { DatabaseSeedSettings } from '../domain/database-seed';
-import type { AccessLogRow, Decision, User } from '../domain/types';
+import type { AccessLogRow, Decision, ReviewedDecision, User } from '../domain/types';
 
 export interface SettingsRow {
   key: string;
@@ -33,6 +33,16 @@ export interface AccessLogStore {
     /** When set (e.g. tests), used as the first candidate key; still bumps on collision. */
     timestamp?: number;
   }): Promise<void>;
+  setReviewDecision(payload: {
+    timestamp: number;
+    reviewedDecision: ReviewedDecision;
+    reviewedAt: number;
+    reviewedBy?: string | null;
+  }): Promise<void>;
+  listReviewCandidates(options?: {
+    limit?: number;
+    minDeniedSimilarity01?: number;
+  }): Promise<AccessLogRow[]>;
 }
 
 export interface SettingsStore {
@@ -60,6 +70,11 @@ class GatekeeperDB extends Dexie {
     this.version(1).stores({
       users: 'id,name',
       accessLog: 'timestamp,userId,decision',
+      settings: 'key',
+    });
+    this.version(2).stores({
+      users: 'id,name',
+      accessLog: 'timestamp,userId,decision,reviewedDecision,similarity01',
       settings: 'key',
     });
     this.users = this.table('users');
@@ -111,6 +126,15 @@ function makeUsersRepo(db: GatekeeperDB, ensureDbReady: EnsureDbReady) {
 }
 
 function makeAccessLogRepo(db: GatekeeperDB, ensureDbReady: EnsureDbReady) {
+  const DEFAULT_REVIEW_LIMIT = 20;
+  const DEFAULT_MIN_DENIED_SIMILARITY = 0.7;
+
+  function isReviewCandidate(row: AccessLogRow, minDeniedSimilarity01: number): boolean {
+    if (row.reviewedDecision) return false;
+    if (row.decision === 'UNCERTAIN') return true;
+    return row.decision === 'DENIED' && row.similarity01 >= minDeniedSimilarity01;
+  }
+
   return {
     async put(row: AccessLogRow): Promise<number> {
       await ensureDbReady();
@@ -152,6 +176,33 @@ function makeAccessLogRepo(db: GatekeeperDB, ensureDbReady: EnsureDbReady) {
         capturedFrameBlob: payload.capturedFrameBlob,
       };
       await db.accessLog.put(row);
+    },
+    async setReviewDecision(payload: {
+      timestamp: number;
+      reviewedDecision: ReviewedDecision;
+      reviewedAt: number;
+      reviewedBy?: string | null;
+    }): Promise<void> {
+      await ensureDbReady();
+      await db.accessLog.update(payload.timestamp, {
+        reviewedDecision: payload.reviewedDecision,
+        reviewedAt: payload.reviewedAt,
+        reviewedBy: payload.reviewedBy ?? null,
+      });
+    },
+    async listReviewCandidates(options?: {
+      limit?: number;
+      minDeniedSimilarity01?: number;
+    }): Promise<AccessLogRow[]> {
+      await ensureDbReady();
+      const limit = options?.limit ?? DEFAULT_REVIEW_LIMIT;
+      const minDeniedSimilarity01 = options?.minDeniedSimilarity01 ?? DEFAULT_MIN_DENIED_SIMILARITY;
+      return db.accessLog
+        .orderBy('timestamp')
+        .reverse()
+        .filter((row) => isReviewCandidate(row, minDeniedSimilarity01))
+        .limit(limit)
+        .toArray();
     },
   };
 }

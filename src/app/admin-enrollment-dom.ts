@@ -15,6 +15,10 @@ export type AdminEnrollmentDom = {
   thresholdStatusEl: HTMLElement;
   thresholdCalibrationStatusEl: HTMLElement;
   thresholdApplySpec075Btn: HTMLButtonElement;
+  reviewQueueSection: HTMLElement;
+  reviewQueueTbody: HTMLTableSectionElement;
+  reviewQueueRefreshBtn: HTMLButtonElement;
+  reviewQueueStatusEl: HTMLElement;
   main: HTMLElement;
   video: HTMLVideoElement;
   frameCanvas: HTMLCanvasElement;
@@ -162,6 +166,51 @@ function buildAccessThresholdSection(rt: GateRuntime): {
   return { section, statusEl, calibrationStatusEl, applySpec075Btn };
 }
 
+function buildReviewQueueSection(): {
+  section: HTMLElement;
+  tbody: HTMLTableSectionElement;
+  refreshBtn: HTMLButtonElement;
+  statusEl: HTMLElement;
+} {
+  const section = document.createElement('section');
+  section.className = 'admin-review-queue';
+  section.setAttribute('data-testid', 'admin-review-queue');
+
+  const h2 = document.createElement('h2');
+  h2.className = 'admin-review-queue__title';
+  h2.textContent = 'Decision review inbox';
+
+  const statusEl = document.createElement('p');
+  statusEl.className = 'admin-review-queue__status';
+  statusEl.setAttribute('data-testid', 'admin-review-queue-status');
+
+  const refreshBtn = document.createElement('button');
+  refreshBtn.type = 'button';
+  refreshBtn.className = 'btn';
+  refreshBtn.textContent = 'Refresh review queue';
+  refreshBtn.setAttribute('data-testid', 'admin-review-queue-refresh');
+
+  const wrap = document.createElement('div');
+  wrap.className = 'admin-review-queue__table-wrap';
+  const table = document.createElement('table');
+  table.className = 'admin-review-queue__table';
+  const thead = document.createElement('thead');
+  const hr = document.createElement('tr');
+  for (const label of ['Time', 'Decision', 'Similarity', 'Review']) {
+    const th = document.createElement('th');
+    th.textContent = label;
+    hr.appendChild(th);
+  }
+  thead.appendChild(hr);
+  const tbody = document.createElement('tbody');
+  tbody.setAttribute('data-testid', 'admin-review-queue-tbody');
+  table.append(thead, tbody);
+  wrap.appendChild(table);
+
+  section.append(h2, statusEl, refreshBtn, wrap);
+  return { section, tbody, refreshBtn, statusEl };
+}
+
 function buildPreviewColumn(rt: GateRuntime): {
   column: HTMLElement;
   video: HTMLVideoElement;
@@ -223,13 +272,14 @@ export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
   const roster = buildUserRosterSection(rt);
   const importUi = buildImportToolbar(rt);
   const thr = buildAccessThresholdSection(rt);
+  const reviewQueue = buildReviewQueueSection();
   const main = document.createElement('main');
   main.className = 'admin-enroll';
 
   const preview = buildPreviewColumn(rt);
   const form = buildFormColumn(rt);
   main.append(preview.column, form.column);
-  shell.append(header, roster.section, importUi.toolbar, thr.section, main);
+  shell.append(header, roster.section, importUi.toolbar, thr.section, reviewQueue.section, main);
 
   return {
     shell,
@@ -245,6 +295,10 @@ export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
     thresholdStatusEl: thr.statusEl,
     thresholdCalibrationStatusEl: thr.calibrationStatusEl,
     thresholdApplySpec075Btn: thr.applySpec075Btn,
+    reviewQueueSection: reviewQueue.section,
+    reviewQueueTbody: reviewQueue.tbody,
+    reviewQueueRefreshBtn: reviewQueue.refreshBtn,
+    reviewQueueStatusEl: reviewQueue.statusEl,
     main,
     video: preview.video,
     frameCanvas: preview.frameCanvas,

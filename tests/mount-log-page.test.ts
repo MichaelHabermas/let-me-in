@@ -212,4 +212,52 @@ describe('mountLogPageIntoApp', () => {
     await Dexie.delete(dbName);
     document.body.removeChild(app);
   });
+
+  it('supports review actions and review-state filtering', async () => {
+    const dbName = `log-page-review-${crypto.randomUUID()}`;
+    const persistence = createDexiePersistence(dbName);
+    const rt = createTestGateRuntime();
+    await persistence.initDatabase(rt.databaseSeedSettings!);
+    await persistence.usersRepo.put({
+      id: 'u1',
+      name: 'One',
+      role: 'Staff',
+      referenceImageBlob: new Blob(),
+      embedding: embeddingVectorZeros(),
+      createdAt: 1,
+    });
+    await persistence.accessLogRepo.put({
+      timestamp: 300,
+      userId: 'u1',
+      similarity01: 0.78,
+      decision: 'DENIED',
+      capturedFrameBlob: new Blob(),
+    });
+
+    const app = document.createElement('div');
+    document.body.appendChild(app);
+    await mountLogPageIntoApp(app, { persistence, rt });
+
+    const grantBtn = app.querySelector<HTMLButtonElement>('[data-testid="log-review-grant-300"]');
+    grantBtn?.click();
+    for (let i = 0; i < 30; i += 1) {
+      const row = await persistence.accessLogRepo.get(300);
+      if (row?.reviewedDecision === 'GRANTED') break;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    expect((await persistence.accessLogRepo.get(300))?.reviewedDecision).toBe('GRANTED');
+
+    const reviewFilter = app.querySelector<HTMLSelectElement>('[data-testid="log-filter-review"]');
+    reviewFilter!.value = 'UNREVIEWED';
+    reviewFilter!.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(app.querySelectorAll('.log-table tbody tr').length).toBe(0);
+
+    reviewFilter!.value = 'REVIEWED';
+    reviewFilter!.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(app.querySelectorAll('.log-table tbody tr').length).toBe(1);
+
+    await persistence.resetIndexedDbClientForTests();
+    await Dexie.delete(dbName);
+    document.body.removeChild(app);
+  });
 });

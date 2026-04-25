@@ -1,7 +1,11 @@
 import type { AccessThresholds } from '../domain/access-policy';
 import type { DatabaseSeedSettings } from '../domain/database-seed';
+import { collectCalibrationSamples } from '../domain/access-log-review';
 import type { DexiePersistence, SettingsStore } from '../infra/persistence';
-import { readAccessThresholdsFromSettings, writeAccessThresholdsToSettings } from './access-thresholds-store';
+import {
+  readAccessThresholdsFromSettings,
+  writeAccessThresholdsToSettings,
+} from './access-thresholds-store';
 
 export const THRESHOLD_CALIBRATION_META_KEY = 'thresholdCalibrationMeta';
 
@@ -16,6 +20,8 @@ export type ThresholdCalibrationMeta = {
   previous: AccessThresholds | null;
   next: AccessThresholds | null;
   maxDriftApplied: number;
+  reviewedSamplesUsed: number;
+  rawSamplesUsed: number;
 };
 
 export type ThresholdCalibrationOptions = {
@@ -87,7 +93,10 @@ function deriveCandidateThresholds(
   return { strong: round4(strong), weak: round4(weak), unknown: round4(weak), margin };
 }
 
-async function writeCalibrationMeta(settingsRepo: SettingsStore, meta: ThresholdCalibrationMeta): Promise<void> {
+async function writeCalibrationMeta(
+  settingsRepo: SettingsStore,
+  meta: ThresholdCalibrationMeta,
+): Promise<void> {
   await settingsRepo.put({ key: THRESHOLD_CALIBRATION_META_KEY, value: meta });
 }
 
@@ -124,13 +133,19 @@ export async function runAutomaticThresholdCalibration(params: {
       previous: current,
       next: null,
       maxDriftApplied: 0,
+      reviewedSamplesUsed: 0,
+      rawSamplesUsed: 0,
     };
     await writeCalibrationMeta(params.persistence.settingsRepo, meta);
     return { applied: false, meta };
   }
-  const grantedScores = logs.filter((row) => row.decision === 'GRANTED').map((row) => row.similarity01);
-  const deniedScores = logs.filter((row) => row.decision === 'DENIED').map((row) => row.similarity01);
-  if (grantedScores.length < opts.minGrantedSamples || deniedScores.length < opts.minDeniedSamples) {
+  const samples = collectCalibrationSamples(logs);
+  const grantedScores = samples.grantedScores;
+  const deniedScores = samples.deniedScores;
+  if (
+    grantedScores.length < opts.minGrantedSamples ||
+    deniedScores.length < opts.minDeniedSamples
+  ) {
     const meta: ThresholdCalibrationMeta = {
       lastRunAtMs: nowMs,
       reason: 'skipped_imbalanced_labels',
@@ -138,6 +153,8 @@ export async function runAutomaticThresholdCalibration(params: {
       previous: current,
       next: null,
       maxDriftApplied: 0,
+      reviewedSamplesUsed: samples.reviewedUsed,
+      rawSamplesUsed: samples.rawUsed,
     };
     await writeCalibrationMeta(params.persistence.settingsRepo, meta);
     return { applied: false, meta };
@@ -156,6 +173,8 @@ export async function runAutomaticThresholdCalibration(params: {
       previous: current,
       next,
       maxDriftApplied: 0,
+      reviewedSamplesUsed: samples.reviewedUsed,
+      rawSamplesUsed: samples.rawUsed,
     };
     await writeCalibrationMeta(params.persistence.settingsRepo, meta);
     return { applied: false, meta };
@@ -173,6 +192,8 @@ export async function runAutomaticThresholdCalibration(params: {
     previous: current,
     next,
     maxDriftApplied: round4(maxDriftApplied),
+    reviewedSamplesUsed: samples.reviewedUsed,
+    rawSamplesUsed: samples.rawUsed,
   };
   await writeCalibrationMeta(params.persistence.settingsRepo, meta);
   return { applied: true, meta };

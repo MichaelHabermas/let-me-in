@@ -5,7 +5,14 @@
 import { createDexiePersistence, type DexiePersistence } from './db-dexie';
 import type { DatabaseSeedSettings } from '../domain/database-seed';
 
-export type { BboxPixels, Decision, MatchResult, User, AccessLogRow } from '../domain/types';
+export type {
+  BboxPixels,
+  Decision,
+  MatchResult,
+  User,
+  AccessLogRow,
+  ReviewedDecision,
+} from '../domain/types';
 
 export type { DatabaseSeedSettings } from '../domain/database-seed';
 export type { SettingsRow } from './db-dexie';

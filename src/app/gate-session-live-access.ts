@@ -49,6 +49,7 @@ export async function withLiveAccessDeps(
     return deps;
   }
   const persistence = deps.persistence;
+  const seedFallback = deps.databaseSeedFallback;
   const uiStrings = deps.accessUiStrings ?? FALLBACK_GATE_ACCESS_UI_STRINGS;
   const onDecision = createLiveAccessOnDecision(elements.decisionEl, uiStrings);
   const context = await createAccessDecisionContext(persistence, deps.databaseSeedFallback);
@@ -65,7 +66,7 @@ export async function withLiveAccessDeps(
     runCalibration: async () => {
       const result = await runAutomaticThresholdCalibration({
         persistence,
-        seedFallback: deps.databaseSeedFallback!,
+        seedFallback,
       });
       if (result.applied) {
         await context.refresh();

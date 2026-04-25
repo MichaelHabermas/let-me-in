@@ -1,5 +1,6 @@
 import type { DexiePersistence, PersistenceProvider } from '../infra/persistence';
 import { accessLogToCsv, downloadAccessLogCsv } from './csv-export';
+import { createAccessLogReviewService } from './access-log-review-service';
 import { createLogPageController } from './log-page-controller';
 import {
   appendUserFilterOptions,
@@ -61,6 +62,7 @@ export async function mountLogPageIntoApp(
   tableWrap.className = 'log-table-wrap';
 
   let controller: ReturnType<typeof createLogPageController> | null = null;
+  const reviewService = createAccessLogReviewService(persistence);
   const { table, tbody } = buildLogTable((key) => controller?.onSortHeaderClick(key));
   tableWrap.appendChild(table);
 
@@ -71,6 +73,7 @@ export async function mountLogPageIntoApp(
     tbody,
     controls,
     userNames,
+    reviewService,
   });
 
   const onFilter = () => controller.render();
@@ -78,6 +81,7 @@ export async function mountLogPageIntoApp(
   controls.dateTo.addEventListener('change', onFilter);
   controls.userSelect.addEventListener('change', onFilter);
   controls.decisionSelect.addEventListener('change', onFilter);
+  controls.reviewSelect.addEventListener('change', onFilter);
 
   const onExportClick = createExportHandler(rows, users, unknown);
   controls.exportBtn.addEventListener('click', onExportClick);
@@ -90,6 +94,7 @@ export async function mountLogPageIntoApp(
     controls.dateTo.removeEventListener('change', onFilter);
     controls.userSelect.removeEventListener('change', onFilter);
     controls.decisionSelect.removeEventListener('change', onFilter);
+    controls.reviewSelect.removeEventListener('change', onFilter);
     controls.exportBtn.removeEventListener('click', onExportClick);
   };
 }
