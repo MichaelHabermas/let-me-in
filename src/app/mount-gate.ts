@@ -1,13 +1,12 @@
-import { getDetectorRuntimeSettings, getEmbedderRuntimeSettings } from '../config';
 import type { YoloDetector } from '../infra/detector-core';
-import { createYoloDetector } from '../infra/detector-ort';
-import { createFaceEmbedder, type FaceEmbedder } from '../infra/embedder-ort';
+import type { FaceEmbedder } from '../infra/embedder-ort';
 import type { DexiePersistence, PersistenceProvider } from '../infra/persistence';
+import type { ModelLoadProgress } from '../infra/model-load-types';
 import type { Camera, CreateCameraOptions } from './camera';
 import { createCamera } from './camera';
 import { buildGateDom } from './gate-preview-dom';
 import { mountModelLoadForRuntime } from './model-load-for-runtime';
-import type { ModelLoadProgress } from '../infra/model-load-types';
+import { createOrtDetectorEmbedderWithLoadProgress } from './ort-detector-embedder-factory';
 import { bootstrapGateConsentIfNeeded } from './gate-consent-bootstrap';
 import { wireGatePreviewSession, type GatePreviewSessionDeps } from './gate-session';
 import type { GateRuntime } from './gate-runtime';
@@ -31,10 +30,10 @@ export type MountGateHostDeps = {
 };
 
 /**
- * Mount the gate UI into an existing host (tests inject `#app` or a detached div).
- * Returns teardown (stop camera, remove listeners) — also registered on `beforeunload` when enabled.
+ * Default mount deps: real camera + `wireGatePreviewSession`; ORT models come from
+ * `createOrtDetectorEmbedderWithLoadProgress` inside `mountGateIntoHost` (progress wired to the E11 UI).
+ * Tests pass `createYoloDetector` + `createFaceEmbedder` together to inject fakes.
  */
-/** Composition-root helper: binds default detector/embedder factories to `get*RuntimeSettings()`. */
 export function createMountGateHostDeps(
   rt: GateRuntime,
   overrides?: Partial<Omit<MountGateHostDeps, 'rt'>>,
@@ -43,10 +42,8 @@ export function createMountGateHostDeps(
     rt,
     createCamera: overrides?.createCamera ?? createCamera,
     wireGatePreviewSession: overrides?.wireGatePreviewSession ?? wireGatePreviewSession,
-    createYoloDetector:
-      overrides?.createYoloDetector ?? (() => createYoloDetector(getDetectorRuntimeSettings())),
-    createFaceEmbedder:
-      overrides?.createFaceEmbedder ?? (() => createFaceEmbedder(getEmbedderRuntimeSettings())),
+    createYoloDetector: overrides?.createYoloDetector,
+    createFaceEmbedder: overrides?.createFaceEmbedder,
     addBeforeUnload: overrides?.addBeforeUnload,
     sessionDepsExtras: overrides?.sessionDepsExtras,
   };
@@ -97,21 +94,22 @@ function createGateModelFactoriesStage(
   deps: MountGateHostDeps,
   onProgress: (p: ModelLoadProgress) => void,
 ) {
-  const createDet =
-    deps.createYoloDetector ??
-    (() =>
-      createYoloDetector(getDetectorRuntimeSettings(), {
-        onLoadProgress: onProgress,
-      }));
-  const createEmb =
-    deps.createFaceEmbedder ??
-    (() =>
-      createFaceEmbedder(getEmbedderRuntimeSettings(), {
-        onLoadProgress: onProgress,
-      }));
-  return { yoloDetector: createDet(), faceEmbedder: createEmb() };
+  const a = deps.createYoloDetector;
+  const b = deps.createFaceEmbedder;
+  if (a && b) {
+    return { yoloDetector: a(), faceEmbedder: b() };
+  }
+  if (!a && !b) {
+    const ort = createOrtDetectorEmbedderWithLoadProgress(onProgress);
+    return { yoloDetector: ort.detector, faceEmbedder: ort.embedder };
+  }
+  throw new Error('mount-gate: pass both createYoloDetector and createFaceEmbedder, or neither');
 }
 
+/**
+ * Mount the gate UI into an existing host (tests inject `#app` or a detached div).
+ * Returns teardown (stop camera, remove listeners) — also registered on `beforeunload` when enabled.
+ */
 export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): () => void {
   const { rt } = deps;
   const createCam = deps.createCamera;

@@ -3,16 +3,12 @@ import type { User } from '../../domain/types';
 import type { DexiePersistence } from '../../infra/persistence';
 import type { ModelLoadStatusController } from '../model-load-status-ui';
 import type { FaceEmbedder } from '../../infra/embedder-ort';
-import type { Detection } from '../../infra/detector-core';
+import type { YoloDetector } from '../../infra/detector-core';
 import type { EnrollState } from './enroll-fsm';
 
 export type EnrollmentControllerOptions = {
   camera: Camera;
-  detector: {
-    load(): Promise<void>;
-    infer(imageData: ImageData): Promise<Detection[]>;
-    dispose(): Promise<void>;
-  };
+  detector: YoloDetector;
   embedder: FaceEmbedder;
   video: HTMLVideoElement;
   frameCanvas: HTMLCanvasElement;

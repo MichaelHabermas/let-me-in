@@ -198,7 +198,7 @@ export function createGateUiRuntimeSlice(
     multiFaceMessage: s.multiFace,
     cameraDefaultDeviceOption: admin.cameraDefaultDeviceOption,
     cameraSelectAriaLabel: admin.cameraSelectAriaLabel,
-    formatUnnamedCamera: (i) => admin.cameraUnnamedFormat(i),
+    formatUnnamedCamera: admin.cameraUnnamedFormat,
     adminUiStrings: admin,
     gateAccessUiStrings: {
       formatGranted(name, similarityPct) {

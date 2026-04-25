@@ -4,7 +4,6 @@ import {
   refreshVideoInputDeviceListAfterStart,
 } from './camera-device-session';
 import type { DexiePersistence } from '../infra/persistence';
-import { createDetectorEmbedderRuntime } from '../infra/inference-runtime';
 import { readCameraPreference } from './camera-preference-persistence';
 import { createCamera } from './camera';
 import type { AdminEnrollmentCaptureMount } from './admin-enrollment-ports';
@@ -16,9 +15,8 @@ import {
   type EnrollmentControllerOptions,
 } from './enroll';
 import {
+  createE2eDetectorEmbedderRuntime,
   createE2eEnrollmentCamera,
-  createE2eEnrollmentDetector,
-  createE2eEnrollmentEmbedder,
 } from './enrollment/enroll-e2e-doubles';
 import type { GateRuntime } from './gate-runtime';
 import type { Camera } from './camera';
@@ -47,10 +45,16 @@ function buildEnrollmentModelLoadSessionHandlers(
   base: ReturnType<typeof enrollmentControllerBase>,
   startOpts: ReturnType<typeof createCameraStartOptionsState>,
   dc: GateRuntime['defaultVideoConstraintsForCamera'],
-): Pick<EnrollmentControllerOptions, 'onAfterCameraStart' | 'onRecoverStaleEnrollDevice' | 'getCameraStartOptions'> {
+): Pick<
+  EnrollmentControllerOptions,
+  'onAfterCameraStart' | 'onRecoverStaleEnrollDevice' | 'getCameraStartOptions'
+> {
   void readCameraPreference(base.persistence.settingsRepo, ENROLL_CAMERA_PREFERENCE_KEY).then(
     (p) => {
       startOpts.setLoadedPreference(p);
+    },
+    (err) => {
+      console.warn('[enrollment] read camera preference', err);
     },
   );
   return {
@@ -116,10 +120,7 @@ export function createAdminEnrollmentSessionController(params: {
   const base = enrollmentControllerBase(dom, rt, persistence, onStateChange);
   if (useStubEnrollment) {
     dom.cameraDeviceSelect.hidden = true;
-    const ort = createDetectorEmbedderRuntime({
-      createDetector: () => createE2eEnrollmentDetector(),
-      createEmbedder: () => createE2eEnrollmentEmbedder(),
-    });
+    const ort = createE2eDetectorEmbedderRuntime();
     return createEnrollmentController({
       ...base,
       defaultVideoConstraints: rt.defaultVideoConstraintsForCamera,

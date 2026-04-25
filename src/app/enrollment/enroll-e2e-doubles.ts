@@ -14,6 +14,7 @@ import { makeCameraError } from '../../infra/camera';
 import type { Detection } from '../../infra/detector-core';
 import type { FaceEmbedder } from '../../infra/embedder-ort';
 import { EMBEDDER_DIM } from '../../infra/embedder-ort';
+import { createDetectorEmbedderRuntime } from '../../infra/inference-runtime';
 import { e2eSingleFaceDetections } from '../e2e-single-face-detections';
 
 const E2E_EMBEDDING_UNIT = 1 / Math.sqrt(EMBEDDER_DIM);
@@ -58,6 +59,14 @@ export function createE2eEnrollmentEmbedder(): FaceEmbedder {
     },
     async dispose() {},
   };
+}
+
+/** E2E detector + embedder pair (same wiring as admin enrollment and bulk import stub path). */
+export function createE2eDetectorEmbedderRuntime() {
+  return createDetectorEmbedderRuntime({
+    createDetector: () => createE2eEnrollmentDetector(),
+    createEmbedder: () => createE2eEnrollmentEmbedder(),
+  });
 }
 
 /**

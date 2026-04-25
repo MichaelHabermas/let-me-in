@@ -1,7 +1,10 @@
 import { getDetectorRuntimeSettings, getEmbedderRuntimeSettings } from '../config';
 import { createYoloDetector } from '../infra/detector-ort';
 import { createFaceEmbedder } from '../infra/embedder-ort';
-import { createDetectorEmbedderRuntime, type DetectorEmbedderRuntime } from '../infra/inference-runtime';
+import {
+  createDetectorEmbedderRuntime,
+  type DetectorEmbedderRuntime,
+} from '../infra/inference-runtime';
 import type { ModelLoadProgress } from '../infra/model-load-types';
 
 /**

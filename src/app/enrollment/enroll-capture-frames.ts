@@ -3,18 +3,14 @@ import { drawDetections, embedFace, handleDetectionCardinality } from './enroll-
 import { imageDataToJpegBlob } from './enroll-image';
 import { persistEnrolledUser } from './enroll-save';
 import { squareCropWithMargin, type Bbox } from '../crop';
-import type { Detection } from '../../infra/detector-core';
+import type { YoloDetector } from '../../infra/detector-core';
 import type { FaceEmbedder } from '../../infra/embedder-ort';
 import type { DexiePersistence } from '../../infra/persistence';
 import { drawVideoToCanvas } from '../../infra/camera';
 
 export type EnrollmentFrameDeps = {
   camera: Camera;
-  detector: {
-    load(): Promise<void>;
-    infer(imageData: ImageData): Promise<Detection[]>;
-    dispose(): Promise<void>;
-  };
+  detector: YoloDetector;
   embedder: FaceEmbedder;
   video: HTMLVideoElement;
   frameCanvas: HTMLCanvasElement;
@@ -22,8 +18,8 @@ export type EnrollmentFrameDeps = {
   frameCtx: CanvasRenderingContext2D;
   overlayCtx: CanvasRenderingContext2D;
   statusEl: HTMLElement;
-  getNoFaceMessage: () => string;
-  getMultiFaceMessage: () => string;
+  noFaceMessage: string;
+  multiFaceMessage: string;
   persistence: DexiePersistence;
 };
 
@@ -41,8 +37,8 @@ export async function runEnrollmentOverlayFrame(d: EnrollmentFrameDeps): Promise
   handleDetectionCardinality(
     {
       statusEl: d.statusEl,
-      noFaceMessage: d.getNoFaceMessage(),
-      multiFaceMessage: d.getMultiFaceMessage(),
+      noFaceMessage: d.noFaceMessage,
+      multiFaceMessage: d.multiFaceMessage,
     },
     dets.length,
   );
@@ -54,20 +50,19 @@ export async function captureEnrollmentFace(
   paintEnrollmentPreview(d);
   const frame = d.camera.getFrame();
   const dets = await d.detector.infer(frame);
-  if (dets.length !== 1) {
+  const onlyDet = dets.length === 1 ? dets[0] : undefined;
+  if (onlyDet === undefined) {
     handleDetectionCardinality(
       {
         statusEl: d.statusEl,
-        noFaceMessage: d.getNoFaceMessage(),
-        multiFaceMessage: d.getMultiFaceMessage(),
+        noFaceMessage: d.noFaceMessage,
+        multiFaceMessage: d.multiFaceMessage,
       },
       dets.length,
     );
     return null;
   }
-  const det = dets[0];
-  if (!det) return null;
-  const bbox = det.bbox as Bbox;
+  const bbox: Bbox = onlyDet.bbox;
   const embedding = await embedFace(frame, bbox, d.embedder);
   const crop = squareCropWithMargin(frame, bbox);
   const referenceImageBlob = await imageDataToJpegBlob(crop, 0.85);

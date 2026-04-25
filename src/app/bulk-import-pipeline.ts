@@ -3,35 +3,22 @@ import type { BulkImportRow } from './bulk-import-parse';
 import { imageDataToJpegBlob } from './enrollment/enroll-image';
 import { persistEnrolledUser } from './enrollment/enroll-save';
 import { squareCropWithMargin, type Bbox } from './crop';
-import {
-  createE2eEnrollmentDetector,
-  createE2eEnrollmentEmbedder,
-} from './enrollment/enroll-e2e-doubles';
+import { createE2eDetectorEmbedderRuntime } from './enrollment/enroll-e2e-doubles';
 import { createOrtDetectorEmbedderFromConfig } from './ort-detector-embedder-factory';
-import type { Detection } from '../infra/detector-core';
+import type { YoloDetector } from '../infra/detector-core';
 import { type FaceEmbedder } from '../infra/embedder-ort';
-import { createDetectorEmbedderRuntime } from '../infra/inference-runtime';
 import type { DexiePersistence } from '../infra/persistence';
 import { base64ToImageData, greyStubImportFrame } from './bulk-import-image';
 import type { BulkImportRowResult } from './bulk-import-progress';
 
-type ImportDetector = {
-  load(): Promise<void>;
-  infer(imageData: ImageData): Promise<Detection[]>;
-  dispose(): Promise<void>;
-};
-
 function makeImportPipeline(useStubEnrollment: boolean): {
-  detector: ImportDetector;
+  detector: YoloDetector;
   embedder: FaceEmbedder;
   loadAll(): Promise<void>;
   disposeAll(): Promise<void>;
 } {
   if (useStubEnrollment) {
-    return createDetectorEmbedderRuntime({
-      createDetector: () => createE2eEnrollmentDetector(),
-      createEmbedder: () => createE2eEnrollmentEmbedder(),
-    });
+    return createE2eDetectorEmbedderRuntime();
   }
   return createOrtDetectorEmbedderFromConfig();
 }
@@ -39,7 +26,7 @@ function makeImportPipeline(useStubEnrollment: boolean): {
 async function importOneRow(
   row: BulkImportRow,
   persistence: DexiePersistence,
-  detector: ImportDetector,
+  detector: YoloDetector,
   embedder: FaceEmbedder,
   useStubEnrollment: boolean,
 ): Promise<BulkImportRowResult> {
@@ -48,18 +35,15 @@ async function importOneRow(
       ? greyStubImportFrame(320, 240)
       : await base64ToImageData(row.imageBase64);
     const dets = await detector.infer(frame);
-    if (dets.length !== 1) {
+    const onlyDet = dets.length === 1 ? dets[0] : undefined;
+    if (onlyDet === undefined) {
       return {
         sourceIndex: row.sourceIndex,
         ok: false,
         error: dets.length === 0 ? 'No face detected' : 'Multiple faces in image',
       };
     }
-    const det = dets[0];
-    if (!det) {
-      return { sourceIndex: row.sourceIndex, ok: false, error: 'No face detected' };
-    }
-    const bbox = det.bbox as Bbox;
+    const bbox: Bbox = onlyDet.bbox;
     const embedding = await embedFace(frame, bbox, embedder);
     const crop = squareCropWithMargin(frame, bbox);
     const referenceImageBlob = await imageDataToJpegBlob(crop, 0.85);

@@ -112,7 +112,9 @@ async function runStartSessionAttempt(
 
 /** Frame loop + FSM; detection helpers: `enroll-capture-frames`. */
 /* eslint-disable max-lines-per-function -- public API: thin methods over shared `m` + `frameDeps` */
-export function createEnrollmentController(opts: EnrollmentControllerOptions): EnrollmentController {
+export function createEnrollmentController(
+  opts: EnrollmentControllerOptions,
+): EnrollmentController {
   const oc = opts.overlayCanvas.getContext('2d');
   const fc = opts.frameCanvas.getContext('2d', { willReadFrequently: true });
   if (!oc || !fc) {
@@ -129,8 +131,8 @@ export function createEnrollmentController(opts: EnrollmentControllerOptions): E
     frameCtx: fc,
     overlayCtx: oc,
     statusEl: opts.statusEl,
-    getNoFaceMessage: opts.getNoFaceMessage,
-    getMultiFaceMessage: opts.getMultiFaceMessage,
+    noFaceMessage: opts.getNoFaceMessage(),
+    multiFaceMessage: opts.getMultiFaceMessage(),
     persistence: opts.persistence,
   };
 
@@ -144,13 +146,9 @@ export function createEnrollmentController(opts: EnrollmentControllerOptions): E
     unsubFrame: null,
   };
 
-  function emit() {
-    opts.onStateChange?.(m.state);
-  }
-
   function setState(next: EnrollState) {
     m.state = next;
-    emit();
+    opts.onStateChange?.(m.state);
   }
 
   function apply(e: EnrollFsmEvent) {
@@ -194,8 +192,8 @@ export function createEnrollmentController(opts: EnrollmentControllerOptions): E
 
       try {
         await runStartSessionAttempt(m, opts, frameDeps, apply, onOverlay, resetAfterLoadFailure);
-      } catch {
-        /* Thrown only when `modelLoadUi` is not configured for recoverable error UI. */
+      } catch (e) {
+        console.error('[enrollment] start session failed (no recoverable model-load UI path)', e);
       }
     },
 

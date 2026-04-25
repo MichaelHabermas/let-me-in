@@ -31,7 +31,7 @@ export type GatePreviewSessionCoreDeps = GateSessionPipelineMessageDeps &
   > &
   Pick<GateSessionDetectorModelDeps, 'logEmbeddingTimings'>;
 
-/** Grouped string surfaces (same object refs as on `GateUiRuntimeSlice` — for narrow dependency passing). */
+/** Grouped string surfaces (sliced from `GateUiRuntimeSlice` — for narrow dependency passing). */
 export type GateRuntimeSurfaceSlices = {
   admin: { pageTitle: string; ui: AdminUiStrings };
   gate: {
@@ -68,7 +68,7 @@ export function composeGateRuntime(
     cooldownMs: databaseSeedSettings.cooldownMs,
     cameraDefaultDeviceOption: ui.cameraDefaultDeviceOption,
     cameraSelectAriaLabel: ui.cameraSelectAriaLabel,
-    formatUnnamedCamera: (i) => ui.formatUnnamedCamera(i),
+    formatUnnamedCamera: ui.formatUnnamedCamera,
   };
 
   const runtimeSlices: GateRuntimeSurfaceSlices = {
