@@ -223,6 +223,35 @@ describe('createDetectionPipeline', () => {
     expect(faceEmbedder.infer).not.toHaveBeenCalled();
   });
 
+  it('draws one overlay box per detection in multi-face frames', async () => {
+    const frame = new ImageData(64, 64);
+    const { camera, getFrameCb } = createCameraWithCapturedFrameCallback(frame);
+    const detector = {
+      infer: vi.fn().mockResolvedValue([
+        { bbox: [1, 1, 10, 10] as const, confidence: 0.9, classId: 0 },
+        { bbox: [20, 20, 30, 30] as const, confidence: 0.8, classId: 0 },
+        { bbox: [35, 35, 45, 45] as const, confidence: 0.7, classId: 0 },
+      ]),
+    } as unknown as YoloDetector;
+    const strokeRect = vi.fn();
+    const overlayCtx = createOverlayCtx({ strokeRect });
+
+    createDetectionPipeline({
+      camera,
+      detector,
+      overlayCtx,
+      overlayWidth: 64,
+      overlayHeight: 64,
+      statusEl: document.createElement('p'),
+      multiFaceMessage: 'Multiple faces detected',
+    });
+
+    const frameCb = getFrameCb();
+    frameCb!(1);
+    await vi.waitFor(() => expect(detector.infer).toHaveBeenCalled());
+    expect(strokeRect).toHaveBeenCalledTimes(3);
+  });
+
   it('enforces cooldown after GRANTED decisions', async () => {
     let now = 1_000;
     const cooldown = createCooldown(3_000, () => now);

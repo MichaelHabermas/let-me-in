@@ -396,7 +396,7 @@ flowchart LR
 
 ---
 
-### Epic E15: Multi-face overlay (“highlight each”) — [ ]
+### Epic E15: Multi-face overlay (“highlight each”) — [x]
 
 **Goal:** When multiple faces appear, **each** face has a visible box before policy blocks grant, per SPECS.
 
@@ -404,24 +404,26 @@ flowchart LR
 
 **Epic DoD:**
 
-- [ ] Overlay draws all face boxes returned by detector policy.
-- [ ] Regression test prevents single-box regression.
-- [ ] All E15 Tasks `- [x]`.
+- [x] Overlay draws all face boxes returned by detector policy.
+- [x] Regression test prevents single-box regression.
+- [x] All E15 Tasks `- [x]`.
 
-#### User Story E15.S1: As a visitor, I see every detected face highlighted — [ ]
+**End-of-Epic report (E15):** Verified frame path still renders all detections (`run-frame` calls `drawDetections` before cardinality gating), and added pipeline-level regression coverage in [`tests/pipeline.test.ts`](../tests/pipeline.test.ts) asserting multi-face frames draw one rectangle per detection (3 detections => 3 `strokeRect` calls). SPEC closure: multi-face highlight (`L86`) and scenario 6 handling basis (`L133–L134`).
 
-##### Feature E15.S1.F1: Overlay audit and test — [ ]
+#### User Story E15.S1: As a visitor, I see every detected face highlighted — [x]
+
+##### Feature E15.S1.F1: Overlay audit and test — [x]
 
 **Files:** [`src/app/bbox-overlay.ts`](../src/app/bbox-overlay.ts), [`src/app/detection-pipeline/run-frame.ts`](../src/app/detection-pipeline/run-frame.ts), tests.
 
-###### Task E15.S1.F1.T1: Trace overlay input list; fix if only largest box drawn — [ ]
+###### Task E15.S1.F1.T1: Trace overlay input list; fix if only largest box drawn — [x]
 
 - **Preconditions:** E13 complete
 - **Steps:** Log or inspect multi-det path; ensure loop draws all boxes with distinct colors optional.
 - **Acceptance test:** Manual multi-face frame or synthetic test doubles show N boxes.
 - **SPEC cite:** L86–L86.
 
-###### Task E15.S1.F1.T2: Add regression test for multi-face overlay — [ ]
+###### Task E15.S1.F1.T2: Add regression test for multi-face overlay — [x]
 
 - **Preconditions:** E15.S1.F1.T1 done
 - **Steps:** Vitest with canvas mock or pure geometry list asserting N rectangles.
@@ -767,7 +769,7 @@ Update the `(x/y tasks)` counts when Tasks flip to `- [x]`.
 | E12 | Front/rear camera selection | - [x] (3/3 tasks) |
 | E13 | Literal face detection (Path A) | - [x] (4/4 tasks) |
 | E14 | Decision UI + threshold semantics | - [x] (4/4 tasks) |
-| E15 | Multi-face overlay | - [ ] (0/2 tasks) |
+| E15 | Multi-face overlay | - [x] (2/2 tasks) |
 | E16 | Measured compliance | - [ ] (0/9 tasks) |
 | E17 | Roster JSON export | - [ ] (0/3 tasks) |
 | E18 | AI + production cost docs | - [ ] (0/3 tasks) |
