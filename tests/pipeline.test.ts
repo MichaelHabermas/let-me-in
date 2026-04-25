@@ -33,7 +33,14 @@ const testBands = { strong: 0.85, weak: 0.65 };
 
 function evalGranted() {
   return {
-    policy: { decision: 'GRANTED' as const, userId: 'u1', score: 0.9 },
+    policy: {
+      decision: 'GRANTED' as const,
+      userId: 'u1',
+      label: 'Matched user',
+      reasons: ['strong-and-margin'] as const,
+      bestScore: 0.9,
+      marginDelta: 0.1,
+    },
     displayName: 'Alex',
     referenceImageBlob: null,
     capturedFrameBlob: sampleBlob,
@@ -43,7 +50,14 @@ function evalGranted() {
 
 function evalDenied() {
   return {
-    policy: { decision: 'DENIED' as const, userId: null, score: 0.2, label: 'Unknown' as const },
+    policy: {
+      decision: 'DENIED' as const,
+      userId: null,
+      label: 'Unknown' as const,
+      reasons: ['below-weak-band'] as const,
+      bestScore: 0.2,
+      marginDelta: 0.1,
+    },
     displayName: null,
     referenceImageBlob: null,
     capturedFrameBlob: sampleBlob,
@@ -53,7 +67,14 @@ function evalDenied() {
 
 function evalUncertain() {
   return {
-    policy: { decision: 'UNCERTAIN' as const, userId: 'u1', score: 0.72 },
+    policy: {
+      decision: 'UNCERTAIN' as const,
+      userId: 'u1',
+      label: 'Matched user',
+      reasons: ['weak-or-mid-band'] as const,
+      bestScore: 0.72,
+      marginDelta: 0.01,
+    },
     displayName: null,
     referenceImageBlob: null,
     capturedFrameBlob: sampleBlob,

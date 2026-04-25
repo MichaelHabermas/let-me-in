@@ -69,7 +69,7 @@ export async function appendAccessLogIfNeeded(
   if (policy.decision !== 'GRANTED' && policy.decision !== 'DENIED') return;
   await opts.appendAccessLog({
     userId: policy.decision === 'GRANTED' ? policy.userId : null,
-    similarity01: policy.score,
+    similarity01: policy.bestScore,
     decision: policy.decision,
     capturedFrameBlob: evaluation.capturedFrameBlob,
   });

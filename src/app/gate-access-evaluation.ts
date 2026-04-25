@@ -1,11 +1,11 @@
-import type { PolicyDecision } from './policy';
+import type { GateAccessVerdict } from '../domain/gate-decision';
 
 /** Strong/weak cutoffs (from settings) — use for UI bands so the meter matches policy. */
 export type BandThresholdsSlice = { strong: number; weak: number };
 
 /** Rich access outcome passed from policy through the detection pipeline to UI and logging. */
 export type GateAccessEvaluation = {
-  policy: PolicyDecision;
+  policy: GateAccessVerdict;
   /** Shown on GRANTED only; UNCERTAIN/DENIED omit name per PRD E7.S1. */
   displayName: string | null;
   referenceImageBlob: Blob | null;
@@ -25,7 +25,7 @@ export type EvaluateGateAccessFn = (
   input: GateAccessEvaluationInput,
 ) => MaybePromise<GateAccessEvaluation | null>;
 
-export function policyDecisionForCooldown(policy: PolicyDecision): 'GRANTED' | 'DENIED' | null {
+export function policyDecisionForCooldown(policy: GateAccessVerdict): 'GRANTED' | 'DENIED' | null {
   if (policy.decision === 'GRANTED' || policy.decision === 'DENIED') return policy.decision;
   return null;
 }

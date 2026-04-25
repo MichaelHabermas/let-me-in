@@ -28,7 +28,7 @@ function similarityPct(score: number): number {
 
 function titleFor(strings: GateAccessUiStrings, ev: GateAccessEvaluation): string {
   const { policy } = ev;
-  const pct = similarityPct(policy.score);
+  const pct = similarityPct(policy.bestScore);
   if (policy.decision === 'GRANTED') {
     const name = ev.displayName ?? '';
     return strings.formatGranted(name, pct);
@@ -62,7 +62,7 @@ export function createGateAccessUiController(
     host.appendChild(banner);
     host.appendChild(
       renderConfidenceMeter({
-        similarity01: ev.policy.score,
+        similarity01: ev.policy.bestScore,
         strong: ev.bandThresholds.strong,
         weak: ev.bandThresholds.weak,
       }),
@@ -81,7 +81,7 @@ export function createGateAccessUiController(
         const side = renderSideBySide({
           referenceObjectUrl: refUrl,
           liveObjectUrl: liveUrl,
-          similarityLine: `${similarityPct(ev.policy.score)}% match`,
+          similarityLine: `${similarityPct(ev.policy.bestScore)}% match`,
         });
         host.appendChild(side);
       } catch (error) {

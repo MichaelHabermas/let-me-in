@@ -2,17 +2,9 @@ import { mountAdminLoginModal } from './admin-login-modal';
 import { createAdminAuth, type AdminAuth } from './auth';
 import { mountAuthenticatedAdminEnrollment } from './mount-admin-enrollment';
 import { config } from '../config';
-import {
-  resolvePersistence,
-  type DexiePersistence,
-  type PersistenceProvider,
-} from '../infra/persistence';
-import { resolveGateRuntime, type GateRuntime } from './gate-runtime';
+import { AppContextOptions, resolveAppContext } from './app-context';
 
-export type MountAdminShellOptions = {
-  rt?: GateRuntime;
-  persistence?: DexiePersistence;
-  persistenceProvider?: PersistenceProvider;
+export type MountAdminShellOptions = AppContextOptions & {
   /** When omitted, uses `localStorage` and `config.admin`. */
   auth?: AdminAuth;
   useStubEnrollment?: boolean;
@@ -22,12 +14,8 @@ export type MountAdminShellOptions = {
  * Admin app shell: login gate, enrollment when authenticated, `document.title`.
  * HTML entry resolves `#app` and calls this with the element.
  */
-export function mountAdminShell(root: HTMLElement, options?: MountAdminShellOptions): void {
-  const rt = options?.rt ?? resolveGateRuntime();
-  const persistence = resolvePersistence({
-    persistence: options?.persistence,
-    provider: options?.persistenceProvider,
-  });
+export function mountAdminShell(root: HTMLElement, options: Required<MountAdminShellOptions>): void {
+  const { rt, persistence } = resolveAppContext(options);
   const auth =
     options?.auth ??
     createAdminAuth({
@@ -68,8 +56,8 @@ export function mountAdminShell(root: HTMLElement, options?: MountAdminShellOpti
   render();
 }
 
-export function mountAdminView(options?: MountAdminShellOptions): void {
-  const root = document.getElementById('app');
-  if (!root) return;
-  mountAdminShell(root, options);
+export function mountAdminView(options: Required<MountAdminShellOptions>): void {
+  const app = document.getElementById('app');
+  if (!app) return;
+  mountAdminShell(app, options);
 }

@@ -5,6 +5,7 @@ import { fetchModelBytesWithProgress } from './fetch-model-bytes';
 import type { ModelLoadProgress } from './model-load-types';
 import { createOrtSession, type OrtSessionBundle } from './ort-session-factory';
 import { runYoloDetectorInference } from './yolo-ort-inference';
+import { createDetectorInferQueue } from './detector-infer-queue';
 
 /* eslint-disable max-lines-per-function -- ORT load + infer + dispose on one surface */
 function createYoloMainThreadDetector(
@@ -20,7 +21,7 @@ function createYoloMainThreadDetector(
   const onLoadProgress = options?.onLoadProgress;
   let bundle: OrtSessionBundle | null = null;
   /** Same non-reentrancy guarantee as the worker-backed detector. */
-  let inferChain: Promise<unknown> = Promise.resolve();
+  const inferQueue = createDetectorInferQueue();
 
   return {
     async load() {
@@ -48,21 +49,16 @@ function createYoloMainThreadDetector(
         throw new Error('detector.load() must be called before infer()');
       }
       const session = bundle.session;
-      const job = inferChain.then(() => runYoloDetectorInference(session, imageData));
-      inferChain = job.then(
-        () => {},
-        () => {},
-      );
-      return job;
+      return inferQueue.enqueue(() => runYoloDetectorInference(session, imageData));
     },
 
     async dispose() {
-      await inferChain.catch(() => {});
+      await inferQueue.drain();
       if (bundle) {
         await bundle.session.release();
         bundle = null;
       }
-      inferChain = Promise.resolve();
+      inferQueue.reset();
     },
   };
 }

@@ -23,21 +23,42 @@ describe('appendAccessLogIfNeeded', () => {
 
     await appendAccessLogIfNeeded(
       opts as FramePipelineOpts,
-      baseEval({ decision: 'GRANTED', userId: 'u1', score: 0.9 }),
+      baseEval({
+        decision: 'GRANTED',
+        userId: 'u1',
+        label: 'Matched user',
+        reasons: ['strong-and-margin'],
+        bestScore: 0.9,
+        marginDelta: 0.1,
+      }),
     );
     expect(appendAccessLog).toHaveBeenCalledOnce();
 
     appendAccessLog.mockClear();
     await appendAccessLogIfNeeded(
       opts as FramePipelineOpts,
-      baseEval({ decision: 'DENIED', userId: null, score: 0.2, label: 'Unknown' }),
+      baseEval({
+        decision: 'DENIED',
+        userId: null,
+        label: 'Unknown',
+        reasons: ['below-weak-band'],
+        bestScore: 0.2,
+        marginDelta: 0.1,
+      }),
     );
     expect(appendAccessLog).toHaveBeenCalledOnce();
 
     appendAccessLog.mockClear();
     await appendAccessLogIfNeeded(
       opts as FramePipelineOpts,
-      baseEval({ decision: 'UNCERTAIN', userId: 'u1', score: 0.6 }),
+      baseEval({
+        decision: 'UNCERTAIN',
+        userId: 'u1',
+        label: 'Matched user',
+        reasons: ['weak-or-mid-band'],
+        bestScore: 0.6,
+        marginDelta: 0.01,
+      }),
     );
     expect(appendAccessLog).not.toHaveBeenCalled();
   });

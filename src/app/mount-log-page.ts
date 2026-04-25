@@ -1,5 +1,4 @@
 import type { DexiePersistence, PersistenceProvider } from '../infra/persistence';
-import { resolvePersistence } from '../infra/persistence';
 import { accessLogToCsv, downloadAccessLogCsv } from './csv-export';
 import { createLogPageController } from './log-page-controller';
 import {
@@ -9,7 +8,7 @@ import {
   createUserNameMap,
 } from './log-page-dom';
 import type { GateRuntime } from './gate-runtime';
-import { resolveGateRuntime } from './gate-runtime';
+import { resolveAppContext } from './app-context';
 
 /**
  * Full access log: filters, sortable columns, all rows (no 20-row cap).
@@ -83,11 +82,10 @@ export type MountLogViewOptions = {
 export function mountLogView(options?: MountLogViewOptions): void {
   const app = document.getElementById('app');
   if (!app) return;
-  const rt = resolveGateRuntime();
-  document.title = rt.logPageTitle;
-  const persistence = resolvePersistence({
+  const { rt, persistence } = resolveAppContext({
     persistence: options?.persistence,
-    provider: options?.persistenceProvider,
+    persistenceProvider: options?.persistenceProvider,
   });
+  document.title = rt.logPageTitle;
   void mountLogPageIntoApp(app, { persistence, rt });
 }

@@ -4,7 +4,7 @@ import type { AccessDecisionDataStores } from '../infra/persistence';
 import type { GateAccessEvaluation, GateAccessEvaluationInput } from './gate-access-evaluation';
 import { imageDataToPngBlob } from './gate-access-evaluation';
 import { matchOne, type EnrolledEmbedding } from '../domain/embedding-match';
-import { decide, type PolicyDecision } from './policy';
+import { evaluateGateAccessMatch } from '../domain/gate-decision';
 
 export type LiveAccessDecisionUi = {
   onDecision(evaluation: GateAccessEvaluation): void;
@@ -38,9 +38,11 @@ export async function createAccessDecisionEvaluator(
     const usersById = new Map(users.map((u) => [u.id, u]));
 
     const ranked = matchOne(input.embedding, enrolled);
-    const policy: PolicyDecision = decide({
-      best: ranked.best,
-      runnerUp: ranked.runnerUp,
+    const policy = evaluateGateAccessMatch({
+      match: {
+        best: ranked.best,
+        runnerUp: ranked.runnerUp,
+      },
       thresholds,
     });
 

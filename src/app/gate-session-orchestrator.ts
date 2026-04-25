@@ -107,16 +107,8 @@ export function wireCameraControls(
     }
   };
 
-  cameraToggleBtn.addEventListener('click', () => {
-    if (camera.isRunning()) {
-      state.stopPipeline?.();
-      state.stopPipeline = undefined;
-      camera.stop();
-      syncCameraToggleUi(cameraToggleBtn, 'idle');
-    } else {
-      void onStart();
-    }
-  });
+  const lifecycle = createGateSessionLifecycle(camera, cameraToggleBtn, state, onStart);
+  cameraToggleBtn.addEventListener('click', lifecycle.onToggleClick);
 
   if (deviceSelect && settingsRepo) {
     deviceSelect.addEventListener('change', () => {
@@ -133,11 +125,7 @@ export function wireCameraControls(
         startOpts.setLoadedPreference({ deviceId: deviceSelect.value });
       }
       if (camera.isRunning()) {
-        state.stopPipeline?.();
-        state.stopPipeline = undefined;
-        camera.stop();
-        syncCameraToggleUi(cameraToggleBtn, 'idle');
-        void onStart();
+        lifecycle.restart();
       }
     });
   }
@@ -148,3 +136,35 @@ export function wireCameraControls(
   };
 }
 /* eslint-enable max-lines-per-function */
+
+function createGateSessionLifecycle(
+  camera: Camera,
+  cameraToggleBtn: HTMLButtonElement,
+  state: DetectorGateState,
+  start: () => Promise<void>,
+): {
+  onToggleClick: () => void;
+  restart: () => void;
+} {
+  const stop = () => {
+    state.stopPipeline?.();
+    state.stopPipeline = undefined;
+    camera.stop();
+    syncCameraToggleUi(cameraToggleBtn, 'idle');
+  };
+
+  const onToggleClick = () => {
+    if (camera.isRunning()) {
+      stop();
+      return;
+    }
+    void start();
+  };
+
+  const restart = () => {
+    stop();
+    void start();
+  };
+
+  return { onToggleClick, restart };
+}

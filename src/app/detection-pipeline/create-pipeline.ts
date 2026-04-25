@@ -4,10 +4,10 @@ import type { EvaluateGateAccessFn } from '../gate-access-evaluation';
 import type { YoloDetector } from '../../infra/detector-core';
 import type { FaceEmbedder } from '../../infra/embedder-ort';
 import {
-  runDetectionPipelineFrame,
   type AppendAccessLogFn,
   type FramePipelineOpts,
 } from './run-frame';
+import { createFrameProcessor } from './frame-processor';
 
 export type { AppendAccessLogFn } from './run-frame';
 
@@ -58,13 +58,14 @@ export function createDetectionPipeline(opts: DetectionPipelineOptions): () => v
     evaluateDecision: opts.evaluateDecision,
     appendAccessLog: opts.appendAccessLog,
   };
+  const processor = createFrameProcessor(frameOpts, noFaceState);
 
   const unsub = opts.camera.onFrame(() => {
     if (!opts.camera.isRunning() || busy) return;
     busy = true;
     void (async () => {
       try {
-        await runDetectionPipelineFrame(frameOpts, noFaceState);
+        await processor.processFrame();
       } catch (e) {
         console.warn('[detection-pipeline] frame error', e);
       } finally {

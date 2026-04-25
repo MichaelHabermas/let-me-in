@@ -234,7 +234,7 @@ Rule: UI entrypoints call `app/*` composition roots (`mountGateView`, `mountAdmi
       https-gate.ts
       pipeline.ts              # createDetectionPipeline — camera frames → detector.infer → overlay
       match.ts
-      policy.ts
+      gate-decision.ts
       cooldown.ts
       events.ts
       crop.ts
@@ -1006,8 +1006,8 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 
 **SOLID/DRY/Modularity checklist:**
 
-- SRP: `match.ts` does similarity; `policy.ts` does bands; `cooldown.ts` does time gating.
-- OCP: new decision band = edit `policy.ts` + `config.thresholds` only.
+- SRP: `match.ts` does similarity; `gate-decision.ts` composes threshold policy; `cooldown.ts` does time gating.
+- OCP: new decision band = edit `access-policy.ts` / `gate-decision.ts` + `config.thresholds`.
 - LSP: `Decision` is a sum type — all consumers handle GRANTED/UNCERTAIN/DENIED uniformly.
 - ISP: `policy.decide(input) → Decision`; no other exports.
 - DIP: `pipeline.ts` depends on `policy` abstraction, not raw threshold numbers.
@@ -1049,7 +1049,7 @@ Detection = { bbox: [x1,y1,x2,y2], confidence: number, classId: number }
 
 ###### Task E5.S1.F2.T1: Implement `policy.decide({best, runnerUp, thresholds})` — [x]
 
-- Files: `src/app/policy.ts`
+- Files: `src/domain/gate-decision.ts`, `src/domain/access-policy.ts`
 - Preconditions: E5.S1.F1.T2 done
 - Steps:
   1. If `best.score >= thresholds.strong` AND (no runnerUp OR `best.score - runnerUp.score >= thresholds.margin`) → `{decision:"GRANTED", userId, score}`.

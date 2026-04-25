@@ -1,5 +1,6 @@
 import type { ModelLoadProgress } from './model-load-types';
 import type { YoloDetector } from './detector-core';
+import { createDetectorInferQueue, type InferQueue } from './detector-infer-queue';
 import {
   YOLO_WORKER_MSG,
   type YoloHostToWorkerInfer,
@@ -29,7 +30,7 @@ type WorkerRpcState = {
 type DetectorRuntimeState = {
   nextId: number;
   loaded: boolean;
-  inferChain: Promise<unknown>;
+  inferQueue: InferQueue;
 };
 
 function rejectAllPending(state: WorkerRpcState, error: Error): void {
@@ -135,20 +136,15 @@ function createDetectorApi(
         height,
         rgba,
       };
-      const job = runtime.inferChain.then(() => runInferJob(state, msg));
-      runtime.inferChain = job.then(
-        () => {},
-        () => {},
-      );
-      return job;
+      return runtime.inferQueue.enqueue(() => runInferJob(state, msg));
     },
 
     async dispose() {
-      await runtime.inferChain.catch(() => {});
+      await runtime.inferQueue.drain();
       state.pending.clear();
       state.worker.terminate();
       runtime.loaded = false;
-      runtime.inferChain = Promise.resolve();
+      runtime.inferQueue.reset();
       runtime.nextId = 1;
     },
   };
@@ -166,7 +162,7 @@ export function createYoloWorkerDetector(opts: YoloWorkerDetectorOptions): YoloD
     nextId: 1,
     loaded: false,
     /** ORT session.run is not re-entrant; RAF overlay + capture can overlap without this queue. */
-    inferChain: Promise.resolve(),
+    inferQueue: createDetectorInferQueue(),
   };
   wireWorkerRpc(state, opts.onLoadProgress);
   return createDetectorApi(opts, state, runtime);

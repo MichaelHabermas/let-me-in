@@ -2,7 +2,6 @@ import { getDetectorRuntimeSettings, getEmbedderRuntimeSettings } from '../confi
 import type { YoloDetector } from '../infra/detector-core';
 import { createYoloDetector } from '../infra/detector-ort';
 import { createFaceEmbedder, type FaceEmbedder } from '../infra/embedder-ort';
-import { resolvePersistence } from '../infra/persistence';
 import type { DexiePersistence, PersistenceProvider } from '../infra/persistence';
 import type { Camera, CreateCameraOptions } from './camera';
 import { createCamera } from './camera';
@@ -12,6 +11,7 @@ import { bootstrapGateConsentIfNeeded } from './gate-consent-bootstrap';
 import { wireGatePreviewSession, type GatePreviewSessionDeps } from './gate-session';
 import type { GateRuntime } from './gate-runtime';
 import { resolveGateRuntime } from './gate-runtime';
+import { resolveAppContext } from './app-context';
 
 export type MountGateHostDeps = {
   rt: GateRuntime;
@@ -170,12 +170,11 @@ export type MountGateViewOptions = {
 export function mountGateView(options?: MountGateViewOptions): void {
   const app = document.getElementById('app');
   if (!app) return;
-
-  const rt = resolveGateRuntime();
-  const persistence = resolvePersistence({
+  const { persistence } = resolveAppContext({
     persistence: options?.persistence,
-    provider: options?.persistenceProvider,
+    persistenceProvider: options?.persistenceProvider,
   });
+  const rt = resolveGateRuntime();
   mountGateIntoHost(
     app,
     createMountGateHostDeps(rt, {

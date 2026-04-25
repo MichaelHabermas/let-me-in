@@ -15,7 +15,14 @@ describe('createGateAccessUiController', () => {
     const ui = createGateAccessUiController(host, FALLBACK_GATE_ACCESS_UI_STRINGS);
     const blob = new Blob(['x']);
     ui.present({
-      policy: { decision: 'GRANTED', userId: 'u1', score: 0.88 },
+      policy: {
+        decision: 'GRANTED',
+        userId: 'u1',
+        label: 'Matched user',
+        reasons: ['strong-and-margin'],
+        bestScore: 0.88,
+        marginDelta: 0.1,
+      },
       displayName: 'Alex',
       referenceImageBlob: null,
       capturedFrameBlob: blob,
@@ -32,7 +39,14 @@ describe('createGateAccessUiController', () => {
     const host = document.createElement('div');
     const ui = createGateAccessUiController(host, FALLBACK_GATE_ACCESS_UI_STRINGS);
     ui.present({
-      policy: { decision: 'DENIED', userId: null, score: 0.4, label: 'Unknown' },
+      policy: {
+        decision: 'DENIED',
+        userId: null,
+        label: 'Unknown',
+        reasons: ['below-weak-band'],
+        bestScore: 0.4,
+        marginDelta: 0.1,
+      },
       displayName: null,
       referenceImageBlob: null,
       capturedFrameBlob: new Blob(['x']),
@@ -49,7 +63,14 @@ describe('createGateAccessUiController', () => {
     const ui = createGateAccessUiController(host, gateAccessUiStrings);
 
     ui.present({
-      policy: { decision: 'GRANTED', userId: 'u1', score: 0.91 },
+      policy: {
+        decision: 'GRANTED',
+        userId: 'u1',
+        label: 'Matched user',
+        reasons: ['strong-and-margin'],
+        bestScore: 0.91,
+        marginDelta: 0.1,
+      },
       displayName: 'Pat',
       referenceImageBlob: null,
       capturedFrameBlob: new Blob(['x']),
@@ -60,7 +81,14 @@ describe('createGateAccessUiController', () => {
 
     host.replaceChildren();
     ui.present({
-      policy: { decision: 'DENIED', userId: null, score: 0.33, label: 'Unknown' },
+      policy: {
+        decision: 'DENIED',
+        userId: null,
+        label: 'Unknown',
+        reasons: ['below-weak-band'],
+        bestScore: 0.33,
+        marginDelta: 0.1,
+      },
       displayName: null,
       referenceImageBlob: null,
       capturedFrameBlob: new Blob(['x']),

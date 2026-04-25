@@ -22,7 +22,7 @@ flowchart LR
 
 1. **Detection (face YOLO):** `ImageData` → **face** bounding boxes (`src/infra/detector-ort.ts`, worker optional). See [Face detection (E13)](#face-detection-e13) below.
 2. **Embedding:** square crop + 112² preprocess → 512-D L2-normalized vector (`src/app/crop.ts`, `src/infra/embedder-ort.ts`).
-3. **Matching:** brute-force cosine similarity01 vs enrolled rows; thresholds in `src/domain/access-policy.ts` via `src/app/policy.ts`.
+3. **Matching:** brute-force cosine similarity01 vs enrolled rows; decisioning through `src/domain/gate-decision.ts` (`evaluateGateAccessMatch`) with thresholds from `src/domain/access-policy.ts`.
 
 ## Threshold rationale (E14, SPECS L82 and L112)
 

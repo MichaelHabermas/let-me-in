@@ -1,9 +1,9 @@
 import type { DatabaseSeedSettings } from '../domain/database-seed';
 import type { DexiePersistence, PersistenceProvider } from '../infra/persistence';
-import { resolvePersistence } from '../infra/persistence';
 import { installGatekeeperMetricsOnWindow } from './gatekeeper-metrics';
 import { getHttpsStartupState as defaultGetHttpsStartupState } from './https-gate';
 import { resolveGateRuntime } from './gate-runtime';
+import { resolveAppContext } from './app-context';
 
 export type HttpsStartupState = ReturnType<typeof defaultGetHttpsStartupState>;
 
@@ -45,10 +45,10 @@ export type BootstrapResult =
  * Call from each HTML entry: `void bootstrapApp({ mount }).then(handleBootstrapResult)`.
  */
 export async function bootstrapApp(options: BootstrapAppOptions): Promise<BootstrapResult> {
-  const { mount, persistence: persistenceOverride, persistenceProvider } = options;
-  const persistence = resolvePersistence({
-    persistence: persistenceOverride,
-    provider: persistenceProvider,
+  const { mount } = options;
+  const { persistence } = resolveAppContext({
+    persistence: options.persistence,
+    persistenceProvider: options.persistenceProvider,
   });
   const getHttps = options.getHttpsStartupState ?? defaultGetHttpsStartupState;
   const renderHttpsBanner = options.renderHttpsBanner ?? defaultRenderHttpsBanner;
