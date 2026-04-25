@@ -157,13 +157,14 @@ function adminStringsFromConfig(cfg: GateUiConfigSlice): AdminUiStrings {
   };
 }
 
-/* eslint-disable max-lines-per-function -- single runtime slice factory */
+/* eslint-disable max-lines-per-function -- single denormalized slice; admin copy comes from one `admin` object */
 export function createGateUiRuntimeSlice(
   cfg: GateUiConfigSlice,
   isDev: boolean,
 ): GateUiRuntimeSlice {
   const orgName = cfg.org.name;
   const s = cfg.ui.strings;
+  const admin = adminStringsFromConfig(cfg);
   return {
     orgName,
     orgTagline: cfg.org.tagline,
@@ -195,12 +196,10 @@ export function createGateUiRuntimeSlice(
     modelLoadRetryLabel: s.modelLoadRetry,
     noFaceMessage: s.noFace,
     multiFaceMessage: s.multiFace,
-    cameraDefaultDeviceOption: s.cameraDefaultDeviceOption,
-    cameraSelectAriaLabel: s.cameraSelectAriaLabel,
-    formatUnnamedCamera(i: number) {
-      return s.cameraUnnamedFormat.replaceAll('{n}', String(i));
-    },
-    adminUiStrings: adminStringsFromConfig(cfg),
+    cameraDefaultDeviceOption: admin.cameraDefaultDeviceOption,
+    cameraSelectAriaLabel: admin.cameraSelectAriaLabel,
+    formatUnnamedCamera: (i) => admin.cameraUnnamedFormat(i),
+    adminUiStrings: admin,
     gateAccessUiStrings: {
       formatGranted(name, similarityPct) {
         return s.accessGrantedBanner

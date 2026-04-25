@@ -56,7 +56,7 @@ export function composeGateRuntime(
   const databaseSeedSettings = getDatabaseSeedSettings();
   const gatePreviewSessionCoreDeps: GatePreviewSessionCoreDeps = {
     getDefaultVideoConstraintsForCamera: () => ui.defaultVideoConstraintsForCamera,
-    getCameraUserFacingMessage: (code) => ui.getCameraUserFacingMessage(code),
+    getCameraUserFacingMessage: ui.getCameraUserFacingMessage,
     logEmbeddingTimings: ui.devLogEmbeddingTimings,
     detectorLoadingMessage: ui.detectorLoadingMessage,
     detectorLoadFailedMessage: ui.detectorLoadFailedMessage,

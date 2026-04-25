@@ -1,19 +1,20 @@
-import { getDetectorRuntimeSettings, getEmbedderRuntimeSettings } from '../config';
 import { ENROLL_CAMERA_PREFERENCE_KEY } from '../domain/camera-preference';
 import {
   createCameraStartOptionsState,
   refreshVideoInputDeviceListAfterStart,
 } from './camera-device-session';
-import type { ModelLoadProgress } from '../infra/model-load-types';
 import type { DexiePersistence } from '../infra/persistence';
-import { createFaceEmbedder } from '../infra/embedder-ort';
-import { createYoloDetector } from '../infra/detector-ort';
 import { createDetectorEmbedderRuntime } from '../infra/inference-runtime';
 import { readCameraPreference } from './camera-preference-persistence';
 import { createCamera } from './camera';
 import type { AdminEnrollmentCaptureMount } from './admin-enrollment-ports';
-import { mountModelLoadStatusUi } from './model-load-status-ui';
-import { createEnrollmentController, type EnrollmentController } from './enroll';
+import { mountModelLoadForRuntime } from './model-load-for-runtime';
+import { createOrtDetectorEmbedderWithLoadProgress } from './ort-detector-embedder-factory';
+import {
+  createEnrollmentController,
+  type EnrollmentController,
+  type EnrollmentControllerOptions,
+} from './enroll';
 import {
   createE2eEnrollmentCamera,
   createE2eEnrollmentDetector,
@@ -40,51 +41,19 @@ function enrollmentControllerBase(
   };
 }
 
-/* eslint-disable max-lines-per-function -- mirrors gate mount: model load + ORT + device list wiring */
-function createAdminEnrollmentWithModelLoad(
+function buildEnrollmentModelLoadSessionHandlers(
   dom: AdminEnrollmentCaptureMount,
   rt: GateRuntime,
   base: ReturnType<typeof enrollmentControllerBase>,
-): EnrollmentController {
-  const modelLoadUi = mountModelLoadStatusUi(dom.modelLoadRoot, {
-    strings: {
-      stageDetector: rt.modelLoadStageDetectorLabel,
-      stageEmbedder: rt.modelLoadStageEmbedderLabel,
-      retryLabel: rt.modelLoadRetryLabel,
-    },
-    testIdPrefix: 'enroll',
-  });
-  const onProgress = (p: ModelLoadProgress) => modelLoadUi.onProgress(p);
-  const ort = createDetectorEmbedderRuntime({
-    createDetector: () =>
-      createYoloDetector(getDetectorRuntimeSettings(), {
-        onLoadProgress: onProgress,
-      }),
-    createEmbedder: () =>
-      createFaceEmbedder(getEmbedderRuntimeSettings(), {
-        onLoadProgress: onProgress,
-      }),
-  });
-  const dc = rt.defaultVideoConstraintsForCamera;
-  const startOpts = createCameraStartOptionsState({
-    getDefaultFacingMode: () => dc.facingMode,
-    getSelectValueTrimmed: () => dom.cameraDeviceSelect.value.trim(),
-  });
+  startOpts: ReturnType<typeof createCameraStartOptionsState>,
+  dc: GateRuntime['defaultVideoConstraintsForCamera'],
+): Pick<EnrollmentControllerOptions, 'onAfterCameraStart' | 'onRecoverStaleEnrollDevice' | 'getCameraStartOptions'> {
   void readCameraPreference(base.persistence.settingsRepo, ENROLL_CAMERA_PREFERENCE_KEY).then(
     (p) => {
       startOpts.setLoadedPreference(p);
     },
   );
-  return createEnrollmentController({
-    ...base,
-    defaultVideoConstraints: dc,
-    camera: createCamera(dom.video, dom.frameCanvas, {
-      defaultConstraints: dc,
-    }),
-    detector: ort.detector,
-    embedder: ort.embedder,
-    modelLoadUi,
-    modelLoadFailedMessage: rt.detectorLoadFailedMessage,
+  return {
     getCameraStartOptions: () => startOpts.getStartOptions(),
     onAfterCameraStart: async (cam: Camera) => {
       const ok = await refreshVideoInputDeviceListAfterStart({
@@ -107,9 +76,34 @@ function createAdminEnrollmentWithModelLoad(
         fb,
       );
     },
+  };
+}
+
+function createAdminEnrollmentWithModelLoad(
+  dom: AdminEnrollmentCaptureMount,
+  rt: GateRuntime,
+  base: ReturnType<typeof enrollmentControllerBase>,
+): EnrollmentController {
+  const modelLoadUi = mountModelLoadForRuntime(dom.modelLoadRoot, rt, 'enroll');
+  const ort = createOrtDetectorEmbedderWithLoadProgress((p) => modelLoadUi.onProgress(p));
+  const dc = rt.defaultVideoConstraintsForCamera;
+  const startOpts = createCameraStartOptionsState({
+    getDefaultFacingMode: () => dc.facingMode,
+    getSelectValueTrimmed: () => dom.cameraDeviceSelect.value.trim(),
+  });
+  return createEnrollmentController({
+    ...base,
+    defaultVideoConstraints: dc,
+    camera: createCamera(dom.video, dom.frameCanvas, {
+      defaultConstraints: dc,
+    }),
+    detector: ort.detector,
+    embedder: ort.embedder,
+    modelLoadUi,
+    modelLoadFailedMessage: rt.detectorLoadFailedMessage,
+    ...buildEnrollmentModelLoadSessionHandlers(dom, rt, base, startOpts, dc),
   });
 }
-/* eslint-enable max-lines-per-function */
 
 export function createAdminEnrollmentSessionController(params: {
   dom: AdminEnrollmentCaptureMount;

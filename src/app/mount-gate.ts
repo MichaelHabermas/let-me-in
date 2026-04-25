@@ -6,7 +6,8 @@ import type { DexiePersistence, PersistenceProvider } from '../infra/persistence
 import type { Camera, CreateCameraOptions } from './camera';
 import { createCamera } from './camera';
 import { buildGateDom } from './gate-preview-dom';
-import { mountModelLoadStatusUi } from './model-load-status-ui';
+import { mountModelLoadForRuntime } from './model-load-for-runtime';
+import type { ModelLoadProgress } from '../infra/model-load-types';
 import { bootstrapGateConsentIfNeeded } from './gate-consent-bootstrap';
 import { wireGatePreviewSession, type GatePreviewSessionDeps } from './gate-session';
 import type { GateRuntime } from './gate-runtime';
@@ -92,20 +93,9 @@ function mountGateDomStage(host: HTMLElement, rt: GateRuntime) {
   return dom;
 }
 
-function mountGateModelLoadStage(rt: GateRuntime, modelLoadRoot: HTMLElement) {
-  return mountModelLoadStatusUi(modelLoadRoot, {
-    strings: {
-      stageDetector: rt.modelLoadStageDetectorLabel,
-      stageEmbedder: rt.modelLoadStageEmbedderLabel,
-      retryLabel: rt.modelLoadRetryLabel,
-    },
-    testIdPrefix: 'gate',
-  });
-}
-
 function createGateModelFactoriesStage(
   deps: MountGateHostDeps,
-  onProgress: (p: Parameters<ReturnType<typeof mountModelLoadStatusUi>['onProgress']>[0]) => void,
+  onProgress: (p: ModelLoadProgress) => void,
 ) {
   const createDet =
     deps.createYoloDetector ??
@@ -141,7 +131,7 @@ export function mountGateIntoHost(host: HTMLElement, deps: MountGateHostDeps): (
     decisionEl,
   } = mountGateDomStage(host, rt);
   maybeBootstrapConsent(sessionDepsExtras?.persistence, cameraToggleBtn, main, rt);
-  const modelLoadUi = mountGateModelLoadStage(rt, modelLoadRoot);
+  const modelLoadUi = mountModelLoadForRuntime(modelLoadRoot, rt, 'gate');
   const { yoloDetector, faceEmbedder } = createGateModelFactoriesStage(deps, (p) =>
     modelLoadUi.onProgress(p),
   );

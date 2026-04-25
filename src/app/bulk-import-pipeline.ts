@@ -7,10 +7,9 @@ import {
   createE2eEnrollmentDetector,
   createE2eEnrollmentEmbedder,
 } from './enrollment/enroll-e2e-doubles';
-import { getDetectorRuntimeSettings, getEmbedderRuntimeSettings } from '../config';
+import { createOrtDetectorEmbedderFromConfig } from './ort-detector-embedder-factory';
 import type { Detection } from '../infra/detector-core';
-import { createFaceEmbedder, type FaceEmbedder } from '../infra/embedder-ort';
-import { createYoloDetector } from '../infra/detector-ort';
+import { type FaceEmbedder } from '../infra/embedder-ort';
 import { createDetectorEmbedderRuntime } from '../infra/inference-runtime';
 import type { DexiePersistence } from '../infra/persistence';
 import { base64ToImageData, greyStubImportFrame } from './bulk-import-image';
@@ -34,10 +33,7 @@ function makeImportPipeline(useStubEnrollment: boolean): {
       createEmbedder: () => createE2eEnrollmentEmbedder(),
     });
   }
-  return createDetectorEmbedderRuntime({
-    createDetector: () => createYoloDetector(getDetectorRuntimeSettings()),
-    createEmbedder: () => createFaceEmbedder(getEmbedderRuntimeSettings()),
-  });
+  return createOrtDetectorEmbedderFromConfig();
 }
 
 async function importOneRow(
