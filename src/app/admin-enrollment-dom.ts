@@ -262,20 +262,21 @@ export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
   const thr = buildAccessThresholdSection(rt);
   const calibrationExplain = buildCalibrationExplainabilitySection();
   const reviewQueue = buildReviewQueueSection();
+  const workspace = document.createElement('div');
+  workspace.className = 'admin-workspace';
+  const colLeft = document.createElement('div');
+  colLeft.className = 'admin-workspace__col admin-workspace__col--left';
+  const colRight = document.createElement('div');
+  colRight.className = 'admin-workspace__col admin-workspace__col--right';
+  colLeft.append(roster.section, importUi.toolbar);
+  colRight.append(thr.section, calibrationExplain.section, reviewQueue.section);
+  workspace.append(colLeft, colRight);
   const main = document.createElement('main');
   main.className = 'admin-enroll';
   const preview = buildPreviewColumn(rt);
   const form = buildFormColumn(rt);
   main.append(preview.column, form.column);
-  shell.append(
-    header,
-    roster.section,
-    importUi.toolbar,
-    thr.section,
-    calibrationExplain.section,
-    reviewQueue.section,
-    main,
-  );
+  shell.append(header, workspace, main);
   return toAdminEnrollmentDom({
     shell,
     logoutBtn,

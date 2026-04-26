@@ -28,8 +28,8 @@ function buildCalibrationShadowLineEls(): {
   shadowDeltasEl: HTMLElement;
   shadowProjectionEl: HTMLElement;
 } {
-  const shadowTitleEl = document.createElement('h3');
-  shadowTitleEl.className = 'admin-calibration-explain__subtitle';
+  const shadowTitleEl = document.createElement('p');
+  shadowTitleEl.className = 'admin-calibration-explain__kicker';
   shadowTitleEl.textContent = 'Shadow preview (not live until you apply)';
   const shadowSummaryEl = document.createElement('p');
   shadowSummaryEl.className = 'admin-calibration-explain__line';
@@ -93,7 +93,7 @@ export function buildCalibrationExplainabilitySection(): {
   section.setAttribute('data-testid', 'admin-calibration-explainability');
   const h2 = document.createElement('h2');
   h2.className = 'admin-calibration-explain__title';
-  h2.textContent = 'Calibration explainability';
+  h2.textContent = 'Calibration detail';
   const live = buildCalibrationLiveExplainEls();
   const shLines = buildCalibrationShadowLineEls();
   const shTools = buildCalibrationShadowToolbar();
@@ -128,9 +128,12 @@ export function buildReviewQueueSection(): {
   section.className = 'admin-review-queue';
   section.setAttribute('data-testid', 'admin-review-queue');
 
+  const head = document.createElement('div');
+  head.className = 'admin-review-queue__head';
+
   const h2 = document.createElement('h2');
   h2.className = 'admin-review-queue__title';
-  h2.textContent = 'Decision review inbox';
+  h2.textContent = 'Review inbox';
 
   const statusEl = document.createElement('p');
   statusEl.className = 'admin-review-queue__status';
@@ -139,8 +142,10 @@ export function buildReviewQueueSection(): {
   const refreshBtn = document.createElement('button');
   refreshBtn.type = 'button';
   refreshBtn.className = 'btn';
-  refreshBtn.textContent = 'Refresh review queue';
+  refreshBtn.textContent = 'Refresh';
   refreshBtn.setAttribute('data-testid', 'admin-review-queue-refresh');
+
+  head.append(h2, statusEl, refreshBtn);
 
   const wrap = document.createElement('div');
   wrap.className = 'admin-review-queue__table-wrap';
@@ -159,6 +164,6 @@ export function buildReviewQueueSection(): {
   table.append(thead, tbody);
   wrap.appendChild(table);
 
-  section.append(h2, statusEl, refreshBtn, wrap);
+  section.append(head, wrap);
   return { section, tbody, refreshBtn, statusEl };
 }

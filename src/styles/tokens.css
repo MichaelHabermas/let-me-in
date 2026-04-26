@@ -1,33 +1,47 @@
-/* Design tokens — colors, spacing, typography */
+/* Design tokens — light warm-neutrals, flat UI, non-blue accent */
 :root {
-  --color-granted: #16a34a;
-  --color-uncertain: #d97706;
-  --color-denied: #dc2626;
-  --color-bg: #0f172a;
-  --color-surface: #1e293b;
-  --color-border: #334155;
-  --color-text: #f1f5f9;
-  --color-text-muted: #94a3b8;
+  /* Domain semantics */
+  --color-granted: #15803d;
+  --color-uncertain: #b45309;
+  --color-denied: #b91c1c;
 
-  /* Gate decision banner — solid fills + high-contrast text (WCAG AA for ~1rem body) */
-  --color-banner-granted-bg: #14532d;
-  --color-banner-granted-fg: #f0fdf4;
-  --color-banner-uncertain-bg: #713f12;
-  --color-banner-uncertain-fg: #fffbeb;
-  --color-banner-denied-bg: #7f1d1d;
-  --color-banner-denied-fg: #fef2f2;
+  /* Base surfaces (warm stone, not slate/indigo) */
+  --color-bg: #f5f2ed;
+  --color-surface: #ffffff;
+  --color-surface-raised: #faf8f5;
+  --color-border: #d6d3cd;
+  --color-border-subtle: #e7e4de;
+  --color-text: #1c1917;
+  --color-text-muted: #57534e;
+
+  /* UI chrome (avoid blue/purple defaults) */
+  --color-ui-border: var(--color-border);
+  --color-ui-fill: #f0ebe4;
+  --color-accent: #3f3a36;
+  --color-focus: #92400e;
+
+  /* Gate decision banner — light surfaces, solid fills, readable text */
+  --color-banner-granted-bg: #dcfce7;
+  --color-banner-granted-fg: #14532d;
+  --color-banner-uncertain-bg: #fef3c7;
+  --color-banner-uncertain-fg: #713f12;
+  --color-banner-denied-bg: #fee2e2;
+  --color-banner-denied-fg: #7f1d1d;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
   --space-4: 1rem;
+  --space-5: 1.25rem;
   --space-6: 1.5rem;
   --space-8: 2rem;
 
+  --radius-2: 2px;
   --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 1rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.25rem;
 
-  --font-sans: system-ui, -apple-system, sans-serif;
-  --font-mono: ui-monospace, monospace;
+  --control-height: 2.5rem;
+  --font-sans: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Code', monospace;
 }

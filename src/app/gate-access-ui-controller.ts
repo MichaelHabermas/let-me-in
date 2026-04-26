@@ -88,6 +88,11 @@ export function createGateAccessUiController(
         // Keep access decisions flowing even if optional preview rendering fails.
         console.warn('[gate-access-ui] side-by-side preview unavailable', error);
       }
+    } else {
+      const spacer = document.createElement('div');
+      spacer.className = 'access-compare-spacer';
+      spacer.setAttribute('aria-hidden', 'true');
+      host.appendChild(spacer);
     }
     recordDecisionPresented();
   };
