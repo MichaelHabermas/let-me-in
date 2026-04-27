@@ -77,6 +77,76 @@ const CALIBRATION_DETAIL: DevTooltipContent = {
   ],
 };
 
+const APPLY_SPEC_075: DevTooltipContent = {
+  title: 'Apply SPECS 0.75 strong floor',
+  what: 'Resets the strong-match threshold to the spec-defined operating point of 0.75 cosine similarity. One-click revert to the documented, tested baseline.',
+  why: 'Operator-tunable thresholds drift. After a few rounds of calibration or manual edits, it can be unclear whether the live values still match anything sane. A one-click "go back to the known-good number" is the cheapest way to recover from a bad tuning session without a redeploy.',
+  decisions: [
+    '0.75 is hard-coded as the strong floor because it is the value the system was specced and benchmarked against — anchoring it in the UI prevents lossy "what was it again?" lookups.',
+    'Action is the floor only, not a full threshold reset, so operator-tuned upper bounds and weak thresholds survive. Reset blast radius is intentionally narrow.',
+    'No confirmation dialog — this is a recovery action, and friction on the recovery path makes recovery less likely.',
+  ],
+  tradeoffs: [
+    'Hard-coding 0.75 in the UI couples the admin surface to a model-specific number. Acceptable for a single-model deployment; would move to config if/when multiple embedders ship.',
+    'Single-button reset can mask a deeper calibration problem if the operator just clicks it instead of investigating. Mitigated by the calibration readouts sitting next to it.',
+  ],
+};
+
+const SHADOW_PREVIEW: DevTooltipContent = {
+  title: 'Preview calibration (shadow)',
+  what: 'Runs a calibration pass in shadow mode — computes proposed threshold values from recent match data without touching live thresholds. The result populates the shadow summary, sample count, deltas, and projection readouts.',
+  why: 'Operators need to see what a re-calibration would do before committing. A blind apply changes gate behavior with no warning; a preview surfaces the impact so the operator can decide whether the new operating point is acceptable.',
+  decisions: [
+    'Shadow run is read-only — it writes to a shadow record in settings, never to the live thresholds.',
+    'Preview is cheap and idempotent; running it again recomputes from the latest data.',
+    'Proposal is persisted, so review can happen later — operators are not forced to decide in the moment.',
+  ],
+  tradeoffs: [
+    'Two-step preview/apply adds friction vs auto-apply, but the cost of a bad threshold change (silent false-accepts) is far higher than one extra click.',
+  ],
+};
+
+const SHADOW_APPLY: DevTooltipContent = {
+  title: 'Apply shadow proposal',
+  what: 'Promotes the current shadow proposal into live thresholds — the gate uses the new values for all subsequent decisions. Clears the shadow record on success.',
+  why: 'Calibration without a commit step means "preview" is just noise. This is the explicit, auditable point at which a proposed operating point becomes the production operating point.',
+  decisions: [
+    'Disabled unless a valid shadow proposal exists; the button is meaningless otherwise.',
+    'One click, not a confirmation dialog — by this point the operator has already reviewed deltas and projection. An extra modal would be paternalistic friction.',
+    'Calibration metadata (sample count, source, timestamp) is recorded with the apply so the threshold history is auditable.',
+  ],
+  tradeoffs: [
+    'No undo. Recovery is via re-running calibration or applying the spec preset. Acceptable — the spec preset is a one-click safe fallback, and apply only fires after explicit review.',
+  ],
+};
+
+const SHADOW_DISMISS: DevTooltipContent = {
+  title: 'Dismiss shadow',
+  what: 'Clears the current shadow proposal without applying it. Live thresholds are untouched and the shadow readouts blank out.',
+  why: 'An operator who reviews a proposal and decides it is wrong needs a clean way to remove it. Without dismiss, the only options are apply (bad) or leave it cluttering the UI (worse).',
+  decisions: [
+    'Non-destructive to live thresholds — only the proposal is discarded.',
+    'Does not lock the operator out: re-running Preview produces a fresh proposal from the latest data.',
+  ],
+  tradeoffs: [
+    'Dismissed proposals are not preserved for audit. Acceptable — the audit trail captures applied threshold changes; rejected proposals would be noise.',
+  ],
+};
+
+const ENROLL_MODEL_LOAD_RETRY: DevTooltipContent = {
+  title: 'Retry (model load)',
+  what: 'Re-attempts loading the ONNX detector and embedder models when the initial download or initialization failed. Surfaced inside the model-load status panel only when an error has occurred.',
+  why: 'The models are fetched on-demand and run client-side. Network blips, cache misses, or a partially-corrupt fetch will block enrollment entirely. A user-driven retry is faster and safer than auto-retry loops that hide failures or burn bandwidth.',
+  decisions: [
+    'Retry is operator-triggered, not automatic — failures should be visible, and the operator decides when conditions are right to try again.',
+    'The button is hidden until a retry handler is registered (failure state), so the success path never shows a dead control.',
+    'Same status surface is reused on the gate page with a different testid prefix; only the labels and IDs change (DRY).',
+  ],
+  tradeoffs: [
+    'Manual retry adds one click on failure; the alternative — silent retry-with-backoff — masks systemic problems and produces flaky enrollment without an audit trail.',
+  ],
+};
+
 const ENROLL_PANEL: DevTooltipContent = {
   title: 'Enroll',
   what: 'Form to add a new person to the roster — capture or upload a face image, set name and role, save. Doubles as the edit surface when retaking a photo.',
@@ -98,6 +168,11 @@ const TARGETS: ReadonlyArray<readonly [selector: string, content: DevTooltipCont
   ['.admin-review-queue__title', REVIEW_INBOX],
   ['.admin-calibration-explain__title', CALIBRATION_DETAIL],
   ['.admin-enroll__heading', ENROLL_PANEL],
+  ['[data-testid="enroll-model-load-retry"]', ENROLL_MODEL_LOAD_RETRY],
+  ['[data-testid="admin-calibration-shadow-preview"]', SHADOW_PREVIEW],
+  ['[data-testid="admin-calibration-shadow-apply"]', SHADOW_APPLY],
+  ['[data-testid="admin-calibration-shadow-dismiss"]', SHADOW_DISMISS],
+  ['[data-testid="admin-threshold-apply-spec075"]', APPLY_SPEC_075],
 ];
 
 export function attachAdminDevTooltips(root: ParentNode): void {
