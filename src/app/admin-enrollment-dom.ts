@@ -67,7 +67,10 @@ function buildAdminHeader(rt: GateRuntime): { header: HTMLElement; logoutBtn: HT
   return { header, logoutBtn };
 }
 
-function buildUserRosterSection(rt: GateRuntime): {
+function buildUserRosterSection(
+  rt: GateRuntime,
+  rosterActions: HTMLElement,
+): {
   section: HTMLElement;
   tbody: HTMLTableSectionElement;
 } {
@@ -76,9 +79,12 @@ function buildUserRosterSection(rt: GateRuntime): {
   section.className = 'admin-user-roster';
   section.setAttribute('data-testid', 'admin-user-roster');
 
+  const header = document.createElement('div');
+  header.className = 'admin-user-roster__header';
   const h2 = document.createElement('h2');
   h2.className = 'admin-user-roster__title';
   h2.textContent = copy.rosterTitle;
+  header.append(h2, rosterActions);
 
   const wrap = document.createElement('div');
   wrap.className = 'admin-user-roster__table-wrap';
@@ -102,12 +108,13 @@ function buildUserRosterSection(rt: GateRuntime): {
   tbody.setAttribute('data-testid', 'admin-user-roster-tbody');
   table.append(thead, tbody);
   wrap.appendChild(table);
-  section.append(h2, wrap);
+  section.append(header, wrap);
   return { section, tbody };
 }
 
 function buildImportToolbar(rt: GateRuntime): {
   toolbar: HTMLElement;
+  rosterActions: HTMLElement;
   importFileInput: HTMLInputElement;
   importButton: HTMLButtonElement;
   exportButton: HTMLButtonElement;
@@ -141,13 +148,12 @@ function buildImportToolbar(rt: GateRuntime): {
   importStatusEl.className = 'admin-import-toolbar__status';
   importStatusEl.setAttribute('data-testid', 'admin-import-status');
 
-  const fileLabel = document.createElement('label');
-  fileLabel.className = 'admin-import-toolbar__pick';
-  fileLabel.htmlFor = importFileInput.id;
-  fileLabel.textContent = copy.rosterImportPick;
+  const rosterActions = document.createElement('div');
+  rosterActions.className = 'admin-user-roster__header-actions';
+  rosterActions.append(importButton, exportButton);
 
-  toolbar.append(fileLabel, importFileInput, importButton, exportButton, importStatusEl);
-  return { toolbar, importFileInput, importButton, exportButton, importStatusEl };
+  toolbar.append(importFileInput, importStatusEl);
+  return { toolbar, rosterActions, importFileInput, importButton, exportButton, importStatusEl };
 }
 
 function buildAccessThresholdSection(rt: GateRuntime): {
@@ -259,8 +265,8 @@ export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
   shell.className = 'admin-root admin-root--authed';
   shell.setAttribute('data-testid', 'admin-enroll-root');
   const { header, logoutBtn } = buildAdminHeader(rt);
-  const roster = buildUserRosterSection(rt);
   const importUi = buildImportToolbar(rt);
+  const roster = buildUserRosterSection(rt, importUi.rosterActions);
   const thr = buildAccessThresholdSection(rt);
   const calibrationExplain = buildCalibrationSection();
   const reviewQueue = buildReviewQueueSection();

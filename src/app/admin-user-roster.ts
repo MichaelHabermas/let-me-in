@@ -43,7 +43,8 @@ function appendRosterRow(
   }
 
   const tdActions = document.createElement('td');
-  tdActions.className = 'admin-user-roster__actions';
+  const actionsWrap = document.createElement('div');
+  actionsWrap.className = 'admin-user-roster__actions';
   const editBtn = document.createElement('button');
   editBtn.type = 'button';
   editBtn.className = 'btn btn--small';
@@ -58,7 +59,8 @@ function appendRosterRow(
   delBtn.setAttribute('data-testid', 'admin-user-delete');
   delBtn.addEventListener('click', () => handlers.onDelete(u));
 
-  tdActions.append(editBtn, delBtn);
+  actionsWrap.append(editBtn, delBtn);
+  tdActions.appendChild(actionsWrap);
   tr.append(tdPhoto, tdName, tdRole, tdCreated, tdActions);
   tbody.appendChild(tr);
 }
