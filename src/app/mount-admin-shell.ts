@@ -4,6 +4,7 @@ import { resolveAdminCredentialsForShell } from './admin-credentials';
 import { mountAuthenticatedAdminEnrollmentCoordinator } from './admin-enrollment-mount-coordinator';
 import { AppContextOptions, resolveAppContext } from './app-context';
 import { attachAdminDevTooltips } from './admin-dev-tooltips';
+import { attachDevTooltipModeToggle } from './dev-tooltip-mode-toggle';
 
 export type MountAdminShellOptions = AppContextOptions & {
   /** When omitted, uses `localStorage` and credentials from {@link resolveAdminCredentialsForShell}. */
@@ -53,6 +54,7 @@ export function mountAdminShell(root: HTMLElement, options?: MountAdminShellOpti
       useStubEnrollment: options?.useStubEnrollment === true,
     });
     attachAdminDevTooltips(root);
+    attachDevTooltipModeToggle(root);
   };
 
   render();

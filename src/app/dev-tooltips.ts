@@ -5,12 +5,36 @@
  * so Vite/terser tree-shake the unreachable body and ship nothing to prod.
  */
 
+import { getDevTooltipMode, subscribeDevTooltipMode } from './dev-tooltip-mode';
+
+export type DevTooltipGlossaryEntry = { term: string; def: string };
+
+export type DevTooltipSimpleVariant = {
+  title?: string;
+  what: string;
+  why: string;
+  decisions?: readonly string[];
+  tradeoffs?: readonly string[];
+  glossary?: readonly DevTooltipGlossaryEntry[];
+};
+
 export type DevTooltipContent = {
   title: string;
   what: string;
   why: string;
   decisions?: readonly string[];
   tradeoffs?: readonly string[];
+  glossary?: readonly DevTooltipGlossaryEntry[];
+  simple?: DevTooltipSimpleVariant;
+};
+
+type DevTooltipView = {
+  title: string;
+  what: string;
+  why: string;
+  decisions?: readonly string[];
+  tradeoffs?: readonly string[];
+  glossary?: readonly DevTooltipGlossaryEntry[];
 };
 
 export function attachDevTooltip(el: HTMLElement, content: DevTooltipContent): void {
@@ -44,6 +68,7 @@ function getPanel(): HTMLDivElement {
   el.setAttribute('role', 'tooltip');
   el.addEventListener('mouseenter', cancelHide);
   el.addEventListener('mouseleave', scheduleHide);
+  subscribeDevTooltipMode(() => el.classList.remove('dev-tooltip-panel--visible'));
   document.body.appendChild(el);
   panel = el;
   return el;
@@ -72,13 +97,37 @@ function cancelHide(): void {
 }
 
 function renderPanel(content: DevTooltipContent): DocumentFragment {
+  const view = pickView(content);
   const frag = document.createDocumentFragment();
-  frag.appendChild(buildHeading(content.title));
-  frag.appendChild(buildSection('What', content.what));
-  frag.appendChild(buildSection('Why', content.why));
-  if (content.decisions?.length) frag.appendChild(buildList('Decisions', content.decisions));
-  if (content.tradeoffs?.length) frag.appendChild(buildList('Trade-offs', content.tradeoffs));
+  frag.appendChild(buildHeading(view.title));
+  frag.appendChild(buildSection('What', view.what));
+  frag.appendChild(buildSection('Why', view.why));
+  if (view.decisions?.length) frag.appendChild(buildList('Decisions', view.decisions));
+  if (view.tradeoffs?.length) frag.appendChild(buildList('Trade-offs', view.tradeoffs));
+  if (view.glossary?.length) frag.appendChild(buildGlossary(view.glossary));
   return frag;
+}
+
+function pickView(content: DevTooltipContent): DevTooltipView {
+  if (getDevTooltipMode() === 'simple' && content.simple) {
+    const s = content.simple;
+    return {
+      title: s.title ?? content.title,
+      what: s.what,
+      why: s.why,
+      decisions: s.decisions,
+      tradeoffs: s.tradeoffs,
+      glossary: s.glossary,
+    };
+  }
+  return {
+    title: content.title,
+    what: content.what,
+    why: content.why,
+    decisions: content.decisions,
+    tradeoffs: content.tradeoffs,
+    glossary: content.glossary,
+  };
 }
 
 function buildHeading(text: string): HTMLElement {
@@ -111,6 +160,23 @@ function buildList(label: string, items: readonly string[]): HTMLElement {
     ul.appendChild(li);
   }
   wrap.appendChild(ul);
+  return wrap;
+}
+
+function buildGlossary(items: readonly DevTooltipGlossaryEntry[]): HTMLElement {
+  const wrap = document.createElement('div');
+  wrap.className = 'dev-tooltip-panel__section';
+  wrap.append(buildLabel('Glossary'));
+  const dl = document.createElement('dl');
+  dl.className = 'dev-tooltip-panel__glossary';
+  for (const { term, def } of items) {
+    const dt = document.createElement('dt');
+    dt.textContent = term;
+    const dd = document.createElement('dd');
+    dd.textContent = def;
+    dl.append(dt, dd);
+  }
+  wrap.appendChild(dl);
   return wrap;
 }
 
@@ -203,5 +269,19 @@ const TOOLTIP_CSS = `
 }
 .dev-tooltip-panel__list li + li {
   margin-top: 3px;
+}
+.dev-tooltip-panel__glossary {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 10px;
+  row-gap: 4px;
+  margin: 0;
+}
+.dev-tooltip-panel__glossary dt {
+  font-weight: 600;
+  color: #cbb6ff;
+}
+.dev-tooltip-panel__glossary dd {
+  margin: 0;
 }
 `;
