@@ -6,17 +6,8 @@ export type AdminUserRosterHandlers = {
   onDelete: (user: User) => void;
 };
 
-function appendRosterRow(
-  tbody: HTMLTableSectionElement,
-  u: User,
-  copy: AdminUiStrings,
-  handlers: AdminUserRosterHandlers,
-  urls: string[],
-): void {
-  const tr = document.createElement('tr');
-  tr.dataset.userId = u.id;
-
-  const tdPhoto = document.createElement('td');
+function buildPhotoCell(u: User, copy: AdminUiStrings, urls: string[]): HTMLTableCellElement {
+  const td = document.createElement('td');
   const img = document.createElement('img');
   img.className = 'admin-user-roster__thumb';
   img.alt = copy.rosterThumbnailAlt;
@@ -27,24 +18,28 @@ function appendRosterRow(
   const url = URL.createObjectURL(refBlob);
   urls.push(url);
   img.src = url;
-  tdPhoto.appendChild(img);
+  td.appendChild(img);
+  return td;
+}
 
-  const tdName = document.createElement('td');
-  tdName.textContent = u.name;
-
-  const tdRole = document.createElement('td');
-  tdRole.textContent = u.role;
-
-  const tdCreated = document.createElement('td');
+function buildCreatedCell(u: User): HTMLTableCellElement {
+  const td = document.createElement('td');
   try {
-    tdCreated.textContent = new Date(u.createdAt).toLocaleString();
+    td.textContent = new Date(u.createdAt).toLocaleString();
   } catch {
-    tdCreated.textContent = String(u.createdAt);
+    td.textContent = String(u.createdAt);
   }
+  return td;
+}
 
-  const tdActions = document.createElement('td');
-  const actionsWrap = document.createElement('div');
-  actionsWrap.className = 'admin-user-roster__actions';
+function buildActionsCell(
+  u: User,
+  copy: AdminUiStrings,
+  handlers: AdminUserRosterHandlers,
+): HTMLTableCellElement {
+  const td = document.createElement('td');
+  const wrap = document.createElement('div');
+  wrap.className = 'admin-user-roster__actions';
   const editBtn = document.createElement('button');
   editBtn.type = 'button';
   editBtn.className = 'btn btn--small';
@@ -59,9 +54,33 @@ function appendRosterRow(
   delBtn.setAttribute('data-testid', 'admin-user-delete');
   delBtn.addEventListener('click', () => handlers.onDelete(u));
 
-  actionsWrap.append(editBtn, delBtn);
-  tdActions.appendChild(actionsWrap);
-  tr.append(tdPhoto, tdName, tdRole, tdCreated, tdActions);
+  wrap.append(editBtn, delBtn);
+  td.appendChild(wrap);
+  return td;
+}
+
+function buildTextCell(text: string): HTMLTableCellElement {
+  const td = document.createElement('td');
+  td.textContent = text;
+  return td;
+}
+
+function appendRosterRow(
+  tbody: HTMLTableSectionElement,
+  u: User,
+  copy: AdminUiStrings,
+  handlers: AdminUserRosterHandlers,
+  urls: string[],
+): void {
+  const tr = document.createElement('tr');
+  tr.dataset.userId = u.id;
+  tr.append(
+    buildPhotoCell(u, copy, urls),
+    buildTextCell(u.name),
+    buildTextCell(u.role),
+    buildCreatedCell(u),
+    buildActionsCell(u, copy, handlers),
+  );
   tbody.appendChild(tr);
 }
 

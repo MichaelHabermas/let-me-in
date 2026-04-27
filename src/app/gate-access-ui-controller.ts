@@ -37,6 +37,41 @@ function titleFor(strings: GateAccessUiStrings, ev: GateAccessEvaluation): strin
   return strings.formatDenied(pct);
 }
 
+function appendCompareOrSpacer(
+  host: HTMLElement,
+  ev: GateAccessEvaluation,
+  revocations: Array<() => void>,
+): void {
+  const showCompare =
+    (ev.verdict.decision === 'GRANTED' || ev.verdict.decision === 'UNCERTAIN') &&
+    ev.referenceImageBlob;
+
+  if (!showCompare || !ev.referenceImageBlob) {
+    const spacer = document.createElement('div');
+    spacer.className = 'access-compare-spacer';
+    spacer.setAttribute('aria-hidden', 'true');
+    host.appendChild(spacer);
+    return;
+  }
+
+  try {
+    const refUrl = URL.createObjectURL(ev.referenceImageBlob);
+    const liveUrl = URL.createObjectURL(ev.capturedFrameBlob);
+    revocations.push(() => URL.revokeObjectURL(refUrl));
+    revocations.push(() => URL.revokeObjectURL(liveUrl));
+    host.appendChild(
+      renderSideBySide({
+        referenceObjectUrl: refUrl,
+        liveObjectUrl: liveUrl,
+        similarityLine: `${similarityPct(ev.verdict.bestScore)}% match`,
+      }),
+    );
+  } catch (error) {
+    // Keep access decisions flowing even if optional preview rendering fails.
+    console.warn('[gate-access-ui] side-by-side preview unavailable', error);
+  }
+}
+
 /**
  * Renders decision banner (+ optional side-by-side) into a host element (typically `#decision`).
  */
@@ -54,12 +89,9 @@ export function createGateAccessUiController(
 
   const present = (ev: GateAccessEvaluation) => {
     clear();
-    const variant = variantFor(ev.verdict);
-    const banner = renderDecisionBanner({
-      variant,
-      title: titleFor(strings, ev),
-    });
-    host.appendChild(banner);
+    host.appendChild(
+      renderDecisionBanner({ variant: variantFor(ev.verdict), title: titleFor(strings, ev) }),
+    );
     host.appendChild(
       renderConfidenceMeter({
         similarity01: ev.verdict.bestScore,
@@ -67,33 +99,7 @@ export function createGateAccessUiController(
         weak: ev.bandThresholds.weak,
       }),
     );
-
-    const showCompare =
-      (ev.verdict.decision === 'GRANTED' || ev.verdict.decision === 'UNCERTAIN') &&
-      ev.referenceImageBlob;
-
-    if (showCompare && ev.referenceImageBlob) {
-      try {
-        const refUrl = URL.createObjectURL(ev.referenceImageBlob);
-        const liveUrl = URL.createObjectURL(ev.capturedFrameBlob);
-        revocations.push(() => URL.revokeObjectURL(refUrl));
-        revocations.push(() => URL.revokeObjectURL(liveUrl));
-        const side = renderSideBySide({
-          referenceObjectUrl: refUrl,
-          liveObjectUrl: liveUrl,
-          similarityLine: `${similarityPct(ev.verdict.bestScore)}% match`,
-        });
-        host.appendChild(side);
-      } catch (error) {
-        // Keep access decisions flowing even if optional preview rendering fails.
-        console.warn('[gate-access-ui] side-by-side preview unavailable', error);
-      }
-    } else {
-      const spacer = document.createElement('div');
-      spacer.className = 'access-compare-spacer';
-      spacer.setAttribute('aria-hidden', 'true');
-      host.appendChild(spacer);
-    }
+    appendCompareOrSpacer(host, ev, revocations);
     recordDecisionPresented();
   };
 

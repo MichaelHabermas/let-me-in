@@ -3,6 +3,7 @@ import { createAdminAuth, type AdminAuth } from './auth';
 import { resolveAdminCredentialsForShell } from './admin-credentials';
 import { mountAuthenticatedAdminEnrollmentCoordinator } from './admin-enrollment-mount-coordinator';
 import { AppContextOptions, resolveAppContext } from './app-context';
+import { attachAdminDevTooltips } from './admin-dev-tooltips';
 
 export type MountAdminShellOptions = AppContextOptions & {
   /** When omitted, uses `localStorage` and credentials from {@link resolveAdminCredentialsForShell}. */
@@ -51,6 +52,7 @@ export function mountAdminShell(root: HTMLElement, options?: MountAdminShellOpti
       rerender: render,
       useStubEnrollment: options?.useStubEnrollment === true,
     });
+    attachAdminDevTooltips(root);
   };
 
   render();
