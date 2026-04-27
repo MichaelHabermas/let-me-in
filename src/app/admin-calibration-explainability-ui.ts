@@ -13,6 +13,7 @@ export type CalibrationExplainabilityDom = {
   calibrationShadowDeltasEl: HTMLElement;
   calibrationShadowProjectionEl: HTMLElement;
   calibrationShadowApplyBtn: HTMLButtonElement;
+  calibrationShadowBannerEl: HTMLElement;
 };
 
 function humanReason(reason: ThresholdCalibrationMeta['reason']): string {
@@ -92,4 +93,5 @@ export function renderAdminCalibrationExplainability(
   );
   const canApply = !!shadow?.meta && shadow.meta.reason === 'applied' && shadow.meta.next !== null;
   dom.calibrationShadowApplyBtn.disabled = !canApply;
+  dom.calibrationShadowBannerEl.dataset.visible = shadow ? 'true' : 'false';
 }

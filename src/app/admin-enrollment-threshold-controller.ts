@@ -1,9 +1,11 @@
 import { applySpec075StrongPreset, readAccessThresholds } from './admin-threshold-preset';
+import { buildReviewRow } from './admin-review-queue-dom';
 import {
   renderAdminCalibrationExplainability,
   type CalibrationExplainabilityDom,
 } from './admin-calibration-explainability-ui';
 import { createAccessLogReviewService } from './access-log-review-service';
+import { ensureReviewInboxDemoRows } from './review-inbox-demo-seed';
 import {
   applyThresholdCalibrationShadow,
   clearThresholdCalibrationShadow,
@@ -30,9 +32,11 @@ type ThresholdDom = {
   calibrationShadowPreviewBtn: HTMLButtonElement;
   calibrationShadowApplyBtn: HTMLButtonElement;
   calibrationShadowDismissBtn: HTMLButtonElement;
+  calibrationShadowBannerEl: HTMLElement;
   reviewQueueTbody: HTMLTableSectionElement;
   reviewQueueRefreshBtn: HTMLButtonElement;
   reviewQueueStatusEl: HTMLElement;
+  reviewQueuePendingBadgeEl: HTMLSpanElement;
 };
 
 function formatThresholdStatus(t: AccessThresholds, template: string): string {
@@ -54,14 +58,6 @@ function formatCalibrationStatus(
   return `Auto-calibration: ${meta.reason.replaceAll('_', ' ')} ${elapsedSec}s ago (n=${meta.sampleCount}, reviewed=${meta.reviewedSamplesUsed}, raw=${meta.rawSamplesUsed}).`;
 }
 
-function formatTimestamp(ts: number): string {
-  try {
-    return new Date(ts).toLocaleString();
-  } catch {
-    return String(ts);
-  }
-}
-
 function toCalibrationExplainabilityDom(dom: ThresholdDom): CalibrationExplainabilityDom {
   return {
     calibrationExplainSummaryEl: dom.calibrationExplainSummaryEl,
@@ -73,6 +69,7 @@ function toCalibrationExplainabilityDom(dom: ThresholdDom): CalibrationExplainab
     calibrationShadowDeltasEl: dom.calibrationShadowDeltasEl,
     calibrationShadowProjectionEl: dom.calibrationShadowProjectionEl,
     calibrationShadowApplyBtn: dom.calibrationShadowApplyBtn,
+    calibrationShadowBannerEl: dom.calibrationShadowBannerEl,
   };
 }
 
@@ -94,6 +91,7 @@ async function doThresholdPanelRefresh(p: {
   p.dom.thresholdCalibrationStatusEl.textContent = formatCalibrationStatus(meta, Date.now());
   renderAdminCalibrationExplainability(toCalibrationExplainabilityDom(p.dom), meta, shadow);
   try {
+    await ensureReviewInboxDemoRows(p.persistence);
     const reviewRows = await p.reviewService.listCandidates(8);
     renderReviewQueueRows({
       rows: reviewRows,
@@ -106,7 +104,10 @@ async function doThresholdPanelRefresh(p: {
         })();
       },
     });
-    p.dom.reviewQueueStatusEl.textContent = `Review queue: ${reviewRows.length} pending`;
+    const count = reviewRows.length;
+    p.dom.reviewQueueStatusEl.textContent = `Review queue: ${count} pending`;
+    p.dom.reviewQueuePendingBadgeEl.textContent = String(count);
+    p.dom.reviewQueuePendingBadgeEl.dataset.visible = count > 0 ? 'true' : 'false';
   } catch {
     p.dom.reviewQueueTbody.replaceChildren();
     p.dom.reviewQueueStatusEl.textContent = 'Review queue unavailable.';
@@ -164,37 +165,7 @@ function renderReviewQueueRows(params: {
 }): void {
   params.tbody.replaceChildren();
   for (const row of params.rows) {
-    const tr = document.createElement('tr');
-
-    const tdTime = document.createElement('td');
-    tdTime.textContent = formatTimestamp(row.timestamp);
-
-    const tdDecision = document.createElement('td');
-    tdDecision.textContent = row.decision;
-
-    const tdSimilarity = document.createElement('td');
-    tdSimilarity.textContent = `${Math.round(row.similarity01 * 100)}%`;
-
-    const tdActions = document.createElement('td');
-    const grantBtn = document.createElement('button');
-    grantBtn.type = 'button';
-    grantBtn.className = 'btn btn--primary';
-    grantBtn.textContent = 'Should grant';
-    grantBtn.setAttribute('data-testid', `admin-review-grant-${row.timestamp}`);
-    grantBtn.addEventListener('click', () => params.onReview(row.timestamp, 'GRANTED'), {
-      signal: params.signal,
-    });
-
-    const denyBtn = document.createElement('button');
-    denyBtn.type = 'button';
-    denyBtn.className = 'btn';
-    denyBtn.textContent = 'Should deny';
-    denyBtn.setAttribute('data-testid', `admin-review-deny-${row.timestamp}`);
-    denyBtn.addEventListener('click', () => params.onReview(row.timestamp, 'DENIED'), {
-      signal: params.signal,
-    });
-    tdActions.append(grantBtn, denyBtn);
-    tr.append(tdTime, tdDecision, tdSimilarity, tdActions);
+    const { tr } = buildReviewRow(row, params.onReview, params.signal);
     params.tbody.appendChild(tr);
   }
 }

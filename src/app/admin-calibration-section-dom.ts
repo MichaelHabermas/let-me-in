@@ -1,4 +1,4 @@
-/** Admin DOM fragments kept out of `admin-enrollment-dom.ts` for file size / lint limits. */
+/** DOM factory for the calibration explainability section. */
 
 function buildCalibrationLiveExplainEls(): {
   summaryEl: HTMLElement;
@@ -22,15 +22,17 @@ function buildCalibrationLiveExplainEls(): {
 }
 
 function buildCalibrationShadowLineEls(): {
-  shadowTitleEl: HTMLElement;
+  shadowBannerEl: HTMLElement;
   shadowSummaryEl: HTMLElement;
   shadowSamplesEl: HTMLElement;
   shadowDeltasEl: HTMLElement;
   shadowProjectionEl: HTMLElement;
 } {
-  const shadowTitleEl = document.createElement('p');
-  shadowTitleEl.className = 'admin-calibration-explain__kicker';
-  shadowTitleEl.textContent = 'Shadow preview (not live until you apply)';
+  const shadowBannerEl = document.createElement('div');
+  shadowBannerEl.className = 'admin-shadow-banner';
+  shadowBannerEl.setAttribute('data-testid', 'admin-shadow-banner');
+  shadowBannerEl.textContent = 'Shadow preview — not live until you apply';
+  shadowBannerEl.dataset.visible = 'false';
   const shadowSummaryEl = document.createElement('p');
   shadowSummaryEl.className = 'admin-calibration-explain__line';
   shadowSummaryEl.setAttribute('data-testid', 'admin-calibration-explain-shadow-summary');
@@ -43,7 +45,7 @@ function buildCalibrationShadowLineEls(): {
   const shadowProjectionEl = document.createElement('p');
   shadowProjectionEl.className = 'admin-calibration-explain__line';
   shadowProjectionEl.setAttribute('data-testid', 'admin-calibration-explain-shadow-projection');
-  return { shadowTitleEl, shadowSummaryEl, shadowSamplesEl, shadowDeltasEl, shadowProjectionEl };
+  return { shadowBannerEl, shadowSummaryEl, shadowSamplesEl, shadowDeltasEl, shadowProjectionEl };
 }
 
 function buildCalibrationShadowToolbar(): {
@@ -73,13 +75,13 @@ function buildCalibrationShadowToolbar(): {
   return { shadowPreviewBtn, shadowApplyBtn, shadowDismissBtn, toolbar };
 }
 
-export function buildCalibrationExplainabilitySection(): {
+export function buildCalibrationSection(): {
   section: HTMLElement;
   summaryEl: HTMLElement;
   samplesEl: HTMLElement;
   deltasEl: HTMLElement;
   projectionEl: HTMLElement;
-  shadowTitleEl: HTMLElement;
+  shadowBannerEl: HTMLElement;
   shadowSummaryEl: HTMLElement;
   shadowSamplesEl: HTMLElement;
   shadowDeltasEl: HTMLElement;
@@ -97,13 +99,18 @@ export function buildCalibrationExplainabilitySection(): {
   const live = buildCalibrationLiveExplainEls();
   const shLines = buildCalibrationShadowLineEls();
   const shTools = buildCalibrationShadowToolbar();
+
+  const details = document.createElement('details');
+  details.className = 'admin-calibration-detail';
+  const summary = document.createElement('summary');
+  summary.className = 'admin-calibration-detail__summary';
+  summary.appendChild(live.summaryEl);
+  details.append(summary, live.samplesEl, live.deltasEl, live.projectionEl);
+
   section.append(
     h2,
-    live.summaryEl,
-    live.samplesEl,
-    live.deltasEl,
-    live.projectionEl,
-    shLines.shadowTitleEl,
+    details,
+    shLines.shadowBannerEl,
     shLines.shadowSummaryEl,
     shLines.shadowSamplesEl,
     shLines.shadowDeltasEl,
@@ -116,54 +123,4 @@ export function buildCalibrationExplainabilitySection(): {
     ...shLines,
     ...shTools,
   };
-}
-
-export function buildReviewQueueSection(): {
-  section: HTMLElement;
-  tbody: HTMLTableSectionElement;
-  refreshBtn: HTMLButtonElement;
-  statusEl: HTMLElement;
-} {
-  const section = document.createElement('section');
-  section.className = 'admin-review-queue';
-  section.setAttribute('data-testid', 'admin-review-queue');
-
-  const head = document.createElement('div');
-  head.className = 'admin-review-queue__head';
-
-  const h2 = document.createElement('h2');
-  h2.className = 'admin-review-queue__title';
-  h2.textContent = 'Review inbox';
-
-  const statusEl = document.createElement('p');
-  statusEl.className = 'admin-review-queue__status';
-  statusEl.setAttribute('data-testid', 'admin-review-queue-status');
-
-  const refreshBtn = document.createElement('button');
-  refreshBtn.type = 'button';
-  refreshBtn.className = 'btn';
-  refreshBtn.textContent = 'Refresh';
-  refreshBtn.setAttribute('data-testid', 'admin-review-queue-refresh');
-
-  head.append(h2, statusEl, refreshBtn);
-
-  const wrap = document.createElement('div');
-  wrap.className = 'admin-review-queue__table-wrap';
-  const table = document.createElement('table');
-  table.className = 'admin-review-queue__table';
-  const thead = document.createElement('thead');
-  const hr = document.createElement('tr');
-  for (const label of ['Time', 'Decision', 'Similarity', 'Review']) {
-    const th = document.createElement('th');
-    th.textContent = label;
-    hr.appendChild(th);
-  }
-  thead.appendChild(hr);
-  const tbody = document.createElement('tbody');
-  tbody.setAttribute('data-testid', 'admin-review-queue-tbody');
-  table.append(thead, tbody);
-  wrap.appendChild(table);
-
-  section.append(head, wrap);
-  return { section, tbody, refreshBtn, statusEl };
 }

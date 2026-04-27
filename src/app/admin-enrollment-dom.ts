@@ -1,8 +1,6 @@
-import {
-  buildCalibrationExplainabilitySection,
-  buildReviewQueueSection,
-} from './admin-enrollment-extra-sections';
+import { buildCalibrationSection } from './admin-calibration-section-dom';
 import { buildFormColumn } from './admin-enrollment-form-dom';
+import { buildReviewQueueSection } from './admin-review-queue-dom';
 import { buildPreviewColumn } from './admin-enrollment-preview-dom';
 import type { GateRuntime } from './gate-runtime';
 
@@ -25,6 +23,7 @@ export type AdminEnrollmentDom = {
   calibrationExplainSamplesEl: HTMLElement;
   calibrationExplainDeltasEl: HTMLElement;
   calibrationExplainProjectionEl: HTMLElement;
+  calibrationShadowBannerEl: HTMLElement;
   calibrationShadowSummaryEl: HTMLElement;
   calibrationShadowSamplesEl: HTMLElement;
   calibrationShadowDeltasEl: HTMLElement;
@@ -36,6 +35,7 @@ export type AdminEnrollmentDom = {
   reviewQueueTbody: HTMLTableSectionElement;
   reviewQueueRefreshBtn: HTMLButtonElement;
   reviewQueueStatusEl: HTMLElement;
+  reviewQueuePendingBadgeEl: HTMLSpanElement;
   main: HTMLElement;
   video: HTMLVideoElement;
   frameCanvas: HTMLCanvasElement;
@@ -189,7 +189,7 @@ type AdminEnrollmentBuild = {
   roster: ReturnType<typeof buildUserRosterSection>;
   importUi: ReturnType<typeof buildImportToolbar>;
   thr: ReturnType<typeof buildAccessThresholdSection>;
-  calibrationExplain: ReturnType<typeof buildCalibrationExplainabilitySection>;
+  calibrationExplain: ReturnType<typeof buildCalibrationSection>;
   reviewQueue: ReturnType<typeof buildReviewQueueSection>;
   main: HTMLElement;
   preview: ReturnType<typeof buildPreviewColumn>;
@@ -205,6 +205,7 @@ function pickCalibrationAndShadowHandles(
     calibrationExplainSamplesEl: calibrationExplain.samplesEl,
     calibrationExplainDeltasEl: calibrationExplain.deltasEl,
     calibrationExplainProjectionEl: calibrationExplain.projectionEl,
+    calibrationShadowBannerEl: calibrationExplain.shadowBannerEl,
     calibrationShadowSummaryEl: calibrationExplain.shadowSummaryEl,
     calibrationShadowSamplesEl: calibrationExplain.shadowSamplesEl,
     calibrationShadowDeltasEl: calibrationExplain.shadowDeltasEl,
@@ -236,6 +237,7 @@ function toAdminEnrollmentDom(p: AdminEnrollmentBuild): AdminEnrollmentDom {
     reviewQueueTbody: reviewQueue.tbody,
     reviewQueueRefreshBtn: reviewQueue.refreshBtn,
     reviewQueueStatusEl: reviewQueue.statusEl,
+    reviewQueuePendingBadgeEl: reviewQueue.pendingCountBadgeEl,
     main: p.main,
     video: preview.video,
     frameCanvas: preview.frameCanvas,
@@ -260,7 +262,7 @@ export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
   const roster = buildUserRosterSection(rt);
   const importUi = buildImportToolbar(rt);
   const thr = buildAccessThresholdSection(rt);
-  const calibrationExplain = buildCalibrationExplainabilitySection();
+  const calibrationExplain = buildCalibrationSection();
   const reviewQueue = buildReviewQueueSection();
   const workspace = document.createElement('div');
   workspace.className = 'admin-workspace';
@@ -269,7 +271,7 @@ export function createAdminEnrollmentDom(rt: GateRuntime): AdminEnrollmentDom {
   const colRight = document.createElement('div');
   colRight.className = 'admin-workspace__col admin-workspace__col--right';
   colLeft.append(roster.section, importUi.toolbar);
-  colRight.append(thr.section, calibrationExplain.section, reviewQueue.section);
+  colRight.append(thr.section, reviewQueue.section, calibrationExplain.section);
   workspace.append(colLeft, colRight);
   const main = document.createElement('main');
   main.className = 'admin-enroll';
