@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gatekeeper (Let Me In) — Architecture &amp; flows</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #fafafa;
+        --fg: #1a1a1a;
+        --muted: #555;
+        --border: #ddd;
+        --accent: #0d47a1;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #121212;
+          --fg: #eee;
+          --muted: #aaa;
+          --border: #333;
+          --accent: #90caf9;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        line-height: 1.55;
+        max-width: 56rem;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 4rem;
+        background: var(--bg);
+        color: var(--fg);
+      }
+      header {
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1.25rem;
+        margin-bottom: 2rem;
+      }
+      h1 {
+        font-size: 1.75rem;
+        font-weight: 650;
+        margin: 0 0 0.35rem;
+      }
+      header p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+      section {
+        margin-bottom: 3rem;
+      }
+      section h2 {
+        font-size: 1.25rem;
+        margin: 0 0 0.75rem;
+        color: var(--accent);
+      }
+      section > p.lead {
+        margin-top: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+      .explain {
+        margin-top: 1.25rem;
+        padding: 1rem 1.1rem;
+        border-left: 4px solid var(--accent);
+        background: color-mix(in srgb, var(--accent) 6%, transparent);
+        border-radius: 0 6px 6px 0;
+      }
+      .explain h3 {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin: 0 0 0.6rem;
+        color: var(--muted);
+      }
+      .explain ol {
+        margin: 0;
+        padding-left: 1.2rem;
+      }
+      .explain li {
+        margin-bottom: 0.45rem;
+      }
+      .diagram-wrap {
+        overflow-x: auto;
+        padding: 0.5rem 0;
+      }
+      .mermaid {
+        display: flex;
+        justify-content: center;
+      }
+      footer {
+        margin-top: 3rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      #elevator {
+        margin-bottom: 2.5rem;
+        padding: 1.1rem 1.25rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      #elevator h2 {
+        margin-top: 0;
+        font-size: 1rem;
+      }
+      #elevator ul {
+        margin: 0;
+        padding-left: 1.25rem;
+      }
+      #elevator li {
+        margin-bottom: 0.5rem;
+      }
+      #elevator li:last-child {
+        margin-bottom: 0;
+      }
+      #elevator ul ul {
+        margin-top: 0.4rem;
+        margin-bottom: 0;
+        padding-left: 1.35rem;
+      }
+      #elevator ul ul li {
+        margin-bottom: 0.35rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Gatekeeper (Let Me In)</h1>
+      <p>Architecture, user flows, and application runtime — for panel presentations.</p>
+    </header>
+
+    <section id="elevator">
+      <h2>Elevator pitch</h2>
+      <ul>
+        <li><strong>Gatekeeper</strong> is a <strong>browser-only</strong> facial recognition access demo</li>
+        <li>The <strong>gate</strong> page uses the webcam; <strong>face detection</strong> runs in a <strong>Web Worker</strong>, <strong>recognition</strong> uses <strong>local embeddings</strong> compared to an <strong>on-device roster</strong>.</li>
+        <li>Outcomes are explicit <strong>GRANTED</strong>, <strong>UNCERTAIN</strong>, or <strong>DENIED</strong> — not a forced binary when the match is weak.</li>
+        <li><strong>Admins</strong> enroll people and tune thresholds on the <strong>admin</strong> page.</li>
+        <li><strong>IndexedDB</strong> on that device holds the <strong>roster</strong> (users, face embeddings, optional reference images), <strong>settings</strong> (thresholds, cooldowns), and <strong>access logs</strong>.</li>
+      </ul>
+    </section>
+
+    <section id="architecture">
+      <h2>1. System architecture</h2>
+      <p class="lead">
+        Components, where code runs, and what stays on the device (client-only ML and IndexedDB).
+      </p>
+      <div class="diagram-wrap">
+        <pre class="mermaid">
+flowchart TB
+  subgraph Host["Browser (client only)"]
+    subgraph Entries["HTML entries (Vite multi-page)"]
+      G["/ — Gate"]
+      A["/admin — Admin"]
+      L["/log — Access log"]
+    end
+
+    subgraph Bootstrap["Startup"]
+      HTTPS["HTTPS / secure-context gate"]
+      DB["IndexedDB init + default settings"]
+      MNT["Mount page UI"]
+    end
+
+    subgraph App["Application layer"]
+      GS["Gate session + camera preview"]
+      DP["Detection pipeline (per frame)"]
+      ADE["Access decision engine"]
+      ENR["Enrollment + roster (admin)"]
+      LOGV["Log / review UI"]
+    end
+
+    subgraph Domain["Domain logic (pure policy)"]
+      MATCH["Embedding match vs roster"]
+      POLICY["decideFromMatch → GRANTED | UNCERTAIN | DENIED"]
+    end
+
+    subgraph Infra["Infrastructure"]
+      DEX["Dexie: users, accessLog, settings"]
+      ORT["ONNX Runtime Web (WASM)"]
+      WK["Web Worker: YOLO face detector"]
+      MOD["Static models (/models/*.onnx)"]
+    end
+
+    CAM["Webcam (getUserMedia)"]
+  end
+
+  NET["Static host e.g. Netlify"]
+
+  NET --> G
+  NET --> A
+  NET --> L
+  G --> HTTPS
+  A --> HTTPS
+  L --> HTTPS
+  HTTPS --> DB
+  DB --> MNT
+  MNT -.->|"gate bundle"| GS
+  MNT -.->|"admin bundle"| ENR
+  MNT -.->|"log bundle"| LOGV
+  GS --> CAM
+  GS --> DP
+  DP --> WK
+  DP --> ORT
+  WK --> MOD
+  ORT --> MOD
+  DP --> ADE
+  ADE --> MATCH
+  MATCH --> DEX
+  ADE --> POLICY
+  ENR --> DEX
+  ENR --> CAM
+  LOGV --> DEX
+  ADE --> DEX
+        </pre>
+      </div>
+      <div class="explain">
+        <h3>Talking points</h3>
+        <ol>
+          <li><strong>Three pages, one product:</strong> gate (live check), admin (enroll + tune), log (local history). No server for video or inference.</li>
+          <li><strong>Privacy:</strong> frames and embeddings stay in-browser; roster and logs live in IndexedDB (<code>gatekeeper</code>).</li>
+          <li><strong>ML:</strong> YOLO detection in a Web Worker; ONNX Runtime for embedding; models served as static assets.</li>
+          <li><strong>Policy:</strong> <code>decideFromMatch</code> maps similarity + margin to GRANTED / UNCERTAIN / DENIED.</li>
+          <li><strong>Bootstrap:</strong> secure context → DB init → mount; avoids half-loaded UI.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="user-flows">
+      <h2>2. User flows</h2>
+      <p class="lead">Visitors, administrators, and log readers — plain-language paths.</p>
+      <div class="diagram-wrap">
+        <pre class="mermaid">
+flowchart TB
+  subgraph Personas["Actors"]
+    V["Visitor at the door"]
+    ADM["Administrator"]
+  end
+
+  subgraph GateFlow["Gate page (/)"]
+    G1["Open site → allow camera"]
+    G2["Wait for models + first detection"]
+    G3["Stand in frame; live preview + status"]
+    G4{"Decision"}
+    G4 -->|GRANTED| G5["Allowed messaging"]
+    G4 -->|UNCERTAIN| G6["Caution — no weak grant"]
+    G4 -->|DENIED| G7["Not recognized"]
+  end
+
+  subgraph AdminFlow["Admin page (/admin)"]
+    A1["Sign in (prod: build-time credentials)"]
+    A2["Capture or import enrollment"]
+    A3["Save user + embedding to IndexedDB"]
+    A4["Thresholds / cooldowns / roster backup"]
+  end
+
+  subgraph LogFlow["Log page (/log)"]
+    L1["Open log view"]
+    L2["Browse local access attempts"]
+    L3["Review workflows on entries"]
+  end
+
+  V --> G1 --> G2 --> G3 --> G4
+  ADM --> A1 --> A2 --> A3 --> A4
+  ADM --> L1
+  V --> L1
+  L1 --> L2 --> L3
+        </pre>
+      </div>
+      <div class="explain">
+        <h3>Talking points</h3>
+        <ol>
+          <li><strong>Visitor:</strong> browser + camera permission; continuous feedback; tri-state outcome with UNCERTAIN as a safety valve.</li>
+          <li><strong>Admin:</strong> enroll identities, persist locally, tune sensitivity for the environment.</li>
+          <li><strong>Log:</strong> device-local audit trail; central logging would need an explicit backend.</li>
+          <li><strong>Trust boundary:</strong> admin auth is front-door UI credentials (prod: env at build time) — not enterprise IAM.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="app-flow">
+      <h2>3. Application flow (per frame)</h2>
+      <p class="lead">Technical sequence from one camera frame to a decision and optional log write.</p>
+      <div class="diagram-wrap">
+        <pre class="mermaid">
+sequenceDiagram
+  participant Cam as Camera / frame
+  participant Pipe as Detection pipeline
+  participant Wk as YOLO Web Worker
+  participant Emb as Face embedder (ORT)
+  participant Eng as Access decision engine
+  participant Dom as Match + policy
+  participant IDB as IndexedDB
+  participant UI as Gate UI + log
+
+  Cam->>Pipe: Video frame (ImageData)
+  Pipe->>Wk: Detect faces (bbox)
+  Wk-->>Pipe: Detections
+
+  alt No face / multiple faces
+    Pipe->>UI: Status + overlay only
+  else Single face
+    Pipe->>Emb: Crop + embed
+    Emb-->>Pipe: Float32 embedding
+    Pipe->>Eng: Evaluate access
+    Eng->>IDB: Load users + embeddings
+    IDB-->>Eng: Roster
+    Eng->>Dom: Best match + margin
+    Dom-->>Eng: GRANTED / UNCERTAIN / DENIED
+    Eng-->>Pipe: Verdict + snapshot blob
+    Pipe->>UI: Banner / meter / colors
+    opt GRANTED or DENIED
+      Pipe->>IDB: appendAccessLog
+      IDB-->>UI: Persisted row
+    end
+  end
+        </pre>
+      </div>
+      <div class="explain">
+        <h3>Talking points</h3>
+        <ol>
+          <li><strong>Detect first:</strong> YOLO finds faces off the UI thread; boxes drive overlay and crop.</li>
+          <li><strong>Cardinality:</strong> zero or multiple faces typically skip grant path; single face runs embedding + policy.</li>
+          <li><strong>Compare:</strong> embedding vs stored vectors (similarity + runner-up margin).</li>
+          <li><strong>Log:</strong> GRANTED and DENIED append to accessLog with frame blob; UNCERTAIN is not logged the same way (align with code when presenting).</li>
+          <li><strong>Loop:</strong> repeats at camera cadence (with debounce/cooldown) for a live-door feel.</li>
+        </ol>
+      </div>
+    </section>
+
+    <footer>
+      Same content as <code>docs/PRESENTATION_DIAGRAMS.md</code> · Mermaid.js renders the diagrams above. Open this file in Chromium or Firefox (requires network for the CDN script).
+    </footer>
+
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "neutral",
+        securityLevel: "strict",
+        flowchart: { htmlLabels: true, curve: "basis" },
+      });
+      await mermaid.run({ querySelector: ".mermaid" });
+    </script>
+  </body>
+</html>
