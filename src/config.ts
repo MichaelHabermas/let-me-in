@@ -152,14 +152,14 @@ export const DEFAULT_THRESHOLD_CONFIG: ThresholdConfig = {
 
 export const DEFAULT_LIVENESS_CONFIG: LivenessConfig = {
   windowSize: 9,
-  minSamples: 5,
-  staleFrameMs: 1200,
-  maxBboxJumpRatio: 0.35,
-  passScore: 0.58,
-  failScore: 0.42,
-  minFrameDifference: 0.012,
-  minTextureVariation: 0.08,
-  maxGlareRisk: 0.32,
+  minSamples: 4,
+  staleFrameMs: 1600,
+  maxBboxJumpRatio: 0.5,
+  passScore: 0.46,
+  failScore: 0.28,
+  minFrameDifference: 0.006,
+  minTextureVariation: 0.045,
+  maxGlareRisk: 0.45,
   maxBlurRisk: 0.78,
 };
 

@@ -25,6 +25,8 @@ describe('passive liveness', () => {
   it('uses deterministic defaults and exhaustive reason codes', () => {
     expect(DEFAULT_LIVENESS_CONFIG.windowSize).toBeGreaterThanOrEqual(5);
     expect(DEFAULT_LIVENESS_CONFIG.windowSize).toBeLessThanOrEqual(15);
+    expect(DEFAULT_LIVENESS_CONFIG.minSamples).toBe(4);
+    expect(DEFAULT_LIVENESS_CONFIG.maxBboxJumpRatio).toBeGreaterThanOrEqual(0.5);
     const reasons: Record<LivenessReason, true> = {
       LIVENESS_WINDOW_FILLING: true,
       LIVE_MOTION_CONFIRMED: true,
