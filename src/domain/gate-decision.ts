@@ -1,5 +1,6 @@
 import { decideFromMatch, type AccessThresholds } from './access-policy';
 import type { Decision, MatchResult } from './types';
+import type { LivenessEvidence } from '../app/liveness';
 
 /** Single place for match + thresholds → access verdict (audit / UI / persistence). */
 export type GateDecisionInput = {
@@ -9,6 +10,7 @@ export type GateDecisionInput = {
   policyEpochId?: string;
   /** Reserved for ONNX / detector latency budgets. */
   modelLatencyMs?: number;
+  liveness?: LivenessEvidence;
 };
 
 export type GateAccessVerdict = {
@@ -39,7 +41,11 @@ function reasonsFor(
   match: MatchResult,
   t: AccessThresholds,
   decision: Decision,
+  liveness?: LivenessEvidence,
 ): readonly string[] {
+  if (liveness?.decision === 'FAIL') {
+    return ['PRESENTATION_ATTACK_RISK', liveness.reason];
+  }
   const score = match.best.score;
   const marginDelta = marginDeltaFor(match);
   if (decision === 'DENIED') return ['below-weak-band'];
@@ -48,15 +54,19 @@ function reasonsFor(
 }
 
 export function evaluateGateAccessMatch(input: GateDecisionInput): GateAccessVerdict {
-  const { match, thresholds } = input;
-  const decision = decideFromMatch(match, thresholds);
+  const { match, thresholds, liveness } = input;
+  const identityDecision = decideFromMatch(match, thresholds);
+  const decision =
+    identityDecision === 'GRANTED' && liveness?.decision === 'FAIL'
+      ? 'UNCERTAIN'
+      : identityDecision;
   const bestScore = match.best.score;
   const marginDelta = marginDeltaFor(match);
   return {
     decision,
     userId: decision === 'DENIED' ? null : match.best.userId,
     label: decision === 'DENIED' ? 'Unknown' : 'Matched user',
-    reasons: reasonsFor(match, thresholds, decision),
+    reasons: reasonsFor(match, thresholds, decision, liveness),
     bestScore,
     marginDelta,
   };

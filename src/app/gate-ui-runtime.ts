@@ -1,10 +1,12 @@
 import type { Config } from '../config';
+import type { LivenessConfig } from './liveness';
 import type { CameraErrorCode } from '../infra/camera';
 import type { GateAccessUiStrings } from './gate-access-ui-controller';
 import type { ConsentModalStrings } from '../ui/components/consent';
 
 /** Config fields needed for titles, preview layout, and camera UX strings. */
-export type GateUiConfigSlice = Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'>;
+export type GateUiConfigSlice = Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'> &
+  Partial<Pick<Config, 'liveness'>>;
 
 export type AdminUiStrings = {
   loginHeading: string;
@@ -82,6 +84,9 @@ export type GateUiRuntimeSlice = {
   modelLoadRetryLabel: string;
   noFaceMessage: string;
   multiFaceMessage: string;
+  livenessCheckingMessage: string;
+  livenessHoldStillMessage: string;
+  livenessConfig?: LivenessConfig;
   cameraDefaultDeviceOption: string;
   cameraSelectAriaLabel: string;
   formatUnnamedCamera: (indexOneBased: number) => string;
@@ -196,6 +201,9 @@ export function createGateUiRuntimeSlice(
     modelLoadRetryLabel: s.modelLoadRetry,
     noFaceMessage: s.noFace,
     multiFaceMessage: s.multiFace,
+    livenessCheckingMessage: s.livenessChecking,
+    livenessHoldStillMessage: s.livenessHoldStill,
+    livenessConfig: cfg.liveness,
     cameraDefaultDeviceOption: admin.cameraDefaultDeviceOption,
     cameraSelectAriaLabel: admin.cameraSelectAriaLabel,
     formatUnnamedCamera: admin.cameraUnnamedFormat,
@@ -212,6 +220,7 @@ export function createGateUiRuntimeSlice(
           .replaceAll('{similarity}', String(similarityPct));
       },
       tryAgain: s.accessTryAgain,
+      presentationAttackRisk: s.presentationAttackRisk,
     },
     consentModalStrings: {
       title: s.consentTitle,

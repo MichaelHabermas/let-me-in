@@ -65,7 +65,10 @@ const TEST_UI_STRING_OVERRIDES: Partial<UiStringsConfig> = {
   adminAccessThresholdsApplySpec075: 'Apply 0.75',
 };
 
-const testGateUiConfig: Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'> = {
+const testGateUiConfig: Pick<
+  Config,
+  'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'
+> = {
   org: {
     name: 'TestOrg',
     logoUrl: '',

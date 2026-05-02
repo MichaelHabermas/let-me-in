@@ -30,6 +30,9 @@ export interface AccessLogStore {
     similarity01: number;
     decision: Decision;
     capturedFrameBlob: Blob;
+    livenessScore?: number;
+    livenessDecision?: AccessLogRow['livenessDecision'];
+    livenessReason?: string;
     /** When set (e.g. tests), used as the first candidate key; still bumps on collision. */
     timestamp?: number;
   }): Promise<void>;
@@ -75,6 +78,12 @@ class GatekeeperDB extends Dexie {
     this.version(2).stores({
       users: 'id,name',
       accessLog: 'timestamp,userId,decision,reviewedDecision,similarity01',
+      settings: 'key',
+    });
+    this.version(3).stores({
+      users: 'id,name',
+      accessLog:
+        'timestamp,userId,decision,reviewedDecision,similarity01,livenessDecision,livenessReason',
       settings: 'key',
     });
     this.users = this.table('users');
@@ -142,6 +151,9 @@ async function accessLogAppendDecision(
     similarity01: number;
     decision: Decision;
     capturedFrameBlob: Blob;
+    livenessScore?: number;
+    livenessDecision?: AccessLogRow['livenessDecision'];
+    livenessReason?: string;
     timestamp?: number;
   },
 ): Promise<void> {
@@ -156,6 +168,9 @@ async function accessLogAppendDecision(
     similarity01: payload.similarity01,
     decision: payload.decision,
     capturedFrameBlob: payload.capturedFrameBlob,
+    livenessScore: payload.livenessScore,
+    livenessDecision: payload.livenessDecision,
+    livenessReason: payload.livenessReason,
   };
   await db.accessLog.put(row);
 }

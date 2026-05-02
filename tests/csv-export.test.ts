@@ -30,6 +30,9 @@ describe('accessLogToCsv', () => {
         similarity01: 0.9123,
         decision: 'GRANTED',
         capturedFrameBlob: new Blob(),
+        livenessDecision: 'PASS',
+        livenessScore: 0.812,
+        livenessReason: 'LIVE_MOTION_CONFIRMED',
       },
     ];
     const csv = accessLogToCsv(rows, users, 'Unknown');
@@ -38,6 +41,10 @@ describe('accessLogToCsv', () => {
     expect(csv).toContain('"Alex, Jr."');
     expect(csv).toContain('91');
     expect(csv).toContain('GRANTED');
+    expect(csv).toContain('Liveness Decision');
+    expect(csv).toContain('PASS');
+    expect(csv).toContain('81');
+    expect(csv).toContain('LIVE_MOTION_CONFIRMED');
     expect(csv.includes('\r\n')).toBe(true);
   });
 

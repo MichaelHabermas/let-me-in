@@ -129,6 +129,9 @@ export function buildLogTable(onHeaderClick: (key: LogSortKey) => void): {
   tbody.setAttribute('data-testid', 'log-table-body');
   table.append(thead, tbody);
   const reviewTh = document.createElement('th');
+  const livenessTh = document.createElement('th');
+  livenessTh.textContent = 'Liveness';
+  hr.appendChild(livenessTh);
   reviewTh.textContent = 'Review';
   hr.appendChild(reviewTh);
   return { table, tbody };
@@ -145,6 +148,38 @@ export function appendUserFilterOptions(userSelect: HTMLSelectElement, users: Us
 
 export function createUserNameMap(users: User[]): Map<string, string> {
   return new Map(users.map((user) => [user.id, user.name]));
+}
+
+function livenessCellText(row: AccessLogRow): string {
+  const liveScore =
+    typeof row.livenessScore === 'number' ? ` ${Math.round(row.livenessScore * 100)}%` : '';
+  return row.livenessDecision
+    ? `${row.livenessDecision}${liveScore}${row.livenessReason ? ` · ${row.livenessReason}` : ''}`
+    : 'Not recorded';
+}
+
+function appendReviewControls(
+  tdReview: HTMLTableCellElement,
+  row: AccessLogRow,
+  onReview?: (timestamp: number, reviewedDecision: ReviewedDecision) => void,
+): void {
+  if (row.reviewedDecision) {
+    tdReview.textContent = `Reviewed: ${row.reviewedDecision}`;
+  } else if (onReview) {
+    const grantBtn = document.createElement('button');
+    grantBtn.type = 'button';
+    grantBtn.className = 'btn btn--primary';
+    grantBtn.textContent = 'Should grant';
+    grantBtn.setAttribute('data-testid', `log-review-grant-${row.timestamp}`);
+    grantBtn.addEventListener('click', () => onReview(row.timestamp, 'GRANTED'));
+    const denyBtn = document.createElement('button');
+    denyBtn.type = 'button';
+    denyBtn.className = 'btn';
+    denyBtn.textContent = 'Should deny';
+    denyBtn.setAttribute('data-testid', `log-review-deny-${row.timestamp}`);
+    denyBtn.addEventListener('click', () => onReview(row.timestamp, 'DENIED'));
+    tdReview.append(grantBtn, denyBtn);
+  }
 }
 
 export function renderLogRows(
@@ -165,27 +200,14 @@ export function renderLogRows(
     tdSim.textContent = `${Math.round(row.similarity01 * 100)}%`;
     const tdDec = document.createElement('td');
     tdDec.textContent = row.decision;
-    const tdReview = document.createElement('td');
-    if (row.reviewedDecision) {
-      tdReview.textContent = `Reviewed: ${row.reviewedDecision}`;
-    } else if (onReview) {
-      const grantBtn = document.createElement('button');
-      grantBtn.type = 'button';
-      grantBtn.className = 'btn btn--primary';
-      grantBtn.textContent = 'Should grant';
-      grantBtn.setAttribute('data-testid', `log-review-grant-${row.timestamp}`);
-      grantBtn.addEventListener('click', () => onReview(row.timestamp, 'GRANTED'));
-      const denyBtn = document.createElement('button');
-      denyBtn.type = 'button';
-      denyBtn.className = 'btn';
-      denyBtn.textContent = 'Should deny';
-      denyBtn.setAttribute('data-testid', `log-review-deny-${row.timestamp}`);
-      denyBtn.addEventListener('click', () => onReview(row.timestamp, 'DENIED'));
-      tdReview.append(grantBtn, denyBtn);
-    } else {
-      tdReview.textContent = '';
+    const tdLiveness = document.createElement('td');
+    tdLiveness.textContent = livenessCellText(row);
+    if (row.livenessReason === 'PRESENTATION_ATTACK_RISK') {
+      tr.classList.add('log-table__row--spoof-risk');
     }
-    tr.append(tdTime, tdUser, tdSim, tdDec, tdReview);
+    const tdReview = document.createElement('td');
+    appendReviewControls(tdReview, row, onReview);
+    tr.append(tdTime, tdUser, tdSim, tdDec, tdLiveness, tdReview);
     tbody.appendChild(tr);
   }
 }

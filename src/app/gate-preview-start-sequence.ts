@@ -7,6 +7,8 @@ import {
 } from './camera-device-session';
 import { createCooldown } from './cooldown';
 import { createDetectionPipeline } from './detection-pipeline';
+import { createLivenessCollector } from './liveness';
+import { createE2eLivenessCollector } from './gate-e2e-doubles';
 import type { GatePreviewElements, GatePreviewSessionDeps } from './gate-session';
 import type { DetectorGateState } from './gate-session-detector-load';
 import { withLiveAccessDeps } from './gate-session-live-access';
@@ -93,6 +95,14 @@ export async function runGatePreviewStartSequence(
         noFaceMessage: attachDeps.noFaceMessage,
         multiFaceMessage: attachDeps.multiFaceMessage,
         cooldown,
+        livenessCollector:
+          import.meta.env.VITE_E2E_STUB_GATE === 'true'
+            ? createE2eLivenessCollector()
+            : attachDeps.livenessConfig
+              ? createLivenessCollector(attachDeps.livenessConfig)
+              : undefined,
+        livenessCheckingMessage: attachDeps.livenessCheckingMessage,
+        livenessHoldStillMessage: attachDeps.livenessHoldStillMessage,
         evaluateDecision: attachDeps.evaluateDecision,
         appendAccessLog: attachDeps.appendAccessLog,
       });

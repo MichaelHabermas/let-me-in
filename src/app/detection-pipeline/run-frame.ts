@@ -16,6 +16,7 @@ import {
 } from '../gatekeeper-metrics';
 import type { Decision } from '../../domain/types';
 import type { EvaluateGateAccessFn, GateAccessEvaluation } from '../gate-access-evaluation';
+import type { LivenessCollector, LivenessEvidence } from '../liveness';
 import type { Camera } from '../camera';
 import type { YoloDetector } from '../../infra/detector-core';
 import type { FaceEmbedder } from '../../infra/embedder-ort';
@@ -25,6 +26,9 @@ export type AppendAccessLogFn = (payload: {
   similarity01: number;
   decision: Decision;
   capturedFrameBlob: Blob;
+  livenessScore?: number;
+  livenessDecision?: LivenessEvidence['decision'];
+  livenessReason?: LivenessEvidence['reason'];
 }) => Promise<void>;
 
 export type FramePipelineOpts = {
@@ -43,16 +47,20 @@ export type FramePipelineOpts = {
   noFaceDebounceMs: number;
   evaluateDecision?: EvaluateGateAccessFn;
   appendAccessLog?: AppendAccessLogFn;
+  livenessCollector?: LivenessCollector;
+  livenessCheckingMessage?: string;
+  livenessHoldStillMessage?: string;
 };
 
 async function evaluateAccessDecision(
   opts: FramePipelineOpts,
   emb: Float32Array,
   frame: ImageData,
+  liveness?: LivenessEvidence,
 ): Promise<GateAccessEvaluation | null> {
   if (!opts.evaluateDecision) return null;
   const tEval0 = performance.now();
-  const raw = opts.evaluateDecision({ embedding: emb, frame });
+  const raw = opts.evaluateDecision({ embedding: emb, frame, liveness });
   const evaluation = await Promise.resolve(raw);
   recordLastAccessEvaluationMs(performance.now() - tEval0);
   return evaluation;
@@ -65,12 +73,17 @@ export async function appendAccessLogIfNeeded(
 ): Promise<void> {
   if (!opts.appendAccessLog) return;
   const { verdict } = evaluation;
-  if (verdict.decision !== 'GRANTED' && verdict.decision !== 'DENIED') return;
+  const isPresentationRisk = verdict.reasons.includes('PRESENTATION_ATTACK_RISK');
+  if (verdict.decision !== 'GRANTED' && verdict.decision !== 'DENIED' && !isPresentationRisk)
+    return;
   await opts.appendAccessLog({
     userId: verdict.decision === 'GRANTED' ? verdict.userId : null,
     similarity01: verdict.bestScore,
     decision: verdict.decision,
     capturedFrameBlob: evaluation.capturedFrameBlob,
+    livenessScore: evaluation.liveness?.score,
+    livenessDecision: evaluation.liveness?.decision,
+    livenessReason: isPresentationRisk ? 'PRESENTATION_ATTACK_RISK' : evaluation.liveness?.reason,
   });
 }
 
@@ -85,6 +98,7 @@ async function runEmbeddingAccessAndAppend(
   opts: FramePipelineOpts,
   frame: ImageData,
   primary: NonNullable<DetectorResult[0]>,
+  liveness?: LivenessEvidence,
 ): Promise<void> {
   if (!opts.faceEmbedder) return;
   const t0 = performance.now();
@@ -94,14 +108,33 @@ async function runEmbeddingAccessAndAppend(
   if (opts.logEmbeddingTimings) {
     console.info(`[gate] embed: ${ms.toFixed(1)} ms, len: ${emb.length}`);
   }
-  const evaluation = await evaluateAccessDecision(opts, emb, frame);
+  const evaluation = await evaluateAccessDecision(opts, emb, frame, liveness);
   if (!evaluation) return;
   const cd =
-    evaluation.verdict.decision === 'GRANTED' || evaluation.verdict.decision === 'DENIED'
+    evaluation.verdict.decision === 'GRANTED' ||
+    evaluation.verdict.decision === 'DENIED' ||
+    evaluation.verdict.reasons.includes('PRESENTATION_ATTACK_RISK')
       ? evaluation.verdict.decision
       : null;
   if (cd) opts.cooldown?.markAttempt(opts.getNowMs());
   await appendAccessLogIfNeeded(opts, evaluation);
+}
+
+function appendLivenessOrWait(
+  opts: FramePipelineOpts,
+  frame: ImageData,
+  primary: NonNullable<DetectorResult[0]>,
+  now: number,
+): LivenessEvidence | null {
+  const liveness = opts.livenessCollector?.append(frame, primary.bbox, now);
+  if (liveness?.decision !== 'CHECKING') return liveness ?? null;
+  setStatus(
+    opts.statusEl,
+    liveness.sampleCount <= 1
+      ? (opts.livenessCheckingMessage ?? '')
+      : (opts.livenessHoldStillMessage ?? opts.livenessCheckingMessage ?? ''),
+  );
+  return null;
 }
 
 export async function runDetectionPipelineFrame(
@@ -116,6 +149,7 @@ export async function runDetectionPipelineFrame(
   drawDetections(opts.overlayCtx, dets);
 
   if (dets.length === 0) {
+    opts.livenessCollector?.reset();
     tickNoFaceDebounced(noFaceState, {
       statusEl: opts.statusEl,
       noFaceMessage: opts.noFaceMessage,
@@ -131,10 +165,12 @@ export async function runDetectionPipelineFrame(
   }
 
   if (handleDetectionCardinality(opts, dets.length) === 'skip') {
+    opts.livenessCollector?.reset();
     return;
   }
   const now = opts.getNowMs();
   if (isCoolingDown(opts, now)) {
+    opts.livenessCollector?.reset();
     return;
   }
   setStatus(opts.statusEl, '');
@@ -145,5 +181,9 @@ export async function runDetectionPipelineFrame(
   if (!primary) {
     return;
   }
-  await runEmbeddingAccessAndAppend(opts, frame, primary);
+  const liveness = appendLivenessOrWait(opts, frame, primary, now);
+  if (opts.livenessCollector && !liveness) {
+    return;
+  }
+  await runEmbeddingAccessAndAppend(opts, frame, primary, liveness ?? undefined);
 }

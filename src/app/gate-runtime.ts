@@ -4,6 +4,7 @@
  */
 
 import { config } from '../config';
+import type { LivenessConfig } from './liveness';
 import type { DatabaseSeedSettings } from '../domain/database-seed';
 import type {
   GateSessionCameraFactoryDeps,
@@ -29,7 +30,7 @@ export type GatePreviewSessionCoreDeps = GateSessionPipelineMessageDeps &
     GateSessionCameraFactoryDeps,
     'getDefaultVideoConstraintsForCamera' | 'getCameraUserFacingMessage'
   > &
-  Pick<GateSessionDetectorModelDeps, 'logEmbeddingTimings'>;
+  Pick<GateSessionDetectorModelDeps, 'logEmbeddingTimings'> & { livenessConfig?: LivenessConfig };
 
 /** Grouped string surfaces (sliced from `GateUiRuntimeSlice` — for narrow dependency passing). */
 export type GateRuntimeSurfaceSlices = {
@@ -65,6 +66,9 @@ export function composeGateRuntime(
     modelLoadRetryLabel: ui.modelLoadRetryLabel,
     noFaceMessage: ui.noFaceMessage,
     multiFaceMessage: ui.multiFaceMessage,
+    livenessCheckingMessage: ui.livenessCheckingMessage,
+    livenessHoldStillMessage: ui.livenessHoldStillMessage,
+    livenessConfig: ui.livenessConfig,
     cooldownMs: databaseSeedSettings.cooldownMs,
     cameraDefaultDeviceOption: ui.cameraDefaultDeviceOption,
     cameraSelectAriaLabel: ui.cameraSelectAriaLabel,

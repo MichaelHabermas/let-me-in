@@ -8,11 +8,14 @@ flowchart LR
     Cam[Webcam / stub camera]
     Det[YOLOv8n face ONNX]
     Emb[InsightFace embedder ONNX]
+    Live[Passive liveness window]
     Match[Cosine match + policy]
     UI[Gate UI + log]
   end
   Cam --> Det
+  Det --> Live
   Det --> Emb
+  Live --> Match
   Emb --> Match
   Match --> UI
   UI --- IDB[(IndexedDB users + log + settings)]
@@ -22,7 +25,8 @@ flowchart LR
 
 1. **Detection (face YOLO):** `ImageData` → **face** bounding boxes (`src/infra/detector-ort.ts`, worker optional). See [Face detection (E13)](#face-detection-e13) below.
 2. **Embedding:** square crop + 112² preprocess → 512-D L2-normalized vector (`src/app/crop.ts`, `src/infra/embedder-ort.ts`).
-3. **Matching:** brute-force cosine similarity01 vs enrolled rows; decisioning through `src/domain/gate-decision.ts` (`evaluateGateAccessMatch`) with thresholds from `src/domain/access-policy.ts`.
+3. **Passive liveness:** the app keeps a short same-face frame window in `src/app/liveness/*`, then scores frame difference, crop texture, sharpness, and glare risk in the browser. No frames are uploaded.
+4. **Matching:** brute-force cosine similarity01 vs enrolled rows; decisioning through `src/domain/gate-decision.ts` (`evaluateGateAccessMatch`) with thresholds from `src/domain/access-policy.ts`.
 
 ## Threshold rationale (E14, SPECS L82 and L112)
 
@@ -31,6 +35,7 @@ flowchart LR
 - **This repository’s policy** ([`src/domain/access-policy.ts`](../src/domain/access-policy.ts)) is stricter: **`GRANTED`** only if the top-1 score is in the **strong** band **and** the top-1 vs top-2 margin is at least **`margin`**; otherwise, if the score is still at or above **`weak`**, the decision is **`UNCERTAIN`**; below **`weak`** is **`DENIED`**. That maps the course’s “one threshold” to a **strong floor** (what “above threshold” means for a high-confidence open) plus an **ambiguity** band, not a single hard cutoff.
 - **Defaults in code** (seed + `config` when IndexedDB is empty; persisted under **`settings.thresholds`**) in [`src/config.ts`](../src/config.ts): **`strong` 0.85**, **`weak` 0.65**, **`unknown` 0.65**, **`margin` 0.05**. The course’s **0.75** is therefore **not** the same number as the shipped `strong` default: **0.75** is the course baseline; **0.85** is this demo’s stricter “clear grant” line. To align the **strong** floor with the course number, use the **admin “SPECS 0.75” preset** (writes `strong: 0.75` into `settings`, leaves `weak` / `margin` unchanged unless you change them in code) or adjust seed/config and re-seed.
 - **UI:** Banner colors and copy are in [`src/ui/components/decision-banner.ts`](../src/ui/components/decision-banner.ts) and styles; the confidence meter uses the **same** `strong` / `weak` as the live policy (via `bandThresholds` on the access evaluation) so the bar matches the access decision.
+- **Liveness gate:** `GRANTED` also requires passing passive liveness evidence. A strong identity match with failed liveness is treated as non-grant and tagged with `PRESENTATION_ATTACK_RISK`; weak identity behavior remains `UNCERTAIN` / `DENIED`.
 
 ## Face detection (E13)
 
@@ -49,7 +54,7 @@ The running artifact is **`yolov8n-face.onnx`** ([`deepghs/yolo-face` on Hugging
 ## Storage (IndexedDB)
 
 - **users:** name, role, embedding, reference image blob (`src/infra/db-dexie.ts`).
-- **accessLog:** timestamped decisions for `/log` + CSV export.
+- **accessLog:** timestamped decisions for `/log` + CSV export, including optional liveness decision, reason, and score for audit review.
 - **settings:** `thresholds`, `cooldownMs`, consent flag, and **E12** camera preferences: `gateCameraPreference` and `enrollCameraPreference` (JSON: optional `deviceId` and `facingMode`). Stale or missing `deviceId` falls back to `config.camera.defaultFacingMode` and the choice is re-saved when the stream starts.
 
 ## Performance observability
@@ -58,5 +63,6 @@ The running artifact is **`yolov8n-face.onnx`** ([`deepghs/yolo-face` on Hugging
 
 ## Limitations
 
-- Client-side embeddings are visible in DevTools; no server-side anti-spoofing in MVP.
+- Client-side embeddings are visible in DevTools; passive liveness raises the spoofing bar but is not PAD certification and does not prove biological identity.
+- Replay attacks with convincing motion can still require a future active challenge or stronger sensor.
 - Stub gate (`VITE_E2E_STUB_GATE`) is for CI only; production behavior uses full ONNX.

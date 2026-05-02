@@ -1,4 +1,5 @@
 import type { GateAccessVerdict } from '../domain/gate-decision';
+import type { LivenessEvidence } from './liveness';
 
 /** Strong/weak cutoffs (from settings) — use for UI bands so the meter matches policy. */
 export type BandThresholdsSlice = { strong: number; weak: number };
@@ -12,11 +13,13 @@ export type GateAccessEvaluation = {
   capturedFrameBlob: Blob;
   /** Same as policy’s runtime thresholds; confidence meter and banners stay aligned with IndexedDB settings. */
   bandThresholds: BandThresholdsSlice;
+  liveness?: LivenessEvidence;
 };
 
 export type GateAccessEvaluationInput = {
   embedding: Float32Array;
   frame: ImageData;
+  liveness?: LivenessEvidence;
 };
 
 export type MaybePromise<T> = T | Promise<T>;

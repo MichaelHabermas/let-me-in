@@ -1,6 +1,7 @@
 import type { Camera } from '../camera';
 import type { CooldownGate } from '../cooldown';
 import type { EvaluateGateAccessFn } from '../gate-access-evaluation';
+import type { LivenessCollector } from '../liveness';
 import type { YoloDetector } from '../../infra/detector-core';
 import type { FaceEmbedder } from '../../infra/embedder-ort';
 import {
@@ -27,6 +28,9 @@ export type DetectionPipelineOptions = {
   noFaceDebounceMs?: number;
   evaluateDecision?: EvaluateGateAccessFn;
   appendAccessLog?: AppendAccessLogFn;
+  livenessCollector?: LivenessCollector;
+  livenessCheckingMessage?: string;
+  livenessHoldStillMessage?: string;
 };
 
 const DEFAULT_NO_FACE_DEBOUNCE_MS = 1000;
@@ -57,6 +61,9 @@ export function createDetectionPipeline(opts: DetectionPipelineOptions): () => v
     noFaceDebounceMs,
     evaluateDecision: opts.evaluateDecision,
     appendAccessLog: opts.appendAccessLog,
+    livenessCollector: opts.livenessCollector,
+    livenessCheckingMessage: opts.livenessCheckingMessage,
+    livenessHoldStillMessage: opts.livenessHoldStillMessage,
   };
   const unsub = opts.camera.onFrame(() => {
     if (!opts.camera.isRunning() || busy) return;

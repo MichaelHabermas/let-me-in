@@ -21,13 +21,31 @@ function isoTimestamp(ms: number): string {
  */
 export function accessLogToCsv(rows: AccessLogRow[], users: User[], unknownLabel: string): string {
   const byId = new Map(users.map((u) => [u.id, u]));
-  const header = ['Timestamp (ISO)', 'User', 'Similarity (%)', 'Decision'];
+  const header = [
+    'Timestamp (ISO)',
+    'User',
+    'Similarity (%)',
+    'Decision',
+    'Liveness Decision',
+    'Liveness Score (%)',
+    'Liveness Reason',
+  ];
   const lines = [header.map(escapeCsvField).join(',')];
 
   for (const row of rows) {
     const name = row.userId === null ? unknownLabel : (byId.get(row.userId)?.name ?? unknownLabel);
     const sim = String(Math.round(row.similarity01 * 100));
-    const cells = [isoTimestamp(row.timestamp), name, sim, row.decision].map(escapeCsvField);
+    const liveScore =
+      typeof row.livenessScore === 'number' ? String(Math.round(row.livenessScore * 100)) : '';
+    const cells = [
+      isoTimestamp(row.timestamp),
+      name,
+      sim,
+      row.decision,
+      row.livenessDecision ?? '',
+      liveScore,
+      row.livenessReason ?? '',
+    ].map(escapeCsvField);
     lines.push(cells.join(','));
   }
 

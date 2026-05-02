@@ -8,12 +8,14 @@ export type GateAccessUiStrings = {
   formatGranted(name: string, similarityPct: number): string;
   formatDenied(similarityPct: number): string;
   tryAgain: string;
+  presentationAttackRisk: string;
 };
 
 export const FALLBACK_GATE_ACCESS_UI_STRINGS: GateAccessUiStrings = {
   formatGranted: (name, p) => `${name} — ${p}%`,
   formatDenied: (p) => `Unknown — ${p}%`,
   tryAgain: 'Please try again',
+  presentationAttackRisk: 'Presentation attack risk — live verification failed.',
 };
 
 function variantFor(verdict: GateAccessEvaluation['verdict']): DecisionBannerVariant {
@@ -33,6 +35,7 @@ function titleFor(strings: GateAccessUiStrings, ev: GateAccessEvaluation): strin
     const name = ev.displayName ?? '';
     return strings.formatGranted(name, pct);
   }
+  if (verdict.reasons.includes('PRESENTATION_ATTACK_RISK')) return strings.presentationAttackRisk;
   if (verdict.decision === 'UNCERTAIN') return strings.tryAgain;
   return strings.formatDenied(pct);
 }

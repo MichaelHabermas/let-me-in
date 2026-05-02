@@ -52,4 +52,22 @@ describe('evaluateGateAccessMatch', () => {
     expect(v.decision).toBe('UNCERTAIN');
     expect(v.reasons).toEqual(['weak-or-mid-band']);
   });
+
+  it('demotes strong identity to UNCERTAIN when liveness fails', () => {
+    const m = match(0.9, { userId: 'u2', score: 0.5 });
+    const v = evaluateGateAccessMatch({
+      match: m,
+      thresholds: t,
+      liveness: {
+        decision: 'FAIL',
+        reason: 'LOW_FRAME_DIFFERENCE',
+        score: 0.2,
+        sampleCount: 5,
+        requiredSamples: 5,
+        metrics: { frameDifference: 0, textureVariation: 0.2, sharpness: 0.7, glareRisk: 0 },
+      },
+    });
+    expect(v.decision).toBe('UNCERTAIN');
+    expect(v.reasons).toEqual(['PRESENTATION_ATTACK_RISK', 'LOW_FRAME_DIFFERENCE']);
+  });
 });

@@ -1,4 +1,5 @@
 import { ORT_EP_ORDER_BROWSER } from './infra/ort-execution-defaults';
+import type { LivenessConfig } from './app/liveness';
 
 /**
  * Central configuration module — all org-configurable values live here.
@@ -29,6 +30,7 @@ export interface Config {
     /** minimum delta between top-2 matches to confirm strong band */
     margin: number;
   };
+  liveness: LivenessConfig;
   cooldownMs: number;
   modelUrls: {
     detector: string;
@@ -105,6 +107,9 @@ export interface Config {
       /** `{unknown}` and `{similarity}` placeholders. */
       accessDeniedBanner: string;
       accessTryAgain: string;
+      livenessChecking: string;
+      livenessHoldStill: string;
+      presentationAttackRisk: string;
       consentTitle: string;
       consentIntro: string;
       consentBulletPurpose: string;
@@ -143,6 +148,19 @@ export const DEFAULT_THRESHOLD_CONFIG: ThresholdConfig = {
   weak: 0.65,
   unknown: 0.65,
   margin: 0.05,
+};
+
+export const DEFAULT_LIVENESS_CONFIG: LivenessConfig = {
+  windowSize: 9,
+  minSamples: 5,
+  staleFrameMs: 1200,
+  maxBboxJumpRatio: 0.35,
+  passScore: 0.58,
+  failScore: 0.42,
+  minFrameDifference: 0.012,
+  minTextureVariation: 0.08,
+  maxGlareRisk: 0.32,
+  maxBlurRisk: 0.78,
 };
 
 export const DEFAULT_UI_STRINGS: UiStringsConfig = {
@@ -199,6 +217,9 @@ export const DEFAULT_UI_STRINGS: UiStringsConfig = {
   accessGrantedBanner: '{name} — {similarity}%',
   accessDeniedBanner: '{unknown} — {similarity}%',
   accessTryAgain: 'Please try again',
+  livenessChecking: 'Checking liveness…',
+  livenessHoldStill: 'Hold still while we verify this is live.',
+  presentationAttackRisk: 'Presentation attack risk — live verification failed.',
   consentTitle: 'Face verification',
   consentIntro: 'Before we use your camera, please confirm you understand the following:',
   consentBulletPurpose:
@@ -228,6 +249,10 @@ export function createThresholdConfig(overrides: Partial<ThresholdConfig> = {}):
   return { ...DEFAULT_THRESHOLD_CONFIG, ...overrides };
 }
 
+export function createLivenessConfig(overrides: Partial<LivenessConfig> = {}): LivenessConfig {
+  return { ...DEFAULT_LIVENESS_CONFIG, ...overrides };
+}
+
 export function createUiStrings(overrides: Partial<UiStringsConfig> = {}): UiStringsConfig {
   return { ...DEFAULT_UI_STRINGS, ...overrides };
 }
@@ -241,6 +266,7 @@ export const config: Config = {
       'A browser-only facial-recognition “door” that verifies who is at the camera and grants or denies entry without sending video to a server or requiring dedicated hardware.',
   },
   thresholds: createThresholdConfig(),
+  liveness: createLivenessConfig(),
   cooldownMs: 3000,
   modelUrls: {
     /** YOLOv8n single-class face, `images` + `output0` [1,5,8400] (E13). */

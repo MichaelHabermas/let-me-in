@@ -10,6 +10,7 @@ import { maybeMountFpsOverlay } from './gate-fps-overlay';
 import { wireCameraControls } from './gate-session-orchestrator';
 import type { ModelLoadStatusController } from './model-load-status-ui';
 import type { AppendAccessLogFn } from './detection-pipeline';
+import type { LivenessConfig } from './liveness';
 
 /** `createUserMedia` binding + per-brand camera error copy. */
 export type GateSessionCameraFactoryDeps = {
@@ -41,6 +42,9 @@ export type GateSessionPipelineMessageDeps = {
   modelLoadRetryLabel: string;
   noFaceMessage: string;
   multiFaceMessage: string;
+  livenessCheckingMessage?: string;
+  livenessHoldStillMessage?: string;
+  livenessConfig?: LivenessConfig;
   cooldownMs: number;
   /** E12: first option label for the gate camera `<select>`. */
   cameraDefaultDeviceOption: string;

@@ -12,7 +12,7 @@ vi.mock('../src/app/gate-access-evaluation', async (importOriginal) => {
 });
 
 import { createTestGateRuntime } from './support/create-test-gate-runtime';
-import { embeddingVectorZeros } from './support/test-embeddings';
+import { embeddingVectorFilled, embeddingVectorZeros } from './support/test-embeddings';
 
 describe('createAccessDecisionEvaluator', () => {
   const dbName = `access-engine-${crypto.randomUUID()}`;
@@ -41,7 +41,7 @@ describe('createAccessDecisionEvaluator', () => {
       name: 'A',
       role: 'r',
       referenceImageBlob: new Blob(),
-      embedding: embeddingVectorZeros(),
+      embedding: embeddingVectorFilled(0.1),
       createdAt: 1,
     });
     const toArray = vi.spyOn(persistence.usersRepo, 'toArray');
@@ -53,7 +53,7 @@ describe('createAccessDecisionEvaluator', () => {
       context,
     );
     const frame = new ImageData(2, 2);
-    const embedding = embeddingVectorZeros();
+    const embedding = embeddingVectorFilled(0.1);
     toArray.mockClear();
     const first = await evalFn({ embedding, frame });
     const second = await evalFn({ embedding, frame });
@@ -80,6 +80,52 @@ describe('createAccessDecisionEvaluator', () => {
     });
     await context.refresh();
     expect(context.getSnapshot().thresholds.strong).toBe(0.75);
+    await persistence.resetIndexedDbClientForTests();
+  });
+
+  it('requires passing liveness before a strong identity match grants', async () => {
+    const persistence = createDexiePersistence(dbName);
+    const rt = createTestGateRuntime();
+    await persistence.initDatabase(rt.databaseSeedSettings);
+    await persistence.usersRepo.put({
+      id: 'u1',
+      name: 'A',
+      role: 'r',
+      referenceImageBlob: new Blob(),
+      embedding: embeddingVectorFilled(0.1),
+      createdAt: 1,
+    });
+    const evalFn = await createAccessDecisionEvaluator(persistence, rt.databaseSeedSettings);
+    const frame = new ImageData(2, 2);
+    const embedding = embeddingVectorFilled(0.1);
+    const failed = await evalFn({
+      embedding,
+      frame,
+      liveness: {
+        decision: 'FAIL',
+        reason: 'PRESENTATION_ATTACK_RISK',
+        score: 0.1,
+        sampleCount: 5,
+        requiredSamples: 5,
+        metrics: { frameDifference: 0, textureVariation: 0, sharpness: 0, glareRisk: 0 },
+      },
+    });
+    expect(failed?.verdict.decision).toBe('UNCERTAIN');
+    expect(failed?.verdict.reasons).toContain('PRESENTATION_ATTACK_RISK');
+
+    const passed = await evalFn({
+      embedding,
+      frame,
+      liveness: {
+        decision: 'PASS',
+        reason: 'LIVE_MOTION_CONFIRMED',
+        score: 0.8,
+        sampleCount: 5,
+        requiredSamples: 5,
+        metrics: { frameDifference: 0.04, textureVariation: 0.2, sharpness: 0.8, glareRisk: 0 },
+      },
+    });
+    expect(passed?.verdict.decision).toBe('GRANTED');
     await persistence.resetIndexedDbClientForTests();
   });
 });

@@ -6,8 +6,11 @@ Record a **3–5 minute** walkthrough covering:
 2. Gate: successful **GRANTED** for enrolled user.
 3. Gate: **DENIED** for non-enrolled subject.
 4. Multi-face handling message.
-5. `/log` viewer with filters.
-6. **Export CSV** from the log toolbar.
+5. Printed-photo / replay-risk path showing non-grant presentation-attack copy.
+6. `/log` viewer with filters and liveness evidence columns.
+7. **Export CSV** from the log toolbar, including liveness columns.
+
+Call out that passive liveness is browser-only and heuristic: it raises the bar for flat photos but does not certify biological identity. Active challenge fallback is intentionally deferred.
 
 Save as `docs/demo.mp4` or host externally and link from [`docs/SUBMISSION.md`](SUBMISSION.md).
 

@@ -723,6 +723,10 @@ body {
   letter-spacing: 0.04em;
 }
 
+.log-table__row--spoof-risk td {
+  background: var(--color-banner-uncertain-bg);
+}
+
 @media (max-width: 820px) {
   .page--gate {
     padding: var(--space-3);

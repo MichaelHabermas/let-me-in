@@ -41,6 +41,7 @@ export async function createAccessDecisionEvaluator(
         runnerUp: ranked.runnerUp,
       },
       thresholds,
+      liveness: input.liveness,
     });
 
     const capturedFrameBlob = await imageDataToPngBlob(input.frame);
@@ -51,6 +52,7 @@ export async function createAccessDecisionEvaluator(
       referenceImageBlob: policy.decision === 'DENIED' ? null : (user?.referenceImageBlob ?? null),
       capturedFrameBlob,
       bandThresholds: { strong: thresholds.strong, weak: thresholds.weak },
+      liveness: input.liveness,
     };
     ui?.onDecision(evaluation);
     return evaluation;

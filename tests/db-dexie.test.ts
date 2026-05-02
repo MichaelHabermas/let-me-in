@@ -81,9 +81,17 @@ describe('Dexie schema v1', () => {
       similarity01: 0.9,
       decision: 'GRANTED',
       capturedFrameBlob: new Blob(['g'], { type: 'image/png' }),
+      livenessDecision: 'PASS',
+      livenessScore: 0.76,
+      livenessReason: 'LIVE_MOTION_CONFIRMED',
     });
     const all = await log.toArray();
     expect(all.length).toBe(2);
+    expect(all.find((r) => r.userId === 'u1')).toMatchObject({
+      livenessDecision: 'PASS',
+      livenessScore: 0.76,
+      livenessReason: 'LIVE_MOTION_CONFIRMED',
+    });
   });
 });
 

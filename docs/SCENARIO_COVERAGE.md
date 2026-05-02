@@ -10,7 +10,7 @@ This document maps SPECS scenarios 1-8 to runnable checks and evidence artifacts
 | 2 | Enroll new user | `tests/scenarios/02-admin-enroll.spec.ts` | `pnpm run test:scenarios` | Pass | Stub enroll path |
 | 3 | GRANTED <3s | `tests/scenarios/03-enrolled-granted.spec.ts` | `pnpm run test:scenarios` | Pass | Stub timing asserts under 3000 ms |
 | 4 | Stranger DENIED / Unknown | `tests/scenarios/04-unknown-denied.spec.ts` | `pnpm run test:scenarios` | Pass | Unknown denial path covered |
-| 5 | Printed photo flagged | `tests/scenarios/05-printed-photo.spec.ts` | `pnpm run test:scenarios` | Pass (honest MVP) | Current behavior: denied without dedicated liveness |
+| 5 | Printed photo flagged | `tests/scenarios/05-printed-photo.spec.ts` | `pnpm run test:scenarios` | Pass | Asserts non-grant plus presentation-attack risk copy |
 | 6 | Two people handled | `tests/scenarios/06-two-people.spec.ts` | `pnpm run test:scenarios` | Pass | Multi-face guidance coverage |
 | 7 | IndexedDB persist after refresh | `tests/scenarios/07-refresh-persist.spec.ts` | `pnpm run test:scenarios` | Pass | Persistence round-trip covered |
 | 8 | Log complete with prior attempts | `tests/scenarios/08-log-prior-attempts.spec.ts` | `pnpm run test:scenarios` | Pass | Log contains granted and denied rows |

@@ -18,6 +18,9 @@ export interface AccessLogRow {
   similarity01: number;
   decision: Decision;
   capturedFrameBlob: Blob;
+  livenessScore?: number;
+  livenessDecision?: 'CHECKING' | 'PASS' | 'FAIL';
+  livenessReason?: string;
   reviewedDecision?: ReviewedDecision;
   reviewedAt?: number;
   reviewedBy?: string | null;

@@ -26,7 +26,7 @@ The shape of the system (single device, ≤50 enrolled users, no backend, privac
 ### Where it's the wrong tool (be honest about this)
 
 - **Multi-site enterprise** — no cross-device sync, no central audit log. You'd want a backend.
-- **High-security / regulated access** (data centers, pharma vaults) — no liveness detection, no tamper-evident log, embeddings readable in DevTools.
+- **High-security / regulated access** (data centers, pharma vaults) — passive liveness is heuristic only, there is no tamper-evident log, and embeddings are readable in DevTools.
 - **Thousands of enrolled users** — brute-force cosine match degrades; needs an ANN index and likely server-side storage.
 - **Anywhere the access log is a legal artifact** — IndexedDB is mutable from DevTools, so the local log isn't evidentiary on its own.
 
@@ -156,14 +156,14 @@ Targets and what I hit on a Chrome MBP (see `docs/BENCHMARKS.md`):
 
 ## Security & spoofing — known gaps
 
-**No liveness detection.** A printed photo could fool the system today. This is the **biggest** real gap and I'd lead with it if asked.
+**Passive liveness is implemented, but it is not proof of life.** The gate now keeps a short same-face frame window and blocks `GRANTED` when the browser-local evidence looks like a flat presentation attack. That catches the basic printed-photo class in the runnable scenario, but it is heuristic anti-spoofing, not PAD certification or biological identity proof.
 
 **What I'd add, in order:**
 
-1. Frame differencing / micro-motion check — cheap, catches static photos.
-2. Head-pose estimation across frames — catches videos played on a phone.
-3. Active challenge (blink, turn head) — gold standard, hurts UX.
-4. Server-side re-verify on GRANTED — defense in depth.
+1. Head-pose estimation across frames — better replay resistance.
+2. Conditional active challenge (blink, turn head) — use only when passive evidence is inconclusive.
+3. Tamper-evident audit export — makes logs harder to rewrite after the fact.
+4. Server-side re-verify on GRANTED — defense in depth for deployments that allow it.
 
 **Admin auth:** credentials gate enrollment, resolved at build time from `VITE_ADMIN_USER`/`VITE_ADMIN_PASS`. Production fails closed if those aren't set. Not a real auth system — fine for a demo, would be replaced by SSO/OIDC in production.
 

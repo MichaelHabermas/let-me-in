@@ -6,14 +6,8 @@ import {
   startGateCamera,
 } from './_helpers';
 
-/**
- * E10.S1.F1.T5 — printed-photo / spoof stretch.
- * Stub path treats `printed` like weak embedding; outcome is recorded for the audit trail.
- */
-test.describe('E10.S1.F1.T5 scenario 5 — printed photo (honest stub)', () => {
-  test('runs pipeline and surfaces denied outcome (no dedicated liveness in MVP)', async ({
-    page,
-  }) => {
+test.describe('E21.S4.F1.T1 scenario 5 — printed photo spoof risk', () => {
+  test('does not grant and surfaces presentation-attack risk', async ({ page }) => {
     await page.addInitScript((key) => {
       localStorage.setItem(key, 'printed');
     }, E2E_GATE_SCENARIO_LS_KEY);
@@ -22,5 +16,6 @@ test.describe('E10.S1.F1.T5 scenario 5 — printed photo (honest stub)', () => {
     await startGateCamera(page);
     await page.locator('.banner--denied').waitFor({ state: 'visible', timeout: 15_000 });
     await expect(page.getByTestId('gate-decision')).toBeVisible();
+    await expect(page.getByTestId('gate-decision')).toContainText(/presentation attack risk/i);
   });
 });

@@ -17,7 +17,7 @@ function baseEval(
 }
 
 describe('appendAccessLogIfNeeded', () => {
-  it('appends for GRANTED and DENIED only', async () => {
+  it('appends for GRANTED and DENIED, but skips ordinary UNCERTAIN', async () => {
     const appendAccessLog = vi.fn().mockResolvedValue(undefined);
     const opts = { appendAccessLog } as Pick<FramePipelineOpts, 'appendAccessLog'>;
 
@@ -61,5 +61,39 @@ describe('appendAccessLogIfNeeded', () => {
       }),
     );
     expect(appendAccessLog).not.toHaveBeenCalled();
+  });
+
+  it('appends UNCERTAIN when presentation-attack risk is the reason', async () => {
+    const appendAccessLog = vi.fn().mockResolvedValue(undefined);
+    const opts = { appendAccessLog } as Pick<FramePipelineOpts, 'appendAccessLog'>;
+
+    await appendAccessLogIfNeeded(
+      opts as FramePipelineOpts,
+      {
+        ...baseEval({
+          decision: 'UNCERTAIN',
+          userId: 'u1',
+          label: 'Matched user',
+          reasons: ['PRESENTATION_ATTACK_RISK'],
+          bestScore: 0.91,
+          marginDelta: 0.2,
+        }),
+        liveness: {
+          decision: 'FAIL',
+          reason: 'LOW_FRAME_DIFFERENCE',
+          score: 0.2,
+          sampleCount: 5,
+          requiredSamples: 5,
+          metrics: { frameDifference: 0, textureVariation: 0.2, sharpness: 0.7, glareRisk: 0 },
+        },
+      },
+    );
+    expect(appendAccessLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        decision: 'UNCERTAIN',
+        livenessDecision: 'FAIL',
+        livenessReason: 'PRESENTATION_ATTACK_RISK',
+      }),
+    );
   });
 });

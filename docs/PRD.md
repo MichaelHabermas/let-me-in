@@ -10,7 +10,7 @@
 2. This `docs/PRD.md`
 3. `docs/PRE-WORK.md` (normalized evidence & locked decisions)
 
-**Tranches:** **Part I (E1–E10)** = MVP, stretch, and validation. **Part II (E11–E20)** = post-MVP `SPECS.txt` **closure** (gaps, benchmarks, submission). Same authority; E11+ closure defaults are **§6.2**.
+**Tranches:** **Part I (E1–E10)** = MVP, stretch, and validation. **Part II (E11–E20)** = post-MVP `SPECS.txt` **closure** (gaps, benchmarks, submission). **Part III (E21)** = liveness / presentation-attack hardening. Same authority; E11+ closure defaults are **§6.2**.
 
 ---
 
@@ -18,6 +18,7 @@
 
 **Part I (E1–E10):** default task window for shipped MVP work; use **§7.1** and **§6.1**.
 **Part II (E11–E20):** `SPECS` closure, evidence, and submission; use **§0** rules below for E11+ IDs, **§7.2**, **§6.2**, and the **Part II** block inside `## 4. Epics`.
+**Part III (E21):** post-closure liveness hardening; E21 is optional for submission closure but should be the next security epic if spoof resistance becomes product scope.
 
 ### 0.1 Picking the next task (Part I, E1–E10)
 
@@ -2579,7 +2580,144 @@ flowchart LR
 
 ---
 
-#### E11–E20 dependency graph
+### Part III — Liveness / presentation-attack hardening (E21)
+
+### Epic E21: Passive liveness and spoof-risk handling — [x]
+
+**Goal:** Add browser-only liveness evidence to the gate so the system does not grant access from a single still image. The first release should passively flag likely printed-photo or screen-replay attempts, preserve the smooth door UX for ordinary users, and record the liveness reason in the access log.
+
+**Depends on:** E13 face detection stable, E14 decision semantics stable, E15 multi-face guard stable.
+
+**Non-goals:**
+
+- Production-grade PAD certification or regulated biometric compliance.
+- New depth camera, server-side video upload, or hardware token requirement.
+- Always-on active challenges for every visitor.
+
+**Epic DoD:**
+
+- [x] Gate decisions can include liveness evidence and a spoof-risk reason without breaking existing `GRANTED`, `UNCERTAIN`, and `DENIED` flows.
+- [x] Passive liveness collects a short rolling window of same-face frames before granting.
+- [x] Likely printed-photo / replay attempts resolve to `UNCERTAIN` or `DENIED` with an explicit presentation-attack reason.
+- [x] Access log rows preserve the liveness outcome, reason, and score needed for audit review.
+- [x] Scenario 5 is upgraded from "honest MVP limitation" to a runnable spoof-risk assertion.
+- [x] Documentation explains limits: heuristic liveness raises the bar but does not prove biological identity.
+
+#### User Story E21.S1: As a gate operator, I want passive liveness before grant — [x]
+
+##### Feature E21.S1.F1: Rolling liveness signal collector — [x]
+
+**Files:** [`src/app/detection-pipeline/run-frame.ts`](../src/app/detection-pipeline/run-frame.ts), `src/app/liveness/*` (new), [`src/config.ts`](../src/config.ts).
+
+###### Task E21.S1.F1.T1: Define liveness types and config defaults — [x]
+
+- **Preconditions:** E13, E14.
+- **Steps:** Add typed `LivenessEvidence`, `LivenessVerdict`, reason codes, rolling-window size, minimum sample count, and threshold defaults in the app layer/config boundary.
+- **Acceptance test:** Unit tests prove defaults are deterministic and reason codes are exhaustive.
+- **SPEC cite:** L84; L132; L513.
+
+###### Task E21.S1.F1.T2: Track same-face temporal windows — [x]
+
+- **Preconditions:** E21.S1.F1.T1.
+- **Steps:** Collect 5-15 recent frames for the single detected face; reset the window on no-face, multi-face, large bbox jump, or cooldown.
+- **Acceptance test:** Unit tests cover append, reset, stale-frame expiry, and bbox-jump reset.
+- **SPEC cite:** L84; L132.
+
+###### Task E21.S1.F1.T3: Compute passive liveness metrics — [x]
+
+- **Preconditions:** E21.S1.F1.T2.
+- **Steps:** Compute cheap browser-local metrics: intra-face frame difference, local texture/motion variation, crop sharpness, and suspicious flatness/glare indicators.
+- **Acceptance test:** Synthetic flat sequence scores lower than synthetic live-like sequence; noisy camera-like jitter alone does not pass by itself.
+- **SPEC cite:** L84; L132.
+
+#### User Story E21.S2: As a visitor, I want the gate to verify liveness without needless friction — [x]
+
+##### Feature E21.S2.F1: Decision integration and hold-to-verify UX — [x]
+
+**Files:** [`src/app/gate-access-evaluation.ts`](../src/app/gate-access-evaluation.ts), [`src/app/detection-pipeline/run-frame.ts`](../src/app/detection-pipeline/run-frame.ts), [`src/app/gate-access-ui-controller.ts`](../src/app/gate-access-ui-controller.ts), [`src/ui/components/decision-banner.ts`](../src/ui/components/decision-banner.ts), [`src/styles/layout.css`](../src/styles/layout.css).
+
+###### Task E21.S2.F1.T1: Gate `GRANTED` on sufficient liveness evidence — [x]
+
+- **Preconditions:** E21.S1 complete.
+- **Steps:** Require a strong identity match plus passing liveness evidence before `GRANTED`; keep weak identity behavior aligned with existing `UNCERTAIN` / `DENIED` semantics.
+- **Acceptance test:** Strong identity + insufficient liveness does not grant; strong identity + passing liveness grants; weak identity remains denied/uncertain regardless of liveness.
+- **SPEC cite:** L82; L84; L112; L132.
+
+###### Task E21.S2.F1.T2: Add passive verification UI state — [x]
+
+- **Preconditions:** E21.S2.F1.T1.
+- **Steps:** Show a short "checking liveness" / "hold still" state while the rolling window fills; avoid layout shifts in the livebar and decision banner.
+- **Acceptance test:** Component tests verify copy/state mapping; Playwright verifies no grant banner appears before the liveness window resolves.
+- **SPEC cite:** L58; L112; L132.
+
+###### Task E21.S2.F1.T3: Surface `PRESENTATION_ATTACK_RISK` reason — [x]
+
+- **Preconditions:** E21.S2.F1.T1.
+- **Steps:** Add a specific liveness failure reason under `UNCERTAIN` or `DENIED`; make UI copy distinguish spoof risk from unknown identity.
+- **Acceptance test:** Printed-photo fixture displays presentation-risk copy and does not show a matched person as granted.
+- **SPEC cite:** L84; L132; L366.
+
+#### User Story E21.S3: As an auditor, I want liveness evidence in logs — [x]
+
+##### Feature E21.S3.F1: Liveness audit trail — [x]
+
+**Files:** [`src/domain/types.ts`](../src/domain/types.ts), [`src/infra/db-dexie.ts`](../src/infra/db-dexie.ts), [`src/app/access-decision-engine.ts`](../src/app/access-decision-engine.ts), [`src/app/log-page-table.ts`](../src/app/log-page-table.ts), [`src/app/csv-export.ts`](../src/app/csv-export.ts).
+
+###### Task E21.S3.F1.T1: Persist liveness score and reason — [x]
+
+- **Preconditions:** E21.S2.F1.T1.
+- **Steps:** Extend access-log payloads with optional `livenessScore`, `livenessDecision`, and `livenessReason`; preserve backward compatibility for existing IndexedDB rows.
+- **Acceptance test:** Migration/backfill test reads old rows and new rows; CSV export includes liveness columns.
+- **SPEC cite:** L136-L137; L366.
+
+###### Task E21.S3.F1.T2: Add log review affordances — [x]
+
+- **Preconditions:** E21.S3.F1.T1.
+- **Steps:** Show liveness outcome in `/log`; make spoof-risk rows scannable without overwhelming normal grant/deny history.
+- **Acceptance test:** Log page test covers granted, denied, uncertain, and presentation-risk rows.
+- **SPEC cite:** L118; L136-L137.
+
+#### User Story E21.S4: As a product owner, I want evidence that liveness works and its limits are honest — [x]
+
+##### Feature E21.S4.F1: Scenario, benchmark, and documentation updates — [x]
+
+**Files:** [`tests/scenarios/05-printed-photo.spec.ts`](../tests/scenarios/05-printed-photo.spec.ts), `tests/liveness*.test.ts` (new), [`docs/SCENARIO_COVERAGE.md`](SCENARIO_COVERAGE.md), [`docs/DEFENSE.md`](DEFENSE.md), [`docs/ARCHITECTURE.md`](ARCHITECTURE.md), [`docs/DEMO.md`](DEMO.md).
+
+###### Task E21.S4.F1.T1: Upgrade printed-photo scenario coverage — [x]
+
+- **Preconditions:** E21.S2 complete.
+- **Steps:** Change Scenario 5 from "honest MVP limitation" to asserting `PRESENTATION_ATTACK_RISK` or equivalent non-grant behavior.
+- **Acceptance test:** `pnpm run test:scenarios` proves printed-photo mode does not grant and shows liveness/spoof-risk state.
+- **SPEC cite:** L132.
+
+###### Task E21.S4.F1.T2: Add liveness unit fixtures — [x]
+
+- **Preconditions:** E21.S1 complete.
+- **Steps:** Add synthetic flat, jittered-flat, live-like micro-motion, blur, and glare fixtures for deterministic liveness scoring tests.
+- **Acceptance test:** `pnpm test` covers liveness score bands and failure reasons without real camera dependencies.
+- **SPEC cite:** L84; L132.
+
+###### Task E21.S4.F1.T3: Document threat model and limitations — [x]
+
+- **Preconditions:** E21.S2 and E21.S3 complete.
+- **Steps:** Update defense, architecture, demo, and scenario coverage docs to explain passive liveness, active-challenge deferral, replay limitations, false positives, and why no frames leave the browser.
+- **Acceptance test:** Docs no longer claim "No liveness detection" after implementation; limitations remain explicit.
+- **SPEC cite:** L366; L513.
+
+#### User Story E21.S5 (optional): As a high-risk site, I want challenge fallback only when passive liveness is inconclusive — [ ]
+
+##### Feature E21.S5.F1: Conditional active challenge — [ ]
+
+###### Task E21.S5.F1.T1: Design challenge fallback — [ ]
+
+- **Preconditions:** E21.S1-E21.S4 complete.
+- **Steps:** Specify one low-friction challenge such as blink twice, turn head slightly, move closer, or follow an on-screen target; include accessibility and reduced-motion constraints.
+- **Acceptance test:** Design doc lists trigger conditions, success/failure states, and spoof cases it adds coverage for.
+- **SPEC cite:** L84; L513.
+
+---
+
+#### E11–E21 dependency graph
 
 ```mermaid
 flowchart TD
@@ -2593,17 +2731,21 @@ flowchart TD
   E18[E18_CostDocs]
   E19[E19_Submission]
   E20[E20_ExceedOptional]
+  E21[E21_LivenessHardening]
   E11 --> E13
   E11 --> E16
   E12 --> E16
   E13 --> E15
   E13 --> E16
+  E13 --> E21
+  E14 --> E21
+  E15 --> E21
   E16 --> E19
   E17 --> E19
   E18 --> E19
 ```
 
-**Note:** `E14` runs in parallel with `E11`–`E13` (not shown as an edge). **`E19`** waits on `E16`, `E17`, and `E18` per Epic E19 **Depends on**. `E20` has no incoming edges.
+**Note:** `E14` runs in parallel with `E11`–`E13` (not shown as an edge). **`E19`** waits on `E16`, `E17`, and `E18` per Epic E19 **Depends on**. `E20` has no incoming edges. `E21` waits on stable face boxes, decision semantics, and multi-face handling.
 
 ---
 
@@ -2671,7 +2813,7 @@ flowchart TD
 7. **Canonical benchmark rerun — single session or continuous CI?**
   Default: **single session on submission day** per E10.S3. No CI perf harness. Source: `docs/PRE-WORK.md` [OPEN] #8.
 8. **Printed photo scenario 5 — spoof acceptance or flag?**
-  Default: **honestly record outcome**; liveness detection stays out of MVP. Source: `docs/SPECS.txt` scenario 5.
+  Default: **honestly record outcome** for MVP/Part II; implement passive liveness as follow-up E21 when spoof resistance enters product scope. Source: `docs/SPECS.txt` scenario 5.
 
 ### 6.2 SPEC-closure (E11+) — merged closure defaults
 
@@ -2730,7 +2872,7 @@ flowchart LR
     E9 --> E10
 ```
 
-### 7.2 Part II (E11–E20)
+### 7.2 Part II (E11–E20) and Part III (E21)
 
 Update the `(x/y tasks)` counts when Tasks flip to `- [x]`.
 
@@ -2746,8 +2888,9 @@ Update the `(x/y tasks)` counts when Tasks flip to `- [x]`.
 | E18 | AI + production cost docs | - [x] (3/3 tasks) |
 | E19 | Submission closure | - [ ] (2/4 tasks) |
 | E20 | Exceed (optional) | - [ ] (0/6 tasks, skip unless selected) |
+| E21 | Passive liveness and spoof-risk handling | - [x] (12/12 tasks, post-closure security epic) |
 
-**Part II (E11–E19) task total:** 36 tasks. **E20:** 6 optional tasks.
+**Part II (E11–E19) task total:** 36 tasks. **E20:** 6 optional tasks. **Part III E21:** 12 tasks.
 
 ---
 
@@ -2769,5 +2912,6 @@ Update the `(x/y tasks)` counts when Tasks flip to `- [x]`.
 | 2026-04-24 | Closure tranche draft | Initial gap synthesis from SPECS + repo audit. |
 | 2026-04-24 | Closure tranche revision | Agent-optimal structure: §0 instructions, gap→epic mapping, E11–E20 hierarchy, mermaid, dashboards, Path A default. |
 | 2026-04-25 | Unified merge | Folded the closure tranche into this file; single PRD (E1–E20). |
+| 2026-05-02 | Liveness epic | Added E21 for passive liveness, spoof-risk handling, logging, scenario coverage, and optional challenge fallback. |
 
-**End of PRD** — this file (E1–E20) is the single execution product requirements document.
+**End of PRD** — this file (E1–E21) is the single execution product requirements document.
