@@ -2,6 +2,14 @@
 
 Browser-based facial-recognition door entry — client-only ML. Single execution PRD: [docs/PRD.md](docs/PRD.md) — **Part I (E1–E10):** MVP and validation; **Part II (E11–E20):** `SPECS` closure and evidence. Immutable assignment: [docs/SPECS.txt](docs/SPECS.txt).
 
+```text
+This is Gatekeeper, a browser-based facial-recognition access system that runs entirely on the user’s device. The pain I was solving was that most face-recognition systems require backend processing, cloud video upload, or dedicated hardware, which adds privacy risk and deployment complexity.
+
+Gatekeeper uses the webcam to detect a face, generate a local face embedding, compare it against enrolled users stored in IndexedDB, and return GRANTED, UNCERTAIN, or DENIED. I built the gate flow, admin enrollment, local access logs, configurable thresholds, CSV export, and browser-side ML pipeline using TypeScript, Vite, ONNX Runtime Web, and Dexie.
+
+The hardest part was making ML inference work smoothly in the browser, so I moved heavier detection work into a background worker and added performance checks around model load and decision latency. The result is a privacy-first access-control demo that runs like a normal static web app, keeps face data off the server, and shows a complete product workflow from enrollment to audit logs.
+```
+
 ## Overview
 
 > **A browser-only facial-recognition “door”** that checks who is at the camera and **grants or denies entry** without sending video to a server or requiring dedicated hardware.
