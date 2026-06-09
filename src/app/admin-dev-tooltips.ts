@@ -1,5 +1,5 @@
 /**
- * Dev-only content registry + wiring for Gatekeeper admin section headers.
+ * Content registry + wiring for Gatekeeper admin section headers.
  *
  * Content lives in two sibling files keyed by {@link AdminTooltipKey}:
  *   - {@link ./admin-dev-tooltips-advanced} — jargon-OK technical narration
@@ -46,7 +46,6 @@ function buildContent(key: AdminTooltipKey): DevTooltipContent {
 }
 
 export function attachAdminDevTooltips(root: ParentNode): void {
-  if (!import.meta.env.DEV) return;
   for (const [selector, key] of TARGETS) {
     const el = root.querySelector<HTMLElement>(selector);
     if (el) attachDevTooltip(el, buildContent(key));

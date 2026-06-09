@@ -1,8 +1,5 @@
 /**
- * Dev-only hover tooltips for studying UI sections during interview prep.
- *
- * `attachDevTooltip` short-circuits in production via `import.meta.env.DEV`,
- * so Vite/terser tree-shake the unreachable body and ship nothing to prod.
+ * Hover tooltips for studying admin UI sections during demos and interview prep.
  */
 
 import { getDevTooltipMode, subscribeDevTooltipMode } from './dev-tooltip-mode';
@@ -38,7 +35,6 @@ type DevTooltipView = {
 };
 
 export function attachDevTooltip(el: HTMLElement, content: DevTooltipContent): void {
-  if (!import.meta.env.DEV) return;
   ensureStyles();
   el.setAttribute('data-dev-tooltip', '');
   el.addEventListener('mouseenter', () => showPanel(el, content));
