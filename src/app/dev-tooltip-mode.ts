@@ -1,9 +1,11 @@
 /** Tooltip mode state. Persists to localStorage; subscribers fire on change. */
 
-export type DevTooltipMode = 'advanced' | 'simple';
+export type DevTooltipMode = 'advanced' | 'simple' | 'off';
 
 const STORAGE_KEY = 'gatekeeper:dev-tooltip-mode';
 const DEFAULT_MODE: DevTooltipMode = 'advanced';
+
+const CYCLE: readonly DevTooltipMode[] = ['advanced', 'simple', 'off'];
 
 const listeners = new Set<(mode: DevTooltipMode) => void>();
 let cached: DevTooltipMode | null = null;
@@ -21,10 +23,16 @@ export function setDevTooltipMode(mode: DevTooltipMode): void {
   for (const cb of listeners) cb(mode);
 }
 
-export function toggleDevTooltipMode(): DevTooltipMode {
-  const next: DevTooltipMode = getDevTooltipMode() === 'simple' ? 'advanced' : 'simple';
+export function cycleDevTooltipMode(): DevTooltipMode {
+  const idx = CYCLE.indexOf(getDevTooltipMode());
+  const next = CYCLE[(idx + 1) % CYCLE.length] ?? DEFAULT_MODE;
   setDevTooltipMode(next);
   return next;
+}
+
+/** @deprecated Use {@link cycleDevTooltipMode}. */
+export function toggleDevTooltipMode(): DevTooltipMode {
+  return cycleDevTooltipMode();
 }
 
 export function subscribeDevTooltipMode(cb: (mode: DevTooltipMode) => void): () => void {
@@ -37,7 +45,8 @@ export function subscribeDevTooltipMode(cb: (mode: DevTooltipMode) => void): () 
 function readFromStorage(): DevTooltipMode {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw === 'simple' ? 'simple' : DEFAULT_MODE;
+    if (raw === 'simple' || raw === 'off') return raw;
+    return DEFAULT_MODE;
   } catch {
     return DEFAULT_MODE;
   }

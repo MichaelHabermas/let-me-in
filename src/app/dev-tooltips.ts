@@ -4,6 +4,22 @@
 
 import { getDevTooltipMode, subscribeDevTooltipMode } from './dev-tooltip-mode';
 
+let modeSyncRegistered = false;
+
+function ensureModeSync(): void {
+  if (modeSyncRegistered) return;
+  modeSyncRegistered = true;
+  syncTooltipMode(getDevTooltipMode());
+  subscribeDevTooltipMode(syncTooltipMode);
+}
+
+function syncTooltipMode(mode: ReturnType<typeof getDevTooltipMode>): void {
+  document.documentElement.dataset.devTooltipMode = mode;
+  if (mode === 'off') {
+    panel?.classList.remove('dev-tooltip-panel--visible');
+  }
+}
+
 export type DevTooltipGlossaryEntry = { term: string; def: string };
 
 export type DevTooltipSimpleVariant = {
@@ -36,6 +52,7 @@ type DevTooltipView = {
 
 export function attachDevTooltip(el: HTMLElement, content: DevTooltipContent): void {
   ensureStyles();
+  ensureModeSync();
   el.setAttribute('data-dev-tooltip', '');
   el.addEventListener('mouseenter', () => showPanel(el, content));
   el.addEventListener('mouseleave', scheduleHide);
@@ -71,6 +88,7 @@ function getPanel(): HTMLDivElement {
 }
 
 function showPanel(anchor: HTMLElement, content: DevTooltipContent): void {
+  if (getDevTooltipMode() === 'off') return;
   cancelHide();
   const el = getPanel();
   el.replaceChildren(renderPanel(content));
@@ -209,6 +227,10 @@ function clampToViewport(el: HTMLDivElement, anchorRect: DOMRect): void {
 const PANEL_MARGIN = 8;
 
 const TOOLTIP_CSS = `
+html[data-dev-tooltip-mode="off"] [data-dev-tooltip] {
+  cursor: inherit;
+  outline: none;
+}
 [data-dev-tooltip] {
   cursor: help;
   outline: 1px dashed rgba(140, 110, 230, 0.4);

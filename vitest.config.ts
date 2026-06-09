@@ -12,6 +12,7 @@ const happyDomTestFiles = [
   'tests/confidence-meter.test.ts',
   'tests/consent-settings.test.ts',
   'tests/decision-banner.test.ts',
+  'tests/dev-tooltip-mode.test.ts',
   'tests/detector-worker-client.test.ts',
   'tests/enroll-e2e-controller.test.ts',
   'tests/gate-access-ui-controller.test.ts',

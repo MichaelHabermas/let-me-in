@@ -1,11 +1,11 @@
 /**
- * Toggle button for switching tooltip content between advanced and simple modes.
+ * Toggle button for switching tooltip content between advanced, simple, and off.
  * Mounted in the admin header next to the logout button.
  */
 
 import {
+  cycleDevTooltipMode,
   getDevTooltipMode,
-  setDevTooltipMode,
   subscribeDevTooltipMode,
   type DevTooltipMode,
 } from './dev-tooltip-mode';
@@ -41,7 +41,14 @@ function ensureStyles(): void {
 }
 
 function labelFor(mode: DevTooltipMode): string {
-  return mode === 'simple' ? 'Tooltips: Simple' : 'Tooltips: Advanced';
+  switch (mode) {
+    case 'simple':
+      return 'Tooltips: Simple';
+    case 'off':
+      return 'Tooltips: Off';
+    default:
+      return 'Tooltips: Advanced';
+  }
 }
 
 export function attachDevTooltipModeToggle(root: ParentNode): void {
@@ -57,15 +64,14 @@ export function attachDevTooltipModeToggle(root: ParentNode): void {
   btn.className = 'dev-tooltip-mode-toggle';
   btn.setAttribute('data-testid', BUTTON_TESTID);
   btn.textContent = labelFor(getDevTooltipMode());
-  btn.title = 'Toggle tooltip detail level (advanced vs simple)';
+  btn.title = 'Cycle tooltips: Advanced → Simple → Off';
 
   const unsubscribe = subscribeDevTooltipMode((mode) => {
     btn.textContent = labelFor(mode);
   });
 
   btn.addEventListener('click', () => {
-    const next: DevTooltipMode = getDevTooltipMode() === 'simple' ? 'advanced' : 'simple';
-    setDevTooltipMode(next);
+    cycleDevTooltipMode();
   });
 
   header.insertBefore(btn, logoutBtn);
