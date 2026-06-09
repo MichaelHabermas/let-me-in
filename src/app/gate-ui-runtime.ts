@@ -5,7 +5,10 @@ import type { GateAccessUiStrings } from './gate-access-ui-controller';
 import type { ConsentModalStrings } from '../ui/components/consent';
 
 /** Config fields needed for titles, preview layout, and camera UX strings. */
-export type GateUiConfigSlice = Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'> &
+export type GateUiConfigSlice = Pick<
+  Config,
+  'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings' | 'livenessEnabled'
+> &
   Partial<Pick<Config, 'liveness'>>;
 
 export type AdminUiStrings = {
@@ -203,7 +206,7 @@ export function createGateUiRuntimeSlice(
     multiFaceMessage: s.multiFace,
     livenessCheckingMessage: s.livenessChecking,
     livenessHoldStillMessage: s.livenessHoldStill,
-    livenessConfig: cfg.liveness,
+    livenessConfig: cfg.livenessEnabled ? cfg.liveness : undefined,
     cameraDefaultDeviceOption: admin.cameraDefaultDeviceOption,
     cameraSelectAriaLabel: admin.cameraSelectAriaLabel,
     formatUnnamedCamera: admin.cameraUnnamedFormat,

@@ -5,8 +5,12 @@ import { getGateSessionWiring } from '../src/app/gate-runtime-wiring';
 import { createGateUiRuntimeSlice } from '../src/app/gate-ui-runtime';
 import { getDatabaseSeedSettingsFromConfig } from '../src/app/gate-seed-settings';
 import type { Config } from '../src/config';
+import { createLivenessConfig } from '../src/config';
 
-const uiCfg: Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'> = {
+const uiCfg: Pick<
+  Config,
+  'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings' | 'livenessEnabled'
+> = {
   org: { name: 'TestOrg', logoUrl: '', tagline: 'Test org tagline.' },
   camera: {
     idealWidth: 640,
@@ -87,6 +91,7 @@ const uiCfg: Pick<Config, 'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'> = 
     },
   },
   devLogEmbeddingTimings: false,
+  livenessEnabled: false,
 };
 
 describe('createGateUiRuntimeSlice', () => {
@@ -123,6 +128,17 @@ describe('createGateUiRuntimeSlice', () => {
     const rt = createGateUiRuntimeSlice(uiCfg, false);
     expect(rt.logPageStrings.unknown).toBe('u');
     expect(rt.logPageStrings.logExportCsv).toBe('csv');
+  });
+
+  it('omits livenessConfig when livenessEnabled is false', () => {
+    const rt = createGateUiRuntimeSlice({ ...uiCfg, livenessEnabled: false }, false);
+    expect(rt.livenessConfig).toBeUndefined();
+  });
+
+  it('passes livenessConfig when livenessEnabled is true', () => {
+    const liveness = createLivenessConfig({ minSamples: 2 });
+    const rt = createGateUiRuntimeSlice({ ...uiCfg, livenessEnabled: true, liveness }, false);
+    expect(rt.livenessConfig).toEqual(liveness);
   });
 });
 

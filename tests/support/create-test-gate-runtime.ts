@@ -67,7 +67,7 @@ const TEST_UI_STRING_OVERRIDES: Partial<UiStringsConfig> = {
 
 const testGateUiConfig: Pick<
   Config,
-  'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings'
+  'org' | 'camera' | 'ui' | 'devLogEmbeddingTimings' | 'livenessEnabled'
 > = {
   org: {
     name: 'TestOrg',
@@ -79,6 +79,7 @@ const testGateUiConfig: Pick<
     strings: createUiStrings(TEST_UI_STRING_OVERRIDES),
   },
   devLogEmbeddingTimings: false,
+  livenessEnabled: false,
 };
 
 /** `GateRuntime` for DOM tests — same composition path as production `resolveGateRuntime`. */

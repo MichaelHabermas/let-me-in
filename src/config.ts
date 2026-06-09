@@ -31,6 +31,11 @@ export interface Config {
     margin: number;
   };
   liveness: LivenessConfig;
+  /**
+   * When false, the gate skips passive liveness checks and grants on identity match alone.
+   * Set `VITE_LIVENESS_ENABLED=true` at build time to turn liveness back on.
+   */
+  livenessEnabled: boolean;
   cooldownMs: number;
   modelUrls: {
     detector: string;
@@ -267,6 +272,7 @@ export const config: Config = {
   },
   thresholds: createThresholdConfig(),
   liveness: createLivenessConfig(),
+  livenessEnabled: import.meta.env.VITE_LIVENESS_ENABLED === 'true',
   cooldownMs: 3000,
   modelUrls: {
     /** YOLOv8n single-class face, `images` + `output0` [1,5,8400] (E13). */
