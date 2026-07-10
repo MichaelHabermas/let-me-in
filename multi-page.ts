@@ -17,6 +17,7 @@ export const rollupHtmlInputs: Record<string, string> = {
 export const devPrettyRoutes: { path: string; html: string }[] = [
   { path: '/admin', html: '/admin.html' },
   { path: '/log', html: '/log.html' },
+  { path: '/devlog', html: '/devlog.html' },
 ];
 
 /** Canonical Netlify `[[redirects]]` blocks (must match `netlify.toml`; use `pnpm sync:netlify` to rewrite). */

@@ -25,3 +25,8 @@
   from = "/log"
   to = "/log.html"
   status = 200
+
+[[redirects]]
+  from = "/devlog"
+  to = "/devlog.html"
+  status = 200
